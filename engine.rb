@@ -84,6 +84,21 @@ module Kwery
         end
       end
     end
+
+    class Filter
+      def initialize(pred, plan)
+        @pred = pred
+        @plan = plan
+      end
+
+      def each
+        @plan.each do |tup|
+          if @pred.call(tup)
+            yield tup
+          end
+        end
+      end
+    end
   end
 end
 
@@ -102,10 +117,13 @@ csv.each do |row|
   index.insert(tup[:id], table.size-1)
 end
 
-plan = Kwery::Plan::IndexScan.new(
-  table,
-  index,
-  :desc
+plan = Kwery::Plan::Filter.new(
+  lambda { |tup| tup[:active] },
+  Kwery::Plan::IndexScan.new(
+    table,
+    index,
+    :desc
+  )
 )
 
 plan.each do |tup|
