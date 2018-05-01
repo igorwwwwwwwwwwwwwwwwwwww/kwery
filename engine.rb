@@ -35,13 +35,53 @@ module Kwery
       scan_leaf_desc(leaf.left, &block)
     end
   end
+
+  class Schema
+    def initialize
+      @fields = []
+    end
+
+    def column(name, type)
+      @fields << { name: name, type: type }
+    end
+
+    def tuple(row)
+      tup = {}
+      @fields.each do |field|
+        name = field[:name]
+        type = field[:type]
+        tup[name] = apply_type(row[name], type)
+      end
+      tup
+    end
+
+    def apply_type(v, type)
+      return nil if v.nil?
+      case type
+      when :integer
+        Integer(v)
+      when :string
+        v
+      when :boolean
+        v.downcase == 'true' ? true : false
+      else
+        raise "unknown type #{type}"
+      end
+    end
+  end
 end
+
+schema = Kwery::Schema.new
+schema.column :id, :integer
+schema.column :name, :string
+schema.column :active, :boolean
 
 table = Kwery::Tree.new
 
-csv = CSV.table('users.csv')
+csv = CSV.table('users.csv', converters: nil)
 csv.each do |row|
-  table.insert(row[:id], row.to_h)
+  tup = schema.tuple(row)
+  table.insert(tup[:id], tup)
 end
 
 # puts table.find(23).value
