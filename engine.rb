@@ -1,41 +1,52 @@
 require 'binary_search_tree'
 require 'csv'
 
-ORDER_ASC = 0
-ORDER_DESC = 1
+module Kwery
+  class Tree
+    def initialize
+      @bst = BinarySearchTree.new
+    end
 
-def self.scan(table, order = ORDER_ASC, &block)
-  if order == ORDER_ASC
-    scan_leaf_asc(table.root, &block)
-  else
-    scan_leaf_desc(table.root, &block)
+    def insert(k, v)
+      @bst.insert(k, v)
+    end
+
+    def scan(order = :asc, &block)
+      if order == :asc
+        scan_leaf_asc(@bst.root, &block)
+      else
+        scan_leaf_desc(@bst.root, &block)
+      end
+    end
+
+    private
+
+    def scan_leaf_asc(leaf, &block)
+      return if leaf.nil?
+      scan_leaf_asc(leaf.left, &block)
+      block.call([leaf.key, leaf.value])
+      scan_leaf_asc(leaf.right, &block)
+    end
+
+    def scan_leaf_desc(leaf, &block)
+      return if leaf.nil?
+      scan_leaf_desc(leaf.right, &block)
+      block.call([leaf.key, leaf.value])
+      scan_leaf_desc(leaf.left, &block)
+    end
   end
 end
 
-def self.scan_leaf_asc(leaf, &block)
-  return if leaf.nil?
-  scan_leaf_asc(leaf.left, &block)
-  block.call([leaf.key, leaf.value])
-  scan_leaf_asc(leaf.right, &block)
-end
-
-def self.scan_leaf_desc(leaf, &block)
-  return if leaf.nil?
-  scan_leaf_desc(leaf.right, &block)
-  block.call([leaf.key, leaf.value])
-  scan_leaf_desc(leaf.left, &block)
-end
-
-table = BinarySearchTree.new
+table = Kwery::Tree.new
 
 csv = CSV.table('users.csv')
 csv.each do |row|
-  table.insert row[:id], row.to_h
+  table.insert(row[:id], row.to_h)
 end
 
 # puts table.find(23).value
 
-scan(table, ORDER_DESC) do |k, tup|
+table.scan(:desc) do |k, tup|
   puts tup
 end
 
