@@ -76,17 +76,18 @@ schema.column :id, :integer
 schema.column :name, :string
 schema.column :active, :boolean
 
-table = Kwery::Tree.new
+table = []
+index = Kwery::Tree.new
 
 csv = CSV.table('users.csv', converters: nil)
 csv.each do |row|
   tup = schema.tuple(row)
-  table.insert(tup[:id], tup)
+  table << tup
+  index.insert(tup[:id], table.size-1)
 end
 
-# puts table.find(23).value
-
-table.scan(:desc) do |k, tup|
+index.scan(:desc) do |k, tid|
+  tup = table[tid]
   puts tup
 end
 
