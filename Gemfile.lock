@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    binary_search_tree (2.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  binary_search_tree
+
+BUNDLED WITH
+   1.16.1
