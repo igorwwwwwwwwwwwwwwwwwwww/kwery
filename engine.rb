@@ -69,6 +69,22 @@ module Kwery
       end
     end
   end
+
+  module Plan
+    class IndexScan
+      def initialize(table, index, direction = :asc)
+        @table = table
+        @index = index
+        @direction = direction
+      end
+
+      def each
+        @index.scan(@direction) do |_, tid|
+          yield @table[tid]
+        end
+      end
+    end
+  end
 end
 
 schema = Kwery::Schema.new
@@ -86,8 +102,13 @@ csv.each do |row|
   index.insert(tup[:id], table.size-1)
 end
 
-index.scan(:desc) do |k, tid|
-  tup = table[tid]
+plan = Kwery::Plan::IndexScan.new(
+  table,
+  index,
+  :desc
+)
+
+plan.each do |tup|
   puts tup
 end
 
