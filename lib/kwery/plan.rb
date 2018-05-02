@@ -42,5 +42,18 @@ module Kwery
         @plan.call(context).take(@limit)
       end
     end
+
+    class Project
+      include Enumerable
+
+      def initialize(proj, plan)
+        @proj = proj
+        @plan = plan
+      end
+
+      def call(context)
+        @plan.call(context).map(&@proj)
+      end
+    end
   end
 end

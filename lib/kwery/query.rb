@@ -31,6 +31,11 @@ module Kwery
         plan = Kwery::Plan::Limit.new(@limit, plan)
       end
 
+      plan = Kwery::Plan::Project.new(
+        lambda { |tup| @select.map { |k, f| [k, f.call(tup)] }.to_h },
+        plan
+      )
+
       plan
     end
 

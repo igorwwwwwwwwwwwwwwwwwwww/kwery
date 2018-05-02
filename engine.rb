@@ -30,7 +30,7 @@ context[:users_idx_id] = users_idx_id
 # LIMIT 10
 
 query = Kwery::Query.new(
-  select: [Kwery::Query::Field.new(:users, :name)],
+  select: { name: Kwery::Query::Field.new(:users, :name) },
   from: :users,
   where: Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
   order: [Kwery::Query::OrderBy.new(Kwery::Query::Field.new(:users, :id), :desc)],
