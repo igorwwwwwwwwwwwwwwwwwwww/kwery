@@ -11,28 +11,43 @@ module Kwery
       @bst.insert(k, v)
     end
 
-    def scan(order = :asc, &block)
+    def scan(order = :asc)
       if order == :asc
-        scan_leaf_asc(@bst.root, &block)
+        scan_leaf_asc(@bst.root)
       else
-        scan_leaf_desc(@bst.root, &block)
+        scan_leaf_desc(@bst.root)
       end
     end
 
     private
 
-    def scan_leaf_asc(leaf, &block)
-      return if leaf.nil?
-      scan_leaf_asc(leaf.left, &block)
-      block.call([leaf.key, leaf.value])
-      scan_leaf_asc(leaf.right, &block)
+    def scan_leaf_asc(leaf)
+      return [] if leaf.nil?
+      Enumerator.new do |y|
+        scan_leaf_asc(leaf.left).each do |v|
+          y << v
+        end
+        y << leaf.value
+        scan_leaf_asc(leaf.right).each do |v|
+          y << v
+        end
+      end
     end
 
-    def scan_leaf_desc(leaf, &block)
-      return if leaf.nil?
-      scan_leaf_desc(leaf.right, &block)
-      block.call([leaf.key, leaf.value])
-      scan_leaf_desc(leaf.left, &block)
+    def scan_leaf_desc(leaf)
+      Enumerator.new do |y|
+        if leaf.right
+          scan_leaf_desc(leaf.right).each do |v|
+            y << v
+          end
+        end
+        y << leaf.value
+        if leaf.left
+          scan_leaf_desc(leaf.left).each do |v|
+            y << v
+          end
+        end
+      end
     end
   end
 
@@ -72,31 +87,43 @@ module Kwery
 
   module Plan
     class IndexScan
-      def initialize(table, index, direction = :asc)
+      include Enumerable
+
+      def initialize(table, index, order = :asc)
         @table = table
         @index = index
-        @direction = direction
+        @order = order
       end
 
-      def each
-        @index.scan(@direction) do |_, tid|
-          yield @table[tid]
-        end
+      def call
+        @index.scan(@order).lazy.map {|tid|
+          tup = @table[tid]
+          tup
+        }
       end
     end
 
     class Filter
+      include Enumerable
+
       def initialize(pred, plan)
         @pred = pred
         @plan = plan
       end
 
-      def each
-        @plan.each do |tup|
-          if @pred.call(tup)
-            yield tup
-          end
-        end
+      def call
+        @plan.call.select(&@pred)
+      end
+    end
+
+    class Limit
+      def initialize(limit, plan)
+        @limit = limit
+        @plan = plan
+      end
+
+      def call
+        @plan.call.take(@limit)
       end
     end
   end
@@ -117,19 +144,12 @@ csv.each do |row|
   index.insert(tup[:id], table.size-1)
 end
 
-plan = Kwery::Plan::Filter.new(
-  lambda { |tup| tup[:active] },
-  Kwery::Plan::IndexScan.new(
-    table,
-    index,
-    :desc
+plan = Kwery::Plan::Limit.new(10,
+  Kwery::Plan::Filter.new(lambda { |tup| tup[:active] },
+    Kwery::Plan::IndexScan.new(table, index, :desc)
   )
 )
 
-plan.each do |tup|
+plan.call.each do |tup|
   puts tup
 end
-
-# Limit(10)
-#   Filter('active = true')
-#     IndexScan('users', 'id', nil, nil, 'desc', ['name', 'active'])
