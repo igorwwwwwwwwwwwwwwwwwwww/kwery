@@ -19,6 +19,21 @@ module Kwery
       end
     end
 
+    class TableScan
+      include Enumerable
+
+      def initialize(table_name)
+        @table_name = table_name
+      end
+
+      def call(context)
+        table = context[@table_name]
+        table # table is already an enumerable of tuples
+
+        table.lazy
+      end
+    end
+
     class Filter
       include Enumerable
 

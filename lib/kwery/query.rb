@@ -9,16 +9,7 @@ module Kwery
     end
 
     def plan(schema)
-      unless @order.size == 1
-        raise 'only single-field index scans supported by query planner'
-      end
-
-      index_name = schema.indexes.values.select { |idx| idx[:expr] == @order.first.expr }.map { |idx| idx[:name] }.first
-      unless index_name
-        raise 'no suitable index found by planner'
-      end
-
-      plan = Kwery::Plan::IndexScan.new(@from, index_name, @order.first.order)
+      plan = index_scan(schema) || table_scan(schema)
 
       if @where
         plan = Kwery::Plan::Filter.new(
@@ -37,6 +28,27 @@ module Kwery
       )
 
       plan
+    end
+
+    private
+
+    def index_scan(schema)
+      unless @order.size == 1
+        return
+      end
+
+      index_name = schema.indexes.values.select { |idx| idx[:expr] == @order.first.expr }.map { |idx| idx[:name] }.first
+      unless index_name
+        return
+      end
+
+      Kwery::Plan::IndexScan.new(@from, index_name, @order.first.order)
+    end
+
+    # cut my plans into pieces
+    # this is my last resort
+    def table_scan(schema)
+      Kwery::Plan::TableScan.new(@from)
     end
 
     class Field < Struct.new(:table, :column)
