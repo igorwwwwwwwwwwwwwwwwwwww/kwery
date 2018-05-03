@@ -3,7 +3,7 @@
 # Misha Conway.
 #
 # the following changes have been made:
-# * none yet
+# * support custom comparator
 
 class BinarySearchTree
   attr_reader :size, :root
@@ -12,7 +12,8 @@ class BinarySearchTree
     -1 == compute_and_check_height(@root) ? false : true
   end
 
-  def initialize(logger = nil)
+  def initialize(comparator: nil, logger: nil)
+    @comparator = comparator || lambda { |a, b| a <=> b }
     @logger = logger
     clear
   end
@@ -75,14 +76,18 @@ class BinarySearchTree
 
   def locate(target, leaf)
     @num_comparisons += 1
-    if leaf.nil?
-      nil
-    elsif leaf.key < target
+
+    return nil if leaf.nil?
+
+    case @comparator.call(leaf.key, target)
+    when -1
       locate target, leaf.right
-    elsif leaf.key > target
+    when 1
       locate target, leaf.left
-    elsif leaf.key == target
+    when 0
       leaf
+    else
+      raise
     end
   end
 
@@ -146,13 +151,17 @@ class BinarySearchTree
         # if at any point you reach an unbalanced node, rebalance it
         rebalance node_to_rebalance if node_to_rebalance
       end
-
-    elsif leaf.key < element
-      put element, value, leaf.right, leaf, 'right'
-    elsif leaf.key > element
-      put element, value, leaf.left, leaf, 'left'
-    elsif leaf.key == element
-      leaf.value = value
+    else
+      case @comparator.call(leaf.key, element)
+      when -1
+        put element, value, leaf.right, leaf, 'right'
+      when 1
+        put element, value, leaf.left, leaf, 'left'
+      when 0
+        leaf.value = value
+      else
+        raise
+      end
     end
   end
 
