@@ -36,7 +36,7 @@ query = Kwery::Query.new(
   },
   from: :users,
   where: Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
-  order: [Kwery::Query::OrderBy.new(Kwery::Query::Field.new(:users, :name), :asc)],
+  order: [Kwery::Query::OrderBy.new(Kwery::Query::Field.new(:users, :id), :desc)],
   limit: 10,
 )
 

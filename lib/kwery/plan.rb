@@ -10,9 +10,11 @@ module Kwery
       def call(context)
         index = context[@index_name]
         table = context[@table_name]
-        index.scan(@order).lazy.map {|tid|
-          tup = table[tid]
-          tup
+        index.scan(@order).lazy.flat_map {|tids|
+          tids.map { |tid|
+            tup = table[tid]
+            tup
+          }
         }
       end
     end
