@@ -1,8 +1,6 @@
 # vague ideas
 
 * query engine
-  * table scan
-  * in-memory sort
   * index scan with offset
   * collect runtime statistics/traces
 * query planner

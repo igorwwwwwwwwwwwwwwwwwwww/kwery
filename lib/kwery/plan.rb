@@ -52,6 +52,17 @@ module Kwery
       end
     end
 
+    class Sort
+      def initialize(comp, plan)
+        @comp = comp
+        @plan = plan
+      end
+
+      def call(context)
+        @plan.call(context).sort(&@comp)
+      end
+    end
+
     class Project
       def initialize(proj, plan)
         @proj = proj
