@@ -1,7 +1,7 @@
 require 'binary_search_tree'
 
 module Kwery
-  class Tree
+  class Index
     def initialize
       @bst = BinarySearchTree.new
     end

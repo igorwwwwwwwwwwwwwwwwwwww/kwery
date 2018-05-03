@@ -10,7 +10,7 @@ schema.column :active, :boolean
 schema.index :users_idx_id, Kwery::Query::Field.new(:users, :id)
 
 users = []
-users_idx_id = Kwery::Tree.new
+users_idx_id = Kwery::Index.new
 
 csv = CSV.table('users.csv', converters: nil)
 csv.each do |row|
@@ -30,7 +30,10 @@ context[:users_idx_id] = users_idx_id
 # LIMIT 10
 
 query = Kwery::Query.new(
-  select: { name: Kwery::Query::Field.new(:users, :name) },
+  select: {
+    id: Kwery::Query::Field.new(:users, :id),
+    name: Kwery::Query::Field.new(:users, :name),
+  },
   from: :users,
   where: Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
   order: [Kwery::Query::OrderBy.new(Kwery::Query::Field.new(:users, :id), :desc)],
