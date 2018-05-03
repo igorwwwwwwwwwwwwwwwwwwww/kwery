@@ -1,8 +1,6 @@
 module Kwery
   module Plan
     class IndexScan
-      include Enumerable
-
       def initialize(table_name, index_name, order = :asc)
         @table_name = table_name
         @index_name = index_name
@@ -20,8 +18,6 @@ module Kwery
     end
 
     class TableScan
-      include Enumerable
-
       def initialize(table_name)
         @table_name = table_name
       end
@@ -35,8 +31,6 @@ module Kwery
     end
 
     class Filter
-      include Enumerable
-
       def initialize(pred, plan)
         @pred = pred
         @plan = plan
@@ -59,8 +53,6 @@ module Kwery
     end
 
     class Project
-      include Enumerable
-
       def initialize(proj, plan)
         @proj = proj
         @plan = plan
