@@ -42,6 +42,16 @@ query = Kwery::Query.new(
 
 plan = query.plan(schema)
 
-plan.call(context).each do |tup|
-  puts tup
+mode = ARGV.shift || 'run'
+case mode
+when 'query'
+  pp query
+when 'plan'
+  pp plan
+when 'run'
+  plan.call(context).each do |tup|
+    puts tup
+  end
+else
+  raise "invalid mode #{mode}"
 end
