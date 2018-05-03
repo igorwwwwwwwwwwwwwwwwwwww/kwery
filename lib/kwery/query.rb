@@ -4,7 +4,7 @@ module Kwery
       @select = select
       @from = from
       @where = where
-      @order = order
+      @order_by = order
       @limit = limit
     end
 
@@ -15,16 +15,25 @@ module Kwery
     private
 
     def index_scan(schema)
-      unless @order.size == 1
+      unless @order_by.size == 1
         return
       end
 
-      index_name = schema.indexes.values.select { |idx| idx[:expr] == @order.first.expr }.map { |idx| idx[:name] }.first
+      # TODO: remove matching prefix, if the remainder of the index spec
+      #       is an exact inverse of the order_by spec, we can perform a
+      #       backward-scan.
+
+      index_name = schema
+        .indexes
+        .values
+        .select { |idx| idx.columns == @order_by }
+        .map { |idx| idx.name }
+        .first
       unless index_name
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@from, index_name, @order.first.order)
+      plan = Kwery::Plan::IndexScan.new(@from, index_name, @order_by.first.order)
 
       plan = where(plan)
       # TODO: extra sort on partial index match
@@ -66,19 +75,19 @@ module Kwery
     end
 
     def sort(plan)
-      if @order.size > 0
+      if @order_by.size > 0
         plan = Kwery::Plan::Sort.new(
           lambda { |tup_a, tup_b|
-            # => enum of orderby fields
+            # => enum of ordered_col fields
             # => enum of ruby "spaceship" results (-1|0|1)
             # => take first non value that is not 0 (tup_a != tup_b)
             # => fall back to 0 if none found
-            @order
+            @order_by
               .lazy
-              .map { |orderby|
-                a = orderby.expr.call(tup_a)
-                b = orderby.expr.call(tup_b)
-                if orderby.order == :asc
+              .map { |ordered_col|
+                a = ordered_col.expr.call(tup_a)
+                b = ordered_col.expr.call(tup_b)
+                if ordered_col.order == :asc
                   a <=> b
                 else
                   b <=> a
@@ -121,7 +130,7 @@ module Kwery
       end
     end
 
-    class OrderBy < Struct.new(:expr, :order)
+    class OrderedField < Struct.new(:expr, :order)
     end
   end
 end

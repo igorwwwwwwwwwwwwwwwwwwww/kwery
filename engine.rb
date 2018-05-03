@@ -7,7 +7,7 @@ schema = Kwery::Schema.new
 schema.column :id, :integer
 schema.column :name, :string
 schema.column :active, :boolean
-schema.index :users_idx_id, Kwery::Query::Field.new(:users, :id)
+schema.index :users_idx_id, [:users, :id, :asc]
 
 users = []
 users_idx_id = Kwery::Index.new
@@ -36,7 +36,7 @@ query = Kwery::Query.new(
   },
   from: :users,
   where: Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
-  order: [Kwery::Query::OrderBy.new(Kwery::Query::Field.new(:users, :id), :desc)],
+  order: [Kwery::Query::OrderedField.new(Kwery::Query::Field.new(:users, :id), :asc)],
   limit: 10,
 )
 

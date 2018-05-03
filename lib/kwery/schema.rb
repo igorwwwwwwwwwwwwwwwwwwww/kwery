@@ -1,26 +1,33 @@
 module Kwery
   class Schema
-    attr_accessor :fields
+    attr_accessor :columns
     attr_accessor :indexes
 
     def initialize
-      @fields = {}
+      @columns = {}
       @indexes = {}
     end
 
     def column(name, type)
-      @fields[name] = { name: name, type: type }
+      @columns[name] = Kwery::Schema::Column.new(name, type)
     end
 
-    def index(name, expr)
-      @indexes[name] = { name: name, expr: expr }
+    def index(name, *specs)
+      columns = specs.map { |spec|
+        table_name, column_name, order = spec
+        Kwery::Query::OrderedField.new(
+          Kwery::Query::Field.new(table_name, column_name),
+          order,
+        )
+      }
+      @indexes[name] = Kwery::Schema::Index.new(name, columns)
     end
 
     def tuple(row)
       tup = {}
-      @fields.each do |_, field|
-        name = field[:name]
-        type = field[:type]
+      @columns.each do |_, field|
+        name = field.name
+        type = field.type
         tup[name] = apply_type(row[name], type)
       end
       tup
@@ -40,6 +47,12 @@ module Kwery
       else
         raise "unknown type #{type}"
       end
+    end
+
+    class Column < Struct.new(:name, :type)
+    end
+
+    class Index < Struct.new(:name, :columns)
     end
   end
 end

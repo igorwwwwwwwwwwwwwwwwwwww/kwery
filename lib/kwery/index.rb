@@ -16,8 +16,8 @@ module Kwery
       vals << v
     end
 
-    def scan(order = :asc)
-      if order == :asc
+    def scan(scan_order = :asc)
+      if scan_order == :asc
         scan_leaf_asc(@bst.root)
       else
         scan_leaf_desc(@bst.root)
