@@ -1,16 +1,16 @@
 module Kwery
   module Plan
     class IndexScan
-      def initialize(table_name, index_name, order = :asc)
+      def initialize(table_name, index_name, scan_order = :asc)
         @table_name = table_name
         @index_name = index_name
-        @order = order
+        @scan_order = scan_order
       end
 
       def call(context)
         index = context[@index_name]
         table = context[@table_name]
-        index.scan(@order).lazy.flat_map {|tids|
+        index.scan(@scan_order).lazy.flat_map {|tids|
           tids.map { |tid|
             tup = table[tid]
             tup

@@ -3,8 +3,8 @@ require 'set'
 
 module Kwery
   class Index
-    def initialize
-      @bst = BinarySearchTree.new
+    def initialize(comparator: nil)
+      @bst = BinarySearchTree.new(comparator: comparator)
     end
 
     def insert(k, v)

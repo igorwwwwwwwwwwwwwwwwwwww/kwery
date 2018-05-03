@@ -53,6 +53,14 @@ module Kwery
     end
 
     class Index < Struct.new(:name, :columns)
+      def columns_flipped
+        columns.map { |ordered_field|
+          Kwery::Query::OrderedField.new(
+            ordered_field.expr,
+            ordered_field.order == :asc ? :desc : :asc,
+          )
+        }
+      end
     end
   end
 end

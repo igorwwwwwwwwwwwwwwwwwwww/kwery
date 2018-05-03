@@ -9,31 +9,45 @@ module Kwery
     end
 
     def plan(schema)
-      index_scan(schema) || table_scan(schema)
+      index_scan_backward(schema) || index_scan(schema) || table_scan(schema)
     end
 
     private
 
-    def index_scan(schema)
-      unless @order_by.size == 1
+    def index_scan_backward(schema)
+      unless @order_by.size > 0
         return
       end
 
-      # TODO: remove matching prefix, if the remainder of the index spec
-      #       is an exact inverse of the order_by spec, we can perform a
-      #       backward-scan.
-
-      index_name = schema
-        .indexes
-        .values
-        .select { |idx| idx.columns == @order_by }
-        .map { |idx| idx.name }
+      index = schema.indexes.values
+        .select { |idx| idx.columns_flipped == @order_by }
         .first
-      unless index_name
+      unless index
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@from, index_name, @order_by.first.order)
+      plan = Kwery::Plan::IndexScan.new(@from, index.name, :desc)
+
+      plan = where(plan)
+      plan = limit(plan)
+      plan = project(plan)
+      plan
+    end
+
+    def index_scan(schema)
+      unless @order_by.size > 0
+        return
+      end
+
+      index = schema.indexes.values
+        .select { |idx| idx.columns == @order_by }
+        .first
+      unless index
+        puts "no index found"
+        return
+      end
+
+      plan = Kwery::Plan::IndexScan.new(@from, index.name, :asc)
 
       plan = where(plan)
       # TODO: extra sort on partial index match
