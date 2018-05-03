@@ -7,7 +7,7 @@ schema = Kwery::Schema.new
 schema.column :id, :integer
 schema.column :name, :string
 schema.column :active, :boolean
-schema.index :users_idx_id, [:users, :id, :asc], [:users, :name, :desc]
+schema.index :users_idx_id, [:users, :id, :asc], [:users, :active, :desc]
 
 users = []
 users_idx_id = Kwery::Index.new
@@ -35,15 +35,24 @@ query = Kwery::Query.new(
     name: Kwery::Query::Field.new(:users, :name),
   },
   from: :users,
-  where: Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
-  order: [
-    Kwery::Query::OrderedField.new(Kwery::Query::Field.new(:users, :id), :desc),
-    Kwery::Query::OrderedField.new(Kwery::Query::Field.new(:users, :name), :asc),
+  where: [
+    Kwery::Query::Gt.new(Kwery::Query::Field.new(:users, :id), Kwery::Query::Literal.new(10)),
+    Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
   ],
+  order: [Kwery::Query::OrderedField.new(Kwery::Query::Field.new(:users, :id), :asc)],
   limit: 10,
 )
 
-plan = query.plan(schema)
+begin
+  plan = query.plan(schema)
+rescue => e
+  puts "error: #{e}"
+  puts
+  puts "query was:"
+  puts
+  pp query
+  exit 1
+end
 
 mode = ARGV.shift || 'run'
 case mode

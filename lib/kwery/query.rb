@@ -1,3 +1,5 @@
+require 'set'
+
 module Kwery
   class Query
     def initialize(select:, from:, where: nil, order: [], limit: nil)
@@ -43,14 +45,19 @@ module Kwery
         .select { |idx| idx.columns == @order_by }
         .first
       unless index
-        puts "no index found"
         return
+      end
+
+      # TODO: extract index bounds from WHERE
+      if @where
+        comparison_operators = Set.new(Kwery::Query::Eq, Kwery::Query::Gt)
+        @where.select { |expr| comparison_operators.include?(expr) }
       end
 
       plan = Kwery::Plan::IndexScan.new(@from, index.name, :asc)
 
-      plan = where(plan)
-      # TODO: extra sort on partial index match
+      # TODO: extra where on index prefix match
+      # TODO: extra sort on index prefix match
       plan = limit(plan)
       plan = project(plan)
       plan
@@ -59,6 +66,11 @@ module Kwery
     # cut my plans into pieces
     # this is my last resort
     def table_scan(schema)
+      if ENV['NOTABLESCAN'] == 'true'
+        # a notable scan indeed
+        raise "query resulted in table scan"
+      end
+
       plan = Kwery::Plan::TableScan.new(@from)
 
       plan = where(plan)
@@ -68,53 +80,50 @@ module Kwery
       plan
     end
 
-    # TODO: make this optional if full index match
+    # there where clause is an array
+    # of (implicitly) ANDed expressions
     def where(plan)
-      if @where
-        plan = Kwery::Plan::Filter.new(
-          lambda { |tup| @where.call(tup) },
-          plan
-        )
-      end
+      return plan unless @where
 
-      plan
+      Kwery::Plan::Filter.new(
+        lambda { |tup|
+          @where.map { |cond| cond.call(tup) }.reduce(:&)
+        },
+        plan
+      )
     end
 
     def limit(plan)
-      if @limit
-        plan = Kwery::Plan::Limit.new(@limit, plan)
-      end
+      return plan unless @limit
 
-      plan
+      Kwery::Plan::Limit.new(@limit, plan)
     end
 
     def sort(plan)
-      if @order_by.size > 0
-        plan = Kwery::Plan::Sort.new(
-          lambda { |tup_a, tup_b|
-            # => enum of ordered_col fields
-            # => enum of ruby "spaceship" results (-1|0|1)
-            # => take first non value that is not 0 (tup_a != tup_b)
-            # => fall back to 0 if none found
-            @order_by
-              .lazy
-              .map { |ordered_col|
-                a = ordered_col.expr.call(tup_a)
-                b = ordered_col.expr.call(tup_b)
-                if ordered_col.order == :asc
-                  a <=> b
-                else
-                  b <=> a
-                end
-              }
-              .reject { |res| res == 0 }
-              .first || 0
-          },
-          plan
-        )
-      end
+      return plan unless @order_by.size > 0
 
-      plan
+      Kwery::Plan::Sort.new(
+        lambda { |tup_a, tup_b|
+          # => enum of ordered_col fields
+          # => enum of ruby "spaceship" results (-1|0|1)
+          # => take first non value that is not 0 (tup_a != tup_b)
+          # => fall back to 0 if none found
+          @order_by
+            .lazy
+            .map { |ordered_col|
+              a = ordered_col.expr.call(tup_a)
+              b = ordered_col.expr.call(tup_b)
+              if ordered_col.order == :asc
+                a <=> b
+              else
+                b <=> a
+              end
+            }
+            .reject { |res| res == 0 }
+            .first || 0
+        },
+        plan
+      )
     end
 
     def project(plan)
@@ -141,6 +150,12 @@ module Kwery
     class Eq < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) == right.call(tup)
+      end
+    end
+
+    class Gt < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) > right.call(tup)
       end
     end
 
