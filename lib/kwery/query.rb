@@ -2,11 +2,11 @@ require 'set'
 
 module Kwery
   class Query
-    def initialize(select:, from:, where: nil, order: [], limit: nil)
+    def initialize(select:, from:, where: nil, order_by: [], limit: nil)
       @select = select
       @from = from
       @where = where
-      @order_by = order
+      @order_by = order_by
       @limit = limit
     end
 
@@ -21,7 +21,7 @@ module Kwery
         return
       end
 
-      index = schema.indexes.values
+      index = schema.tables[@from].indexes.values
         .select { |idx| idx.columns_flipped == @order_by }
         .first
       unless index
@@ -37,21 +37,11 @@ module Kwery
     end
 
     def index_scan(schema)
-      unless @order_by.size > 0
-        return
-      end
-
-      index = schema.indexes.values
+      index = schema.tables[@from].indexes.values
         .select { |idx| idx.columns == @order_by }
         .first
       unless index
         return
-      end
-
-      # TODO: extract index bounds from WHERE
-      if @where
-        comparison_operators = Set.new(Kwery::Query::Eq, Kwery::Query::Gt)
-        @where.select { |expr| comparison_operators.include?(expr) }
       end
 
       plan = Kwery::Plan::IndexScan.new(@from, index.name, :asc)
@@ -68,7 +58,7 @@ module Kwery
     def table_scan(schema)
       if ENV['NOTABLESCAN'] == 'true'
         # a notable scan indeed
-        raise "query resulted in table scan"
+        raise Kwery::Query::NoTableScanError.new("query resulted in table scan")
       end
 
       plan = Kwery::Plan::TableScan.new(@from)
@@ -160,6 +150,9 @@ module Kwery
     end
 
     class OrderedField < Struct.new(:expr, :order)
+    end
+
+    class NoTableScanError < StandardError
     end
   end
 end

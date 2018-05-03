@@ -4,24 +4,42 @@ require 'kwery'
 require 'csv'
 
 schema = Kwery::Schema.new
-schema.column :id, :integer
-schema.column :name, :string
-schema.column :active, :boolean
-schema.index :users_idx_id, [:users, :id, :asc], [:users, :active, :desc]
 
-users = []
-users_idx_id = Kwery::Index.new
-
-csv = CSV.table('users.csv', converters: nil)
-csv.each do |row|
-  tup = schema.tuple(row)
-  users << tup
-  users_idx_id.insert(tup[:id], users.size-1)
+schema.table :users do |t|
+  t.column :id, :integer
+  t.column :name, :string
+  t.column :active, :boolean
+  t.index :users_idx_id, [:users, :id, :asc], [:users, :active, :asc]
 end
 
 context = {}
-context[:users] = users
-context[:users_idx_id] = users_idx_id
+schema.tables.each do |table_name, t|
+  context[table_name] = []
+  context = context.merge(
+    # TODO create index with custom comparator based on sort order
+    t.indexes.keys.map { |k| [k, Kwery::Index.new] }.to_h
+  )
+end
+
+schema.tables.each do |table_name, t|
+  if File.exists?("#{table_name}.csv")
+    csv = CSV.table("#{table_name}.csv", converters: nil)
+    csv.each do |row|
+      tup = t.tuple(row)
+
+      table = context[table_name]
+      table << tup
+      tid = table.size - 1
+
+      t.indexes.each do |index_name, i|
+        index = context[index_name]
+
+        key = i.columns.map(&:expr).map { |expr| expr.call(tup) }
+        index.insert(key, tid)
+      end
+    end
+  end
+end
 
 # SELECT name
 # FROM users
@@ -39,18 +57,15 @@ query = Kwery::Query.new(
     Kwery::Query::Gt.new(Kwery::Query::Field.new(:users, :id), Kwery::Query::Literal.new(10)),
     Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
   ],
-  order: [Kwery::Query::OrderedField.new(Kwery::Query::Field.new(:users, :id), :asc)],
   limit: 10,
 )
 
 begin
   plan = query.plan(schema)
-rescue => e
-  puts "error: #{e}"
-  puts
-  puts "query was:"
-  puts
+rescue Kwery::Query::NoTableScanError => e
   pp query
+  puts
+  puts "error: #{e}"
   exit 1
 end
 

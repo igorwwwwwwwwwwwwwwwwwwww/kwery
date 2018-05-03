@@ -1,51 +1,72 @@
 module Kwery
   class Schema
-    attr_accessor :columns
-    attr_accessor :indexes
+    attr_accessor :tables
 
     def initialize
-      @columns = {}
-      @indexes = {}
+      @tables = {}
     end
 
-    def column(name, type)
-      @columns[name] = Kwery::Schema::Column.new(name, type)
+    def table(name)
+      @tables[name] = Kwery::Schema::Table.new(name)
+
+      yield @tables[name] if block_given?
+
+      @tables[name]
     end
 
-    def index(name, *specs)
-      columns = specs.map { |spec|
-        table_name, column_name, order = spec
-        Kwery::Query::OrderedField.new(
-          Kwery::Query::Field.new(table_name, column_name),
-          order,
-        )
-      }
-      @indexes[name] = Kwery::Schema::Index.new(name, columns)
-    end
+    class Table
+      attr_accessor :columns
+      attr_accessor :indexes
 
-    def tuple(row)
-      tup = {}
-      @columns.each do |_, field|
-        name = field.name
-        type = field.type
-        tup[name] = apply_type(row[name], type)
+      def initialize(name)
+        @name = name
+        @columns = {}
+        @indexes = {}
       end
-      tup
-    end
 
-    private
+      def column(name, type)
+        @columns[name] = Kwery::Schema::Column.new(name, type)
 
-    def apply_type(v, type)
-      return nil if v.nil?
-      case type
-      when :integer
-        Integer(v)
-      when :string
-        v
-      when :boolean
-        v.downcase == 'true' ? true : false
-      else
-        raise "unknown type #{type}"
+        self
+      end
+
+      def index(name, *specs)
+        columns = specs.map { |spec|
+          table_name, column_name, order = spec
+          Kwery::Query::OrderedField.new(
+            Kwery::Query::Field.new(table_name, column_name),
+            order,
+          )
+        }
+        @indexes[name] = Kwery::Schema::Index.new(name, columns)
+
+        self
+      end
+
+      def tuple(row)
+        tup = {}
+        @columns.each do |_, field|
+          name = field.name
+          type = field.type
+          tup[name] = apply_type(row[name], type)
+        end
+        tup
+      end
+
+      private
+
+      def apply_type(v, type)
+        return nil if v.nil?
+        case type
+        when :integer
+          Integer(v)
+        when :string
+          v
+        when :boolean
+          v.downcase == 'true' ? true : false
+        else
+          raise "unknown type #{type}"
+        end
       end
     end
 
