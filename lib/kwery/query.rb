@@ -37,9 +37,48 @@ module Kwery
     end
 
     def index_scan(schema)
-      index = schema.tables[@from].indexes.values
-        .select { |idx| idx.columns == @order_by }
-        .first
+      # TODO: extract index bounds from WHERE
+      # TODO: support using index for both WHERE and ORDER BY
+      if @where
+        # * get all expressions being compared to constant values
+        # * search all indexes to see if any of them are satisfied
+        #   by our set of known constants
+        # * we can now compile that into a key (range) that can be
+        #   scanned by the index
+
+        # next steps: start with the executor, then we have a target
+        #   api to work against.
+        # then: try and find some papers on query planning, maybe
+        #   vldb has something.
+
+        comparison_operators = Set.new([Kwery::Query::Eq, Kwery::Query::Gt])
+        match_exprs_map = @where
+          .select { |expr| comparison_operators.include?(expr.class) }
+          .select { |expr| Kwery::Query::Literal === expr.right }
+          .map { |expr| [expr.left, expr.right] }
+          .to_h
+        match_exprs = match_exprs_map.keys.to_set
+
+        matching_indexes = schema.tables[@from].indexes
+          .map { |k, idx| [k, idx.columns.map(&:expr).to_set] }
+          .select { |k, exprs| exprs == match_exprs }
+          .to_h
+
+        matching_index_name = matching_indexes.keys.first
+        index = schema.tables[@from].indexes[matching_index_name]
+
+        # TODO pass this as a condition to the index scan
+        index_options = match_exprs_map
+        pp index_options
+      end
+
+      unless index
+        # try to find index with exact match
+        index = schema.tables[@from].indexes.values
+          .select { |idx| idx.columns == @order_by }
+          .first
+      end
+
       unless index
         return
       end
@@ -125,6 +164,7 @@ module Kwery
       plan
     end
 
+    # TODO: handle naming conflicts
     class Field < Struct.new(:table, :column)
       def call(tup)
         tup[column]
