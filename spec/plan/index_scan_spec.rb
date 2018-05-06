@@ -1,6 +1,6 @@
 require 'kwery'
 
-RSpec.describe Kwery::Plan::TableScan do
+RSpec.describe Kwery::Plan::IndexScan do
   catalog = Kwery::Catalog.new
 
   catalog.table :users, Kwery::Catalog::Table.new(
@@ -8,7 +8,11 @@ RSpec.describe Kwery::Plan::TableScan do
       id:     Kwery::Catalog::Column.new(:integer),
       name:   Kwery::Catalog::Column.new(:string),
     },
+    indexes: [:users_idx_id],
   )
+  catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
+    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+  ])
 
   schema = catalog.new_schema
   schema.bulk_insert(:users, [
@@ -23,9 +27,10 @@ RSpec.describe Kwery::Plan::TableScan do
     {id: 9,  name: "Uta"},
     {id: 10, name: "Anastasia"}
   ])
+  schema.reindex(:users, :users_idx_id)
 
-  it "scans the whole table" do
-    plan = Kwery::Plan::TableScan.new(:users)
+  it "scans the whole index" do
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -44,12 +49,12 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 10,
+      index_tuples_scanned: 10,
     })
   end
 
   it "scans only as much as needed by limit" do
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Limit.new(5, plan)
 
     context = Kwery::Plan::Context.new(schema)
@@ -64,14 +69,14 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 5,
+      index_tuples_scanned: 5,
     })
   end
 
   it "filters properly" do
     pred = lambda { |tup| tup[:id] == 8 }
 
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Filter.new(pred, plan)
 
     context = Kwery::Plan::Context.new(schema)
@@ -82,14 +87,14 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 10,
+      index_tuples_scanned: 10,
     })
   end
 
   it "filters lazily" do
     pred = lambda { |tup| tup[:id] == 8 }
 
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Filter.new(pred, plan)
     plan = Kwery::Plan::Limit.new(1, plan)
 
@@ -101,14 +106,14 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 8,
+      index_tuples_scanned: 8,
     })
   end
 
   it "sorts the result set" do
     comp = lambda { |tup_a, tup_b| tup_a[:name] <=> tup_b[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Sort.new(comp, plan)
 
     context = Kwery::Plan::Context.new(schema)
@@ -128,14 +133,14 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 10,
+      index_tuples_scanned: 10,
     })
   end
 
   it "scans everything while sorting despite limit" do
     comp = lambda { |tup_a, tup_b| tup_a[:name] <=> tup_b[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Sort.new(comp, plan)
     plan = Kwery::Plan::Limit.new(2, plan)
 
@@ -148,14 +153,14 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 10,
+      index_tuples_scanned: 10,
     })
   end
 
   it "projects selected values" do
     proj = lambda { |tup| tup[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_id)
     plan = Kwery::Plan::Project.new(proj, plan)
     plan = Kwery::Plan::Limit.new(2, plan)
 
@@ -168,7 +173,7 @@ RSpec.describe Kwery::Plan::TableScan do
     ])
 
     expect(context.stats).to eq({
-      table_tuples_scanned: 2,
+      index_tuples_scanned: 2,
     })
   end
 end

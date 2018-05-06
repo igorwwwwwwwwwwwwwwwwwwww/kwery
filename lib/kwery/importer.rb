@@ -16,18 +16,7 @@ module Kwery
 
       csv = CSV.table(filename, converters: nil)
       csv.each do |row|
-        tup = table.tuple(row)
-
-        relation = @schema[table_name]
-        relation << tup
-        tid = relation.size - 1
-
-        table.indexes.each do |index_name|
-          index = @schema[index_name]
-
-          key = @catalog.indexes[index_name].indexed_exprs.map(&:expr).map { |expr| expr.call(tup) }
-          index.insert(key, tid)
-        end
+        @schema.insert(table_name, row)
       end
     end
   end

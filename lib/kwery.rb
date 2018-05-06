@@ -1,5 +1,6 @@
 require 'kwery/expr'
 require 'kwery/catalog'
+require 'kwery/schema'
 require 'kwery/index'
 require 'kwery/plan'
 require 'kwery/query'

@@ -18,16 +18,12 @@ RSpec.describe Kwery do
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
-    schema = {}
-    catalog.tables.each do |table_name, t|
-      schema[table_name] = []
-    end
-    catalog.indexes.each do |index_name, i|
-      schema[index_name] = Kwery::Index.new
-    end
+    schema = catalog.new_schema
 
     importer = Kwery::Importer.new(catalog, schema)
     importer.load(:users, 'data/users.csv')
+
+    schema.reindex(:users, :users_idx_id)
 
     query = Kwery::Query.new(
       select: {

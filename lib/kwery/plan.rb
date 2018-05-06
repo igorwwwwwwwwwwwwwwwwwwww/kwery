@@ -25,14 +25,10 @@ module Kwery
       end
 
       def call(context)
-        index = context.schema[@index_name]
-        table = context.schema[@table_name]
-        index.scan(@scan_order).lazy.flat_map {|tids|
+        context.schema.index_scan(@index_name, @scan_order).flat_map {|tids|
           tids.map { |tid|
             context.increment :index_tuples_scanned
-
-            tup = table[tid]
-            tup
+            context.schema.fetch(@table_name, tid)
           }
         }
       end
@@ -44,10 +40,7 @@ module Kwery
       end
 
       def call(context)
-        table = context.schema[@table_name]
-        table # table is already an enumerable of tuples
-
-        table.lazy.map {|tup|
+        context.schema.table_scan(@table_name).map {|tup|
           context.increment :table_tuples_scanned
           tup
         }

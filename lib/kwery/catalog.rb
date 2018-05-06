@@ -16,18 +16,8 @@ module Kwery
       @indexes[name] = index
     end
 
-    def self.apply_type(v, type)
-      return nil if v.nil?
-      case type
-      when :integer
-        Integer(v)
-      when :string
-        v
-      when :boolean
-        v.downcase == 'true' ? true : false
-      else
-        raise "unknown type #{type}"
-      end
+    def new_schema
+      Kwery::Schema.new(self)
     end
 
     class Table
@@ -37,15 +27,6 @@ module Kwery
       def initialize(columns:, indexes: [])
         @columns = columns
         @indexes = indexes
-      end
-
-      def tuple(row)
-        tup = {}
-        @columns.each do |name, column|
-          type = column.type
-          tup[name] = Catalog.apply_type(row[name], type)
-        end
-        tup
       end
     end
 
