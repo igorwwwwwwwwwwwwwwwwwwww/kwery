@@ -25,8 +25,5 @@ module Kwery
         left.call(tup) > right.call(tup)
       end
     end
-
-    class NoTableScanError < StandardError
-    end
   end
 end

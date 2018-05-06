@@ -94,7 +94,7 @@ module Kwery
     def table_scan
       if @query.options[:notablescan]
         # a notable scan indeed
-        raise Kwery::Optimizer::NoTableScanError.new("query resulted in table scan")
+        raise Kwery::Plan::NoTableScanError.new("query resulted in table scan")
       end
 
       plan = Kwery::Plan::TableScan.new(@query.from)
@@ -161,9 +161,6 @@ module Kwery
       )
 
       plan
-    end
-
-    class NoTableScanError < StandardError
     end
   end
 end

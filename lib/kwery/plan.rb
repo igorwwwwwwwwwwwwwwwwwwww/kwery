@@ -1,5 +1,22 @@
 module Kwery
   module Plan
+    class NoTableScanError < StandardError
+    end
+
+    class Context
+      attr_accessor :schema, :stats
+
+      def initialize(schema, stats = {})
+        @schema = schema
+        @stats = stats
+      end
+
+      def increment(key, count = 1)
+        stats[key] ||= 0
+        stats[key] += count
+      end
+    end
+
     class IndexScan
       def initialize(table_name, index_name, scan_order = :asc)
         @table_name = table_name
@@ -7,11 +24,13 @@ module Kwery
         @scan_order = scan_order
       end
 
-      def call(schema)
-        index = schema[@index_name]
-        table = schema[@table_name]
+      def call(context)
+        index = context.schema[@index_name]
+        table = context.schema[@table_name]
         index.scan(@scan_order).lazy.flat_map {|tids|
           tids.map { |tid|
+            context.increment :index_tuples_scanned
+
             tup = table[tid]
             tup
           }
@@ -24,11 +43,14 @@ module Kwery
         @table_name = table_name
       end
 
-      def call(schema)
+      def call(context)
         table = schema[@table_name]
         table # table is already an enumerable of tuples
 
-        table.lazy
+        table.lazy.map {|tup|
+          context.increment :table_tuples_scanned
+          tup
+        }
       end
     end
 
@@ -38,8 +60,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(schema)
-        @plan.call(schema).select(&@pred)
+      def call(context)
+        @plan.call(context).select(&@pred)
       end
     end
 
@@ -49,8 +71,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(schema)
-        @plan.call(schema).take(@limit)
+      def call(context)
+        @plan.call(context).take(@limit)
       end
     end
 
@@ -60,8 +82,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(schema)
-        @plan.call(schema).sort(&@comp)
+      def call(context)
+        @plan.call(context).sort(&@comp)
       end
     end
 
@@ -71,8 +93,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(schema)
-        @plan.call(schema).map(&@proj)
+      def call(context)
+        @plan.call(context).map(&@proj)
       end
     end
   end

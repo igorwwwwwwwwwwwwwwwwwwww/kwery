@@ -43,7 +43,9 @@ RSpec.describe Kwery do
     )
 
     plan = query.plan(catalog)
-    result = plan.call(schema)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
 
     expect(result.to_a).to eq([
       {id: 1,  name:"Kathleen"},
