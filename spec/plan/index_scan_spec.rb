@@ -262,4 +262,24 @@ RSpec.describe Kwery::Plan::IndexScan do
       index_tuples_scanned: 4,
     })
   end
+
+  it "performs a range scan with lt sarg" do
+    sargs = {
+      lt: ["Herrod"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 10, name: "Anastasia"},
+      {id: 6,  name: "Emi"},
+      {id: 4,  name: "Hedley"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 3,
+    })
+  end
 end
