@@ -66,7 +66,6 @@ module Kwery
 
         # TODO pass this as a condition to the index scan
         index_options = match_exprs_map
-        pp index_options
       end
 
       unless index_name
