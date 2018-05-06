@@ -177,7 +177,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     })
   end
 
-  it "performs a direct lookup with match search args" do
+  it "performs a direct lookup with eq sarg" do
     sargs = {
       eq: ["Quincy"],
     }
@@ -193,5 +193,18 @@ RSpec.describe Kwery::Plan::IndexScan do
     expect(context.stats).to eq({
       index_tuples_scanned: 1,
     })
+  end
+
+  it "handles non-matching eq sarg" do
+    sargs = {
+      eq: ["Quixote"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([])
+    expect(context.stats).to eq({})
   end
 end
