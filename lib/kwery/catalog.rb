@@ -34,7 +34,7 @@ module Kwery
       attr_accessor :columns
       attr_accessor :indexes
 
-      def initialize(columns:, indexes:)
+      def initialize(columns:, indexes: [])
         @columns = columns
         @indexes = indexes
       end

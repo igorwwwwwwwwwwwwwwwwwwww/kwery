@@ -48,16 +48,16 @@ RSpec.describe Kwery do
     result = plan.call(context)
 
     expect(result.to_a).to eq([
-      {id: 1,  name:"Kathleen"},
-      {id: 2,  name:"Xantha"},
-      {id: 3,  name:"Hope"},
-      {id: 4,  name:"Hedley"},
-      {id: 5,  name:"Reese"},
-      {id: 6,  name:"Emi"},
-      {id: 7,  name:"Herrod"},
-      {id: 8,  name:"Quincy"},
-      {id: 9,  name:"Uta"},
-      {id: 10, name:"Anastasia"}
+      {id: 1,  name: "Kathleen"},
+      {id: 2,  name: "Xantha"},
+      {id: 3,  name: "Hope"},
+      {id: 4,  name: "Hedley"},
+      {id: 5,  name: "Reese"},
+      {id: 6,  name: "Emi"},
+      {id: 7,  name: "Herrod"},
+      {id: 8,  name: "Quincy"},
+      {id: 9,  name: "Uta"},
+      {id: 10, name: "Anastasia"},
     ])
 
     expect(context.stats).to eq({

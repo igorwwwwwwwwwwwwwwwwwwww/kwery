@@ -44,7 +44,7 @@ module Kwery
       end
 
       def call(context)
-        table = schema[@table_name]
+        table = context.schema[@table_name]
         table # table is already an enumerable of tuples
 
         table.lazy.map {|tup|
