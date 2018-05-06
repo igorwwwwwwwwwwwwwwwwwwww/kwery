@@ -348,4 +348,38 @@ RSpec.describe Kwery::Plan::IndexScan do
       index_tuples_scanned: 4,
     })
   end
+
+  it "performs a range scan with gt and lt sargs" do
+    sargs = {
+      gt: ["Herrod"],
+      lt: ["Quincy"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 3,  name: "Hope"},
+      {id: 1,  name: "Kathleen"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 2,
+    })
+  end
+
+  it "performs a range scan with contradictory gt and lt sargs" do
+    sargs = {
+      gt: ["Quincy"],
+      lt: ["Herrod"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([])
+    expect(context.stats).to eq({})
+  end
 end
