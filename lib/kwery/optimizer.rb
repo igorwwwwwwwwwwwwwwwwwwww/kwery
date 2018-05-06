@@ -19,7 +19,7 @@ module Kwery
       end
 
       index = @catalog.tables[@query.from].indexes.values
-        .select { |idx| idx.columns_flipped == @query.order_by }
+        .select { |idx| idx.reverse == @query.order_by }
         .first
       unless index
         return
@@ -57,30 +57,31 @@ module Kwery
         match_exprs = match_exprs_map.keys.to_set
 
         matching_indexes = @catalog.tables[@query.from].indexes
-          .map { |k, idx| [k, idx.columns.map(&:expr).to_set] }
+          .map { |k| [k, @catalog.indexes[k]] }
+          .map { |k, index| [k, index.indexed_exprs.map(&:expr).to_set] }
           .select { |k, exprs| exprs == match_exprs }
           .to_h
 
-        matching_index_name = matching_indexes.keys.first
-        index = @catalog.tables[@query.from].indexes[matching_index_name]
+        index_name = matching_indexes.keys.first
 
         # TODO pass this as a condition to the index scan
         index_options = match_exprs_map
         pp index_options
       end
 
-      unless index
+      unless index_name
         # try to find index with exact match
-        index = @catalog.tables[@query.from].indexes.values
-          .select { |idx| idx.columns == @query.order_by }
+        index = @catalog.tables[@query.from].indexes
+          .select { |name, idx| idx.columns == @query.order_by }
+          .keys
           .first
       end
 
-      unless index
+      unless index_name
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@query.from, index.name, :asc)
+      plan = Kwery::Plan::IndexScan.new(@query.from, index_name, :asc)
 
       # TODO: extra where on index prefix match
       # TODO: extra sort on index prefix match

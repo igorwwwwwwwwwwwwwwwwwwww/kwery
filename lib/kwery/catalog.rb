@@ -1,86 +1,69 @@
 module Kwery
   class Catalog
     attr_accessor :tables
+    attr_accessor :indexes
 
     def initialize
       @tables = {}
+      @indexes = {}
     end
 
-    def table(name)
-      @tables[name] = Kwery::Catalog::Table.new(name)
+    def table(name, table)
+      @tables[name] = table
+    end
 
-      yield @tables[name] if block_given?
+    def index(name, index)
+      @indexes[name] = index
+    end
 
-      @tables[name]
+    def self.apply_type(v, type)
+      return nil if v.nil?
+      case type
+      when :integer
+        Integer(v)
+      when :string
+        v
+      when :boolean
+        v.downcase == 'true' ? true : false
+      else
+        raise "unknown type #{type}"
+      end
     end
 
     class Table
       attr_accessor :columns
       attr_accessor :indexes
 
-      def initialize(name)
-        @name = name
-        @columns = {}
-        @indexes = {}
-      end
-
-      def column(name, type)
-        @columns[name] = Kwery::Catalog::Column.new(name, type)
-
-        self
-      end
-
-      def index(name, *specs)
-        columns = specs.map { |spec|
-          table_name, column_name, order = spec
-          Kwery::Query::OrderedField.new(
-            Kwery::Query::Field.new(column_name),
-            order,
-          )
-        }
-        @indexes[name] = Kwery::Catalog::Index.new(name, columns)
-
-        self
+      def initialize(columns:, indexes:)
+        @columns = columns
+        @indexes = indexes
       end
 
       def tuple(row)
         tup = {}
-        @columns.each do |_, field|
-          name = field.name
-          type = field.type
-          tup[name] = apply_type(row[name], type)
+        @columns.each do |name, column|
+          type = column.type
+          tup[name] = Catalog.apply_type(row[name], type)
         end
         tup
       end
+    end
 
-      private
+    class Column < Struct.new(:type)
+    end
 
-      def apply_type(v, type)
-        return nil if v.nil?
-        case type
-        when :integer
-          Integer(v)
-        when :string
-          v
-        when :boolean
-          v.downcase == 'true' ? true : false
-        else
-          raise "unknown type #{type}"
-        end
+    class Index < Struct.new(:indexed_exprs)
+      def reverse
+        indexed_exprs.map(&:reverse)
       end
     end
 
-    class Column < Struct.new(:name, :type)
-    end
-
-    class Index < Struct.new(:name, :columns)
-      def columns_flipped
-        columns.map { |ordered_field|
-          Kwery::Query::OrderedField.new(
-            ordered_field.expr,
-            ordered_field.order == :asc ? :desc : :asc,
-          )
-        }
+    class IndexedExpr < Struct.new(:expr, :order)
+      def reverse
+        Kwery::Catalog::IndexedExpr.new(
+          expr,
+          order == :asc ? :desc : :asc,
+        )
       end
     end
   end

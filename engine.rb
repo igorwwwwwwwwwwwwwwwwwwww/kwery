@@ -5,20 +5,26 @@ require 'csv'
 
 catalog = Kwery::Catalog.new
 
-catalog.table :users do |t|
-  t.column :id, :integer
-  t.column :name, :string
-  t.column :active, :boolean
-  t.index :users_idx_id, [:users, :id, :asc], [:users, :active, :asc]
-end
+catalog.table :users, Kwery::Catalog::Table.new(
+  columns: {
+    id:     Kwery::Catalog::Column.new(:integer),
+    name:   Kwery::Catalog::Column.new(:string),
+    active: Kwery::Catalog::Column.new(:boolean),
+  },
+  indexes: [:users_idx_id],
+)
+catalog.index :users_idx_id, Kwery::Catalog::Index.new([
+  Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:id), :asc),
+  Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:active), :asc),
+])
 
 context = {}
 catalog.tables.each do |table_name, t|
   context[table_name] = []
-  context = context.merge(
-    # TODO create index with custom comparator based on sort order
-    t.indexes.keys.map { |k| [k, Kwery::Index.new] }.to_h
-  )
+end
+catalog.indexes.each do |index_name, i|
+  # TODO create index with custom comparator based on sort order
+  context[index_name] = Kwery::Index.new
 end
 
 catalog.tables.each do |table_name, t|
@@ -31,10 +37,10 @@ catalog.tables.each do |table_name, t|
       table << tup
       tid = table.size - 1
 
-      t.indexes.each do |index_name, i|
+      t.indexes.each do |index_name|
         index = context[index_name]
 
-        key = i.columns.map(&:expr).map { |expr| expr.call(tup) }
+        key = catalog.indexes[index_name].indexed_exprs.map(&:expr).map { |expr| expr.call(tup) }
         index.insert(key, tid)
       end
     end
