@@ -49,13 +49,13 @@ end
 
 query = Kwery::Query.new(
   select: {
-    id: Kwery::Query::Field.new(:users, :id),
-    name: Kwery::Query::Field.new(:users, :name),
+    id: Kwery::Query::Field.new(:id),
+    name: Kwery::Query::Field.new(:name),
   },
   from: :users,
   where: [
-    Kwery::Query::Gt.new(Kwery::Query::Field.new(:users, :id), Kwery::Query::Literal.new(10)),
-    Kwery::Query::Eq.new(Kwery::Query::Field.new(:users, :active), Kwery::Query::Literal.new(true)),
+    Kwery::Query::Gt.new(Kwery::Query::Field.new(:id), Kwery::Query::Literal.new(10)),
+    Kwery::Query::Eq.new(Kwery::Query::Field.new(:active), Kwery::Query::Literal.new(true)),
   ],
   limit: 10,
 )

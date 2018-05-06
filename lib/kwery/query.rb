@@ -16,8 +16,7 @@ module Kwery
       Optimizer.new(self).plan(schema)
     end
 
-    # TODO: handle naming conflicts
-    class Field < Struct.new(:table, :column)
+    class Field < Struct.new(:column)
       def call(tup)
         tup[column]
       end

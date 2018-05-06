@@ -36,7 +36,7 @@ module Kwery
         columns = specs.map { |spec|
           table_name, column_name, order = spec
           Kwery::Query::OrderedField.new(
-            Kwery::Query::Field.new(table_name, column_name),
+            Kwery::Query::Field.new(column_name),
             order,
           )
         }
