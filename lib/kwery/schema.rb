@@ -1,3 +1,5 @@
+# TODO: rename to catalog
+
 module Kwery
   class Schema
     attr_accessor :tables

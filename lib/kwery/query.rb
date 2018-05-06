@@ -10,6 +10,7 @@ module Kwery
       @limit = limit
     end
 
+    # TODO: extract to Optimizer class
     def plan(schema)
       index_scan_backward(schema) || index_scan(schema) || table_scan(schema)
     end
@@ -109,7 +110,9 @@ module Kwery
       plan
     end
 
-    # there where clause is an array
+    # TODO: change this to be DNF (OR of ANDs)
+    #
+    # therewhere clause is an array
     # of (implicitly) ANDed expressions
     def where(plan)
       return plan unless @where
