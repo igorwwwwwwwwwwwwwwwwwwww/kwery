@@ -4,13 +4,12 @@
 #
 # the following changes have been made:
 # * support custom comparator
-# * scan_leaf_asc  to scan rightwards from the root
-# * scan_leaf_gt   to scan rightwards >
-# * scan_leaf_gte  to scan rightwards >=
-# * print_tree     for debugging
+# * scan_leaf_asc       to scan rightwards from the root
+# * scan_leaf_asc_cond  to scan rightwards conditionally
+# * print_tree          print the full tree for debugging
 
 class BinarySearchTree
-  attr_reader :size, :root
+  attr_reader :size, :root, :comparator
 
   def balanced?
     -1 == compute_and_check_height(@root) ? false : true
@@ -85,32 +84,21 @@ class BinarySearchTree
     end
   end
 
-  def scan_leaf_gt(key, leaf = @root)
-    return [] if leaf.nil?
+  def scan_leaf_asc_cond(leaf = @root, &block)
+    return unless block
     Enumerator.new do |y|
-      if @comparator.call(leaf.key, key) > 0
-        scan_leaf_gt(key, leaf.left).each do |v|
+      if leaf.left && block.call(leaf.left.key)
+        scan_leaf_asc_cond(leaf.left, &block).each do |v|
           y << v
         end
-        y << leaf.value
       end
-      scan_leaf_gt(key, leaf.right).each do |v|
-        y << v
-      end
-    end
-  end
 
-  def scan_leaf_gte(key, leaf = @root)
-    return [] if leaf.nil?
-    Enumerator.new do |y|
-      if @comparator.call(leaf.key, key) >= 0
-        scan_leaf_gte(key, leaf.left).each do |v|
+      y << leaf.value if block.call(leaf.key)
+
+      if leaf.right && block.call(leaf.right.key)
+        scan_leaf_asc_cond(leaf.right, &block).each do |v|
           y << v
         end
-        y << leaf.value
-      end
-      scan_leaf_gte(key, leaf.right).each do |v|
-        y << v
       end
     end
   end

@@ -23,11 +23,15 @@ module Kwery
       end
 
       if sargs[:gt]
-        return @bst.scan_leaf_gt(sargs[:gt])
+        return @bst.scan_leaf_asc_cond do |key|
+          @bst.comparator.call(key, sargs[:gt]) > 0
+        end
       end
 
       if sargs[:gte]
-        return @bst.scan_leaf_gte(sargs[:gte])
+        return @bst.scan_leaf_asc_cond do |key|
+          @bst.comparator.call(key, sargs[:gte]) >= 0
+        end
       end
 
       scan_order == :asc ? @bst.scan_leaf_asc : @bst.scan_leaf_desc
