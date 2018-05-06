@@ -14,8 +14,8 @@ catalog.table :users, Kwery::Catalog::Table.new(
   indexes: [:users_idx_id],
 )
 catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-  Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:id), :asc),
-  Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:active), :asc),
+  Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+  Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
 ])
 
 context = {}
@@ -55,13 +55,13 @@ end
 
 query = Kwery::Query.new(
   select: {
-    id: Kwery::Query::Field.new(:id),
-    name: Kwery::Query::Field.new(:name),
+    id: Kwery::Expr::Column.new(:id),
+    name: Kwery::Expr::Column.new(:name),
   },
   from: :users,
   where: [
-    Kwery::Query::Gt.new(Kwery::Query::Field.new(:id), Kwery::Query::Literal.new(10)),
-    Kwery::Query::Eq.new(Kwery::Query::Field.new(:active), Kwery::Query::Literal.new(true)),
+    Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
+    Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
   ],
   limit: 10,
 )

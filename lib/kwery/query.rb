@@ -15,35 +15,5 @@ module Kwery
     def plan(catalog)
       Optimizer.new(catalog, self).call
     end
-
-    class Field < Struct.new(:column)
-      def call(tup)
-        tup[column]
-      end
-    end
-
-    class Literal < Struct.new(:value)
-      def call(tup)
-        value
-      end
-    end
-
-    class Eq < Struct.new(:left, :right)
-      def call(tup)
-        left.call(tup) == right.call(tup)
-      end
-    end
-
-    class Gt < Struct.new(:left, :right)
-      def call(tup)
-        left.call(tup) > right.call(tup)
-      end
-    end
-
-    class OrderedField < Struct.new(:expr, :order)
-    end
-
-    class NoTableScanError < StandardError
-    end
   end
 end

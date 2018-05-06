@@ -48,10 +48,10 @@ module Kwery
         # then: try and find some papers on query planning, maybe
         #   vldb has something.
 
-        comparison_operators = Set.new([Kwery::Query::Eq, Kwery::Query::Gt])
+        comparison_operators = Set.new([Kwery::Expr::Eq, Kwery::Expr::Gt])
         match_exprs_map = @query.where
           .select { |expr| comparison_operators.include?(expr.class) }
-          .select { |expr| Kwery::Query::Literal === expr.right }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
           .map { |expr| [expr.left, expr.right] }
           .to_h
         match_exprs = match_exprs_map.keys.to_set
@@ -95,7 +95,7 @@ module Kwery
     def table_scan
       if ENV['NOTABLESCAN'] == 'true'
         # a notable scan indeed
-        raise Kwery::Query::NoTableScanError.new("query resulted in table scan")
+        raise Kwery::Optimizer::NoTableScanError.new("query resulted in table scan")
       end
 
       plan = Kwery::Plan::TableScan.new(@query.from)
@@ -162,6 +162,9 @@ module Kwery
       )
 
       plan
+    end
+
+    class NoTableScanError < StandardError
     end
   end
 end

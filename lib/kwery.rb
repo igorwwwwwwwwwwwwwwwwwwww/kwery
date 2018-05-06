@@ -1,3 +1,4 @@
+require 'kwery/expr'
 require 'kwery/catalog'
 require 'kwery/index'
 require 'kwery/plan'
