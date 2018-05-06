@@ -303,4 +303,49 @@ RSpec.describe Kwery::Plan::IndexScan do
       index_tuples_scanned: 4,
     })
   end
+
+  it "scans the whole index backwards" do
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :desc)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 2,  name: "Xantha"},
+      {id: 9,  name: "Uta"},
+      {id: 5,  name: "Reese"},
+      {id: 8,  name: "Quincy"},
+      {id: 1,  name: "Kathleen"},
+      {id: 3,  name: "Hope"},
+      {id: 7,  name: "Herrod"},
+      {id: 4,  name: "Hedley"},
+      {id: 6,  name: "Emi"},
+      {id: 10, name: "Anastasia"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 10,
+    })
+  end
+
+  it "performs a backwards range scan with gt sarg" do
+    sargs = {
+      gt: ["Kathleen"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :desc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 2,  name: "Xantha"},
+      {id: 9,  name: "Uta"},
+      {id: 5,  name: "Reese"},
+      {id: 8,  name: "Quincy"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 4,
+    })
+  end
 end

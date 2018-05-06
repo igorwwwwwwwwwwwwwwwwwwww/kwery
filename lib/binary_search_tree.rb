@@ -71,6 +71,10 @@ class BinarySearchTree
   end
 
   def scan_leaf(leaf = @root, scan_order = :asc, sargs = {})
+    scan_order == :asc ? scan_leaf_asc(leaf, sargs) : scan_leaf_desc(leaf, sargs)
+  end
+
+  def scan_leaf_asc(leaf = @root, sargs = {})
     return [] if leaf.nil?
 
     Enumerator.new do |y|
@@ -83,8 +87,7 @@ class BinarySearchTree
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
       if above_lower
-        left = scan_order == :asc ? leaf.left : leaf.right
-        scan_leaf(left, scan_order, sargs).each do |v|
+        scan_leaf_asc(leaf.left, sargs).each do |v|
           y << v
         end
       end
@@ -94,8 +97,37 @@ class BinarySearchTree
       end
 
       if below_upper
-        right = scan_order == :asc ? leaf.right : leaf.left
-        scan_leaf(right, scan_order, sargs).each do |v|
+        scan_leaf_asc(leaf.right, sargs).each do |v|
+          y << v
+        end
+      end
+    end
+  end
+
+  def scan_leaf_desc(leaf = @root, sargs = {})
+    return [] if leaf.nil?
+
+    Enumerator.new do |y|
+      lower_bound = sargs[:gt] || sargs[:gte]
+      upper_bound = sargs[:lt] || sargs[:lte]
+      equal_value = sargs[:gte] || sargs[:lte] || sargs[:eq]
+
+      above_lower = lower_bound.nil? || comparator.call(leaf.key, lower_bound) > 0
+      below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
+      equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
+
+      if below_upper
+        scan_leaf_desc(leaf.right, sargs).each do |v|
+          y << v
+        end
+      end
+
+      if (above_lower && below_upper && !sargs[:eq]) || equal_match
+        y << leaf.value
+      end
+
+      if above_lower
+        scan_leaf_desc(leaf.left, sargs).each do |v|
           y << v
         end
       end
