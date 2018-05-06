@@ -18,9 +18,9 @@ module Kwery
       csv.each do |row|
         tup = table.tuple(row)
 
-        table_storage = @schema[table_name]
-        table_storage << tup
-        tid = table_storage.size - 1
+        relation = @schema[table_name]
+        relation << tup
+        tid = relation.size - 1
 
         table.indexes.each do |index_name|
           index = @schema[index_name]
