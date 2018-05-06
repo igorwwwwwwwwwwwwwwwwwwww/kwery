@@ -84,19 +84,30 @@ class BinarySearchTree
     end
   end
 
-  def scan_leaf_asc_cond(leaf = @root, &block)
-    return unless block
+  def scan_leaf_asc_cond(leaf = @root, sargs = {})
+    return [] if leaf.nil?
+
     Enumerator.new do |y|
-      if leaf.left && block.call(leaf.left.key)
-        scan_leaf_asc_cond(leaf.left, &block).each do |v|
+      lower_bound = sargs[:gt] || sargs[:gte]
+      upper_bound = sargs[:lt] || sargs[:lte]
+      equal_value = sargs[:gte] || sargs[:lte] || sargs[:eq]
+
+      above_lower = lower_bound.nil? || comparator.call(leaf.key, lower_bound) > 0
+      below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
+      equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
+
+      if above_lower
+        scan_leaf_asc_cond(leaf.left, sargs).each do |v|
           y << v
         end
       end
 
-      y << leaf.value if block.call(leaf.key)
+      if (above_lower && below_upper) || equal_match
+        y << leaf.value
+      end
 
-      if leaf.right && block.call(leaf.right.key)
-        scan_leaf_asc_cond(leaf.right, &block).each do |v|
+      if below_upper
+        scan_leaf_asc_cond(leaf.right, sargs).each do |v|
           y << v
         end
       end
