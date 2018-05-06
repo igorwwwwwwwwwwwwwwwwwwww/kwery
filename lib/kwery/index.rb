@@ -23,14 +23,11 @@ module Kwery
       end
 
       if sargs[:gt]
-        node = @bst.find_insert_point(sargs[:gt])
-        return @bst.scan_leaf_gt(sargs[:gt], node)
+        return @bst.scan_leaf_gt(sargs[:gt])
       end
 
       if sargs[:gte]
-        node = @bst.find_insert_point(sargs[:gte])
-        @bst.print_tree
-        return @bst.scan_leaf_gte(sargs[:gte], node)
+        return @bst.scan_leaf_gte(sargs[:gte])
       end
 
       scan_order == :asc ? @bst.scan_leaf_asc : @bst.scan_leaf_desc

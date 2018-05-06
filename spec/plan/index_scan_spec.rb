@@ -242,24 +242,24 @@ RSpec.describe Kwery::Plan::IndexScan do
     expect(context.stats).to eq({})
   end
 
-  # it "performs a range scan with gte sarg" do
-  #   sargs = {
-  #     gte: ["Quincy"],
-  #   }
-  #   plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
-  #
-  #   context = Kwery::Plan::Context.new(schema)
-  #   result = plan.call(context)
-  #
-  #   expect(result.to_a).to eq([
-  #     {id: 1,  name: "Quincy"},
-  #     {id: 5,  name: "Reese"},
-  #     {id: 9,  name: "Uta"},
-  #     {id: 2,  name: "Xantha"},
-  #   ])
-  #
-  #   expect(context.stats).to eq({
-  #     index_tuples_scanned: 4,
-  #   })
-  # end
+  it "performs a range scan with gte sarg" do
+    sargs = {
+      gte: ["Quincy"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 8,  name: "Quincy"},
+      {id: 5,  name: "Reese"},
+      {id: 9,  name: "Uta"},
+      {id: 2,  name: "Xantha"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 4,
+    })
+  end
 end

@@ -112,9 +112,6 @@ class BinarySearchTree
       scan_leaf_gte(key, leaf.right).each do |v|
         y << v
       end
-      if leaf.parent
-        scan_leaf_gte()
-      end
     end
   end
 
