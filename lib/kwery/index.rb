@@ -16,7 +16,12 @@ module Kwery
       vals << v
     end
 
-    def scan(scan_order = :asc)
+    def scan(scan_order = :asc, sargs = {})
+      if sargs[:eq]
+        node = @bst.find(sargs[:eq]) rescue nil
+        return node ? [node.value] : []
+      end
+
       if scan_order == :asc
         scan_leaf_asc(@bst.root)
       else

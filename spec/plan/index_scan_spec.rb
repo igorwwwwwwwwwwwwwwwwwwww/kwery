@@ -176,4 +176,22 @@ RSpec.describe Kwery::Plan::IndexScan do
       index_tuples_scanned: 2,
     })
   end
+
+  it "performs a direct lookup with match search args" do
+    sargs = {
+      eq: ["Quincy"],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 8,  name: "Quincy"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 1,
+    })
+  end
 end

@@ -18,14 +18,17 @@ module Kwery
     end
 
     class IndexScan
-      def initialize(table_name, index_name, scan_order = :asc)
+      # sargs = search args
+      # see: Access Path Selection in a Relational Database Management System
+      def initialize(table_name, index_name, scan_order = :asc, sargs = {})
         @table_name = table_name
         @index_name = index_name
         @scan_order = scan_order
+        @sargs = sargs
       end
 
       def call(context)
-        context.schema.index_scan(@index_name, @scan_order).flat_map {|tids|
+        context.schema.index_scan(@index_name, @scan_order, @sargs).flat_map {|tids|
           tids.map { |tid|
             context.increment :index_tuples_scanned
             context.schema.fetch(@table_name, tid)

@@ -12,10 +12,10 @@ module Kwery
       end
     end
 
-    def index_scan(index_name, scan_order = :asc)
+    def index_scan(index_name, scan_order = :asc, sargs = {})
       index = @state[index_name] or raise "no index of name #{index_name}"
 
-      index.scan(scan_order).lazy
+      index.scan(scan_order, sargs).lazy
     end
 
     def table_scan(table_name)
