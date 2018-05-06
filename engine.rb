@@ -13,7 +13,7 @@ catalog.table :users, Kwery::Catalog::Table.new(
   },
   indexes: [:users_idx_id],
 )
-catalog.index :users_idx_id, Kwery::Catalog::Index.new([
+catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
   Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:id), :asc),
   Kwery::Catalog::IndexedExpr.new(Kwery::Query::Field.new(:active), :asc),
 ])

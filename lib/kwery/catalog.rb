@@ -52,7 +52,14 @@ module Kwery
     class Column < Struct.new(:type)
     end
 
-    class Index < Struct.new(:indexed_exprs)
+    class Index
+      attr_accessor :table, :indexed_exprs
+
+      def initialize(table, indexed_exprs)
+        @table = table
+        @indexed_exprs = indexed_exprs
+      end
+
       def reverse
         indexed_exprs.map(&:reverse)
       end
