@@ -18,46 +18,22 @@ module Kwery
 
     def scan(scan_order = :asc, sargs = {})
       if sargs[:eq]
-        node = @bst.find(sargs[:eq]) rescue nil
+        node = @bst.find(sargs[:eq])
         return node ? [node.value] : []
       end
 
-      if scan_order == :asc
-        scan_leaf_asc(@bst.root)
-      else
-        scan_leaf_desc(@bst.root)
+      if sargs[:gt]
+        node = @bst.find_insert_point(sargs[:gt])
+        return @bst.scan_leaf_gt(sargs[:gt], node)
       end
-    end
 
-    private
-
-    def scan_leaf_asc(leaf)
-      return [] if leaf.nil?
-      Enumerator.new do |y|
-        scan_leaf_asc(leaf.left).each do |v|
-          y << v
-        end
-        y << leaf.value
-        scan_leaf_asc(leaf.right).each do |v|
-          y << v
-        end
+      if sargs[:gte]
+        node = @bst.find_insert_point(sargs[:gte])
+        @bst.print_tree
+        return @bst.scan_leaf_gte(sargs[:gte], node)
       end
-    end
 
-    def scan_leaf_desc(leaf)
-      Enumerator.new do |y|
-        if leaf.right
-          scan_leaf_desc(leaf.right).each do |v|
-            y << v
-          end
-        end
-        y << leaf.value
-        if leaf.left
-          scan_leaf_desc(leaf.left).each do |v|
-            y << v
-          end
-        end
-      end
+      scan_order == :asc ? @bst.scan_leaf_asc : @bst.scan_leaf_desc
     end
   end
 end

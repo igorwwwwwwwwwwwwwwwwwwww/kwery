@@ -4,6 +4,10 @@
 #
 # the following changes have been made:
 # * support custom comparator
+# * scan_leaf_asc  to scan rightwards from the root
+# * scan_leaf_gt   to scan rightwards >
+# * scan_leaf_gte  to scan rightwards >=
+# * print_tree     for debugging
 
 class BinarySearchTree
   attr_reader :size, :root
@@ -66,6 +70,79 @@ class BinarySearchTree
 
   def ==(other)
     compare @root, other.root
+  end
+
+  def scan_leaf_asc(leaf = @root)
+    return [] if leaf.nil?
+    Enumerator.new do |y|
+      scan_leaf_asc(leaf.left).each do |v|
+        y << v
+      end
+      y << leaf.value
+      scan_leaf_asc(leaf.right).each do |v|
+        y << v
+      end
+    end
+  end
+
+  def scan_leaf_gt(key, leaf = @root)
+    return [] if leaf.nil?
+    Enumerator.new do |y|
+      if @comparator.call(leaf.key, key) > 0
+        scan_leaf_gt(key, leaf.left).each do |v|
+          y << v
+        end
+        y << leaf.value
+      end
+      scan_leaf_gt(key, leaf.right).each do |v|
+        y << v
+      end
+    end
+  end
+
+  def scan_leaf_gte(key, leaf = @root)
+    return [] if leaf.nil?
+    Enumerator.new do |y|
+      if @comparator.call(leaf.key, key) >= 0
+        scan_leaf_gte(key, leaf.left).each do |v|
+          y << v
+        end
+        y << leaf.value
+      end
+      scan_leaf_gte(key, leaf.right).each do |v|
+        y << v
+      end
+      if leaf.parent
+        scan_leaf_gte()
+      end
+    end
+  end
+
+  # find exact match or parent node, where we could
+  # insert a node this useful to find a starting point
+  # for scans
+  def find_insert_point(target, leaf = @root)
+    @num_comparisons += 1
+
+    return nil if leaf.nil?
+
+    case @comparator.call(leaf.key, target)
+    when -1
+      find_insert_point(target, leaf.right) || leaf
+    when 0
+      leaf
+    when 1
+      find_insert_point(target, leaf.left) || leaf
+    else
+      raise
+    end
+  end
+
+  def print_tree(leaf = @root, depth = 0)
+    return unless leaf
+    puts (" " * depth * 2) + leaf.key.inspect
+    print_tree(leaf.left, depth + 1)
+    print_tree(leaf.right, depth + 1)
   end
 
   private
