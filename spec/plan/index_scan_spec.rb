@@ -11,7 +11,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     indexes: [:users_idx_name],
   )
   catalog.index :users_idx_name, Kwery::Catalog::Index.new(:users, [
-    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
   ])
 
   schema = catalog.new_schema
@@ -181,7 +181,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       eq: ["Quincy"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -199,7 +199,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       eq: ["Quixote"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -212,7 +212,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       gt: ["Kathleen"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -233,7 +233,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       gt: ["Yves"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -246,7 +246,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       gte: ["Quincy"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -267,7 +267,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       lt: ["Herrod"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -287,7 +287,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       lte: ["Herrod"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -305,7 +305,7 @@ RSpec.describe Kwery::Plan::IndexScan do
   end
 
   it "scans the whole index backwards" do
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :desc)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, {}, :desc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -332,7 +332,7 @@ RSpec.describe Kwery::Plan::IndexScan do
     sargs = {
       gt: ["Kathleen"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :desc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :desc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -354,7 +354,7 @@ RSpec.describe Kwery::Plan::IndexScan do
       gt: ["Herrod"],
       lt: ["Quincy"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)
@@ -374,7 +374,7 @@ RSpec.describe Kwery::Plan::IndexScan do
       gt: ["Quincy"],
       lt: ["Herrod"],
     }
-    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, :asc, sargs)
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
 
     context = Kwery::Plan::Context.new(schema)
     result = plan.call(context)

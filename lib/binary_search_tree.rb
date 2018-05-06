@@ -70,7 +70,7 @@ class BinarySearchTree
     compare @root, other.root
   end
 
-  def scan_leaf(leaf = @root, scan_order = :asc, sargs = {})
+  def scan_leaf(leaf = @root, sargs = {}, scan_order = :asc)
     scan_order == :asc ? scan_leaf_asc(leaf, sargs) : scan_leaf_desc(leaf, sargs)
   end
 

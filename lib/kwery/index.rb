@@ -16,12 +16,8 @@ module Kwery
       vals << v
     end
 
-    def scan(scan_order = :asc, sargs = {})
-      @bst.scan_leaf(@bst.root, scan_order, sargs)
-    end
-
-    def scan_leaf(scan_order)
-      scan_order == :asc ? @bst.scan_leaf_asc : @bst.scan_leaf_desc
+    def scan(sargs = {}, scan_order = :asc)
+      @bst.scan_leaf(@bst.root, sargs, scan_order)
     end
   end
 end

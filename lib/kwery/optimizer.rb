@@ -25,7 +25,7 @@ module Kwery
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@query.from, index.name, :desc)
+      plan = Kwery::Plan::IndexScan.new(@query.from, index.name, {}, :desc)
 
       plan = where(plan)
       plan = limit(plan)
@@ -80,7 +80,7 @@ module Kwery
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@query.from, index_name, :asc)
+      plan = Kwery::Plan::IndexScan.new(@query.from, index_name, {}, :asc)
 
       # TODO: extra where on index prefix match
       # TODO: extra sort on index prefix match
