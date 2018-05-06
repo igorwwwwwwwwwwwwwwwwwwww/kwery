@@ -7,9 +7,9 @@ module Kwery
         @scan_order = scan_order
       end
 
-      def call(context)
-        index = context[@index_name]
-        table = context[@table_name]
+      def call(schema)
+        index = schema[@index_name]
+        table = schema[@table_name]
         index.scan(@scan_order).lazy.flat_map {|tids|
           tids.map { |tid|
             tup = table[tid]
@@ -24,8 +24,8 @@ module Kwery
         @table_name = table_name
       end
 
-      def call(context)
-        table = context[@table_name]
+      def call(schema)
+        table = schema[@table_name]
         table # table is already an enumerable of tuples
 
         table.lazy
@@ -38,8 +38,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(context)
-        @plan.call(context).select(&@pred)
+      def call(schema)
+        @plan.call(schema).select(&@pred)
       end
     end
 
@@ -49,8 +49,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(context)
-        @plan.call(context).take(@limit)
+      def call(schema)
+        @plan.call(schema).take(@limit)
       end
     end
 
@@ -60,8 +60,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(context)
-        @plan.call(context).sort(&@comp)
+      def call(schema)
+        @plan.call(schema).sort(&@comp)
       end
     end
 
@@ -71,8 +71,8 @@ module Kwery
         @plan = plan
       end
 
-      def call(context)
-        @plan.call(context).map(&@proj)
+      def call(schema)
+        @plan.call(schema).map(&@proj)
       end
     end
   end

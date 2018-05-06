@@ -17,16 +17,16 @@ catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
   Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
 ])
 
-context = {}
+schema = {}
 catalog.tables.each do |table_name, t|
-  context[table_name] = []
+  schema[table_name] = []
 end
 catalog.indexes.each do |index_name, i|
   # TODO create index with custom comparator based on sort order
-  context[index_name] = Kwery::Index.new
+  schema[index_name] = Kwery::Index.new
 end
 
-importer = Kwery::Importer.new(catalog, context)
+importer = Kwery::Importer.new(catalog, schema)
 importer.load(:users, 'data/users.csv')
 
 query = Kwery::Query.new(
@@ -59,7 +59,7 @@ when 'query'
 when 'plan'
   pp plan
 when 'run'
-  plan.call(context).each do |tup|
+  plan.call(schema).each do |tup|
     puts tup
   end
 else

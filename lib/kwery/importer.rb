@@ -2,9 +2,9 @@ require 'csv'
 
 module Kwery
   class Importer
-    def initialize(catalog, context)
+    def initialize(catalog, schema)
       @catalog = catalog
-      @context = context
+      @schema = schema
     end
 
     def load(table_name, filename)
@@ -18,12 +18,12 @@ module Kwery
       csv.each do |row|
         tup = table.tuple(row)
 
-        table_storage = @context[table_name]
+        table_storage = @schema[table_name]
         table_storage << tup
         tid = table_storage.size - 1
 
         table.indexes.each do |index_name|
-          index = @context[index_name]
+          index = @schema[index_name]
 
           key = @catalog.indexes[index_name].indexed_exprs.map(&:expr).map { |expr| expr.call(tup) }
           index.insert(key, tid)

@@ -18,15 +18,15 @@ RSpec.describe Kwery do
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
-    context = {}
+    schema = {}
     catalog.tables.each do |table_name, t|
-      context[table_name] = []
+      schema[table_name] = []
     end
     catalog.indexes.each do |index_name, i|
-      context[index_name] = Kwery::Index.new
+      schema[index_name] = Kwery::Index.new
     end
 
-    importer = Kwery::Importer.new(catalog, context)
+    importer = Kwery::Importer.new(catalog, schema)
     importer.load(:users, 'data/users.csv')
 
     query = Kwery::Query.new(
@@ -43,7 +43,7 @@ RSpec.describe Kwery do
     )
 
     plan = query.plan(catalog)
-    result = plan.call(context)
+    result = plan.call(schema)
 
     expect(result.to_a).to eq([
       {id: 1,  name:"Kathleen"},
