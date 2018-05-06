@@ -4,9 +4,8 @@
 #
 # the following changes have been made:
 # * support custom comparator
-# * scan_leaf_asc       to scan rightwards from the root
-# * scan_leaf_asc_cond  to scan rightwards conditionally
-# * print_tree          print the full tree for debugging
+# * scan_leaf   to scan index based on sargs (search args)
+# * print_tree  print the full tree for debugging
 
 class BinarySearchTree
   attr_reader :size, :root, :comparator
@@ -71,20 +70,7 @@ class BinarySearchTree
     compare @root, other.root
   end
 
-  def scan_leaf_asc(leaf = @root)
-    return [] if leaf.nil?
-    Enumerator.new do |y|
-      scan_leaf_asc(leaf.left).each do |v|
-        y << v
-      end
-      y << leaf.value
-      scan_leaf_asc(leaf.right).each do |v|
-        y << v
-      end
-    end
-  end
-
-  def scan_leaf_asc_cond(leaf = @root, sargs = {})
+  def scan_leaf(leaf = @root, scan_order = :asc, sargs = {})
     return [] if leaf.nil?
 
     Enumerator.new do |y|
@@ -97,7 +83,8 @@ class BinarySearchTree
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
       if above_lower
-        scan_leaf_asc_cond(leaf.left, sargs).each do |v|
+        left = scan_order == :asc ? leaf.left : leaf.right
+        scan_leaf(left, scan_order, sargs).each do |v|
           y << v
         end
       end
@@ -107,7 +94,8 @@ class BinarySearchTree
       end
 
       if below_upper
-        scan_leaf_asc_cond(leaf.right, sargs).each do |v|
+        right = scan_order == :asc ? leaf.right : leaf.left
+        scan_leaf(right, scan_order, sargs).each do |v|
           y << v
         end
       end
