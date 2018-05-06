@@ -13,7 +13,7 @@ module Kwery
     end
 
     def plan(schema)
-      Optimizer.new(self).plan(schema)
+      Optimizer.new(schema, self).call
     end
 
     class Field < Struct.new(:column)

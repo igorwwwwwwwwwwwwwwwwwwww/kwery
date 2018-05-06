@@ -2,22 +2,23 @@ require 'set'
 
 module Kwery
   class Optimizer
-    def initialize(query)
+    def initialize(schema, query)
+      @schema = schema
       @query = query
     end
 
-    def plan(schema)
-      index_scan_backward(schema) || index_scan(schema) || table_scan(schema)
+    def call
+      index_scan_backward || index_scan || table_scan
     end
 
     private
 
-    def index_scan_backward(schema)
+    def index_scan_backward
       unless @query.order_by.size > 0
         return
       end
 
-      index = schema.tables[@query.from].indexes.values
+      index = @schema.tables[@query.from].indexes.values
         .select { |idx| idx.columns_flipped == @query.order_by }
         .first
       unless index
@@ -32,7 +33,7 @@ module Kwery
       plan
     end
 
-    def index_scan(schema)
+    def index_scan
       # TODO: extract index bounds from WHERE
       # TODO: support using index for both WHERE and ORDER BY
       if @query.where
@@ -55,13 +56,13 @@ module Kwery
           .to_h
         match_exprs = match_exprs_map.keys.to_set
 
-        matching_indexes = schema.tables[@query.from].indexes
+        matching_indexes = @schema.tables[@query.from].indexes
           .map { |k, idx| [k, idx.columns.map(&:expr).to_set] }
           .select { |k, exprs| exprs == match_exprs }
           .to_h
 
         matching_index_name = matching_indexes.keys.first
-        index = schema.tables[@query.from].indexes[matching_index_name]
+        index = @schema.tables[@query.from].indexes[matching_index_name]
 
         # TODO pass this as a condition to the index scan
         index_options = match_exprs_map
@@ -70,7 +71,7 @@ module Kwery
 
       unless index
         # try to find index with exact match
-        index = schema.tables[@query.from].indexes.values
+        index = @schema.tables[@query.from].indexes.values
           .select { |idx| idx.columns == @query.order_by }
           .first
       end
@@ -90,7 +91,7 @@ module Kwery
 
     # cut my plans into pieces
     # this is my last resort
-    def table_scan(schema)
+    def table_scan
       if ENV['NOTABLESCAN'] == 'true'
         # a notable scan indeed
         raise Kwery::Query::NoTableScanError.new("query resulted in table scan")
