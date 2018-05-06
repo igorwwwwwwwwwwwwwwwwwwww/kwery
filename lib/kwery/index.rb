@@ -17,11 +17,6 @@ module Kwery
     end
 
     def scan(scan_order = :asc, sargs = {})
-      if sargs[:eq]
-        node = @bst.find(sargs[:eq])
-        return node ? [node.value] : []
-      end
-
       scan_leaf_cond(scan_order, sargs)
     end
 

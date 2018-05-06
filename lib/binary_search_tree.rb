@@ -102,7 +102,7 @@ class BinarySearchTree
         end
       end
 
-      if (above_lower && below_upper) || equal_match
+      if (above_lower && below_upper && !sargs[:eq]) || equal_match
         y << leaf.value
       end
 
