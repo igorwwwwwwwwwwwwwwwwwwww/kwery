@@ -12,8 +12,8 @@ module Kwery
       @limit = limit
     end
 
-    def plan(schema)
-      Optimizer.new(schema, self).call
+    def plan(catalog)
+      Optimizer.new(catalog, self).call
     end
 
     class Field < Struct.new(:column)

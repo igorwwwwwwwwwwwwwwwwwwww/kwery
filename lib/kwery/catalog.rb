@@ -1,7 +1,5 @@
-# TODO: rename to catalog
-
 module Kwery
-  class Schema
+  class Catalog
     attr_accessor :tables
 
     def initialize
@@ -9,7 +7,7 @@ module Kwery
     end
 
     def table(name)
-      @tables[name] = Kwery::Schema::Table.new(name)
+      @tables[name] = Kwery::Catalog::Table.new(name)
 
       yield @tables[name] if block_given?
 
@@ -27,7 +25,7 @@ module Kwery
       end
 
       def column(name, type)
-        @columns[name] = Kwery::Schema::Column.new(name, type)
+        @columns[name] = Kwery::Catalog::Column.new(name, type)
 
         self
       end
@@ -40,7 +38,7 @@ module Kwery
             order,
           )
         }
-        @indexes[name] = Kwery::Schema::Index.new(name, columns)
+        @indexes[name] = Kwery::Catalog::Index.new(name, columns)
 
         self
       end

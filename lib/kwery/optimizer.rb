@@ -2,8 +2,8 @@ require 'set'
 
 module Kwery
   class Optimizer
-    def initialize(schema, query)
-      @schema = schema
+    def initialize(catalog, query)
+      @catalog = catalog
       @query = query
     end
 
@@ -18,7 +18,7 @@ module Kwery
         return
       end
 
-      index = @schema.tables[@query.from].indexes.values
+      index = @catalog.tables[@query.from].indexes.values
         .select { |idx| idx.columns_flipped == @query.order_by }
         .first
       unless index
@@ -56,13 +56,13 @@ module Kwery
           .to_h
         match_exprs = match_exprs_map.keys.to_set
 
-        matching_indexes = @schema.tables[@query.from].indexes
+        matching_indexes = @catalog.tables[@query.from].indexes
           .map { |k, idx| [k, idx.columns.map(&:expr).to_set] }
           .select { |k, exprs| exprs == match_exprs }
           .to_h
 
         matching_index_name = matching_indexes.keys.first
-        index = @schema.tables[@query.from].indexes[matching_index_name]
+        index = @catalog.tables[@query.from].indexes[matching_index_name]
 
         # TODO pass this as a condition to the index scan
         index_options = match_exprs_map
@@ -71,7 +71,7 @@ module Kwery
 
       unless index
         # try to find index with exact match
-        index = @schema.tables[@query.from].indexes.values
+        index = @catalog.tables[@query.from].indexes.values
           .select { |idx| idx.columns == @query.order_by }
           .first
       end

@@ -3,9 +3,9 @@ $: << 'lib'
 require 'kwery'
 require 'csv'
 
-schema = Kwery::Schema.new
+catalog = Kwery::Catalog.new
 
-schema.table :users do |t|
+catalog.table :users do |t|
   t.column :id, :integer
   t.column :name, :string
   t.column :active, :boolean
@@ -13,7 +13,7 @@ schema.table :users do |t|
 end
 
 context = {}
-schema.tables.each do |table_name, t|
+catalog.tables.each do |table_name, t|
   context[table_name] = []
   context = context.merge(
     # TODO create index with custom comparator based on sort order
@@ -21,7 +21,7 @@ schema.tables.each do |table_name, t|
   )
 end
 
-schema.tables.each do |table_name, t|
+catalog.tables.each do |table_name, t|
   if File.exists?("#{table_name}.csv")
     csv = CSV.table("#{table_name}.csv", converters: nil)
     csv.each do |row|
@@ -61,7 +61,7 @@ query = Kwery::Query.new(
 )
 
 begin
-  plan = query.plan(schema)
+  plan = query.plan(catalog)
 rescue Kwery::Query::NoTableScanError => e
   pp query
   puts
