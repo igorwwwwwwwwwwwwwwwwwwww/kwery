@@ -93,5 +93,38 @@ module Kwery
         @plan.call(context).map(&@proj)
       end
     end
+
+    class Aggregate
+      def initialize(init, reduce, render, plan)
+        @init = init
+        @reduce = reduce
+        @render = render
+        @plan = plan
+      end
+
+      def call(context)
+        state = @plan.call(context).reduce(@init, &@reduce)
+        [@render.call(state)]
+      end
+    end
+
+    class HashAggregate
+      def initialize(init, group_by, reduce, render, plan)
+        @init = init
+        @group_by = group_by
+        @reduce = reduce
+        @render = render
+        @plan = plan
+      end
+
+      def call(context)
+        state = @plan.call(context)
+          .group_by(&@group_by)
+          .map { |k, vs| [k, vs.reduce(@init, &@reduce)] }
+          .to_h
+
+        state.map { |k, v| @render.call(k, v) }
+      end
+    end
   end
 end

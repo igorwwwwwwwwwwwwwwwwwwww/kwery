@@ -79,6 +79,7 @@ module Kwery
       when :string
         v
       when :boolean
+        return v if [true, false].include? v
         v.downcase == 'true' ? true : false
       else
         raise "unknown type #{type}"
