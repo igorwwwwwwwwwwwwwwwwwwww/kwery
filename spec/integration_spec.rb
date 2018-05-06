@@ -59,5 +59,9 @@ RSpec.describe Kwery do
       {id: 9,  name:"Uta"},
       {id: 10, name:"Anastasia"}
     ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 10,
+    })
   end
 end
