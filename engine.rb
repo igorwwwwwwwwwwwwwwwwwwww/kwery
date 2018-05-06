@@ -1,7 +1,6 @@
 $: << 'lib'
 
 require 'kwery'
-require 'csv'
 
 catalog = Kwery::Catalog.new
 
@@ -27,31 +26,8 @@ catalog.indexes.each do |index_name, i|
   context[index_name] = Kwery::Index.new
 end
 
-catalog.tables.each do |table_name, t|
-  if File.exists?("#{table_name}.csv")
-    csv = CSV.table("#{table_name}.csv", converters: nil)
-    csv.each do |row|
-      tup = t.tuple(row)
-
-      table = context[table_name]
-      table << tup
-      tid = table.size - 1
-
-      t.indexes.each do |index_name|
-        index = context[index_name]
-
-        key = catalog.indexes[index_name].indexed_exprs.map(&:expr).map { |expr| expr.call(tup) }
-        index.insert(key, tid)
-      end
-    end
-  end
-end
-
-# SELECT name
-# FROM users
-# WHERE active = true
-# ORDER BY id DESC
-# LIMIT 10
+importer = Kwery::Importer.new(catalog, context)
+importer.load(:users, 'data/users.csv')
 
 query = Kwery::Query.new(
   select: {
