@@ -2,14 +2,15 @@ require 'set'
 
 module Kwery
   class Query
-    attr_accessor :select, :from, :where, :order_by, :limit
+    attr_accessor :select, :from, :where, :order_by, :limit, :options
 
-    def initialize(select:, from:, where: nil, order_by: [], limit: nil)
+    def initialize(select:, from:, where: nil, order_by: [], limit: nil, options: {})
       @select = select
       @from = from
       @where = where
       @order_by = order_by
       @limit = limit
+      @options = options
     end
 
     def plan(catalog)

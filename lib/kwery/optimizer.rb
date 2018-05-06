@@ -93,7 +93,7 @@ module Kwery
     # cut my plans into pieces
     # this is my last resort
     def table_scan
-      if ENV['NOTABLESCAN'] == 'true'
+      if @query.options[:notablescan]
         # a notable scan indeed
         raise Kwery::Optimizer::NoTableScanError.new("query resulted in table scan")
       end

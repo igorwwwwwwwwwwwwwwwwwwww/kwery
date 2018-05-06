@@ -64,6 +64,7 @@ query = Kwery::Query.new(
     Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
   ],
   limit: 10,
+  options: { notablescan: ENV['NOTABLESCAN'] == 'true' },
 )
 
 begin
