@@ -50,6 +50,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 10,
     })
   end
 
@@ -68,8 +69,11 @@ RSpec.describe Kwery::Plan::IndexScan do
       {id: 3,  name: "Hope"},
     ])
 
+    # theory: this is 6 because the iterator advances to the next
+    # item before limit effectively limits it
     expect(context.stats).to eq({
       index_tuples_scanned: 5,
+      index_comparisons: 6,
     })
   end
 
@@ -88,6 +92,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 10,
     })
   end
 
@@ -107,6 +112,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 7,
+      index_comparisons: 8,
     })
   end
 
@@ -134,6 +140,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 10,
     })
   end
 
@@ -154,6 +161,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 10,
     })
   end
 
@@ -172,8 +180,10 @@ RSpec.describe Kwery::Plan::IndexScan do
       "Emi",
     ])
 
+    # not sure why we have 4 comparisons here
     expect(context.stats).to eq({
       index_tuples_scanned: 2,
+      index_comparisons: 4,
     })
   end
 
@@ -190,8 +200,10 @@ RSpec.describe Kwery::Plan::IndexScan do
       {id: 8,  name: "Quincy"},
     ])
 
+    # TODO: this should be log(n) comparisons
     expect(context.stats).to eq({
       index_tuples_scanned: 1,
+      index_comparisons: 10,
     })
   end
 
@@ -205,7 +217,11 @@ RSpec.describe Kwery::Plan::IndexScan do
     result = plan.call(context)
 
     expect(result.to_a).to eq([])
-    expect(context.stats).to eq({})
+
+    # TODO: this should be log(n) comparisons
+    expect(context.stats).to eq({
+      index_comparisons: 10,
+    })
   end
 
   it "performs a range scan with gt sarg" do
@@ -226,6 +242,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 4,
+      index_comparisons: 5,
     })
   end
 
@@ -239,7 +256,9 @@ RSpec.describe Kwery::Plan::IndexScan do
     result = plan.call(context)
 
     expect(result.to_a).to eq([])
-    expect(context.stats).to eq({})
+    expect(context.stats).to eq({
+      index_comparisons: 3,
+    })
   end
 
   it "performs a range scan with gte sarg" do
@@ -260,6 +279,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 4,
+      index_comparisons: 5,
     })
   end
 
@@ -280,6 +300,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 3,
+      index_comparisons: 6,
     })
   end
 
@@ -301,6 +322,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 4,
+      index_comparisons: 6,
     })
   end
 
@@ -325,6 +347,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 10,
     })
   end
 
@@ -346,6 +369,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 4,
+      index_comparisons: 5,
     })
   end
 
@@ -366,6 +390,7 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 2,
+      index_comparisons: 6,
     })
   end
 
@@ -380,6 +405,8 @@ RSpec.describe Kwery::Plan::IndexScan do
     result = plan.call(context)
 
     expect(result.to_a).to eq([])
-    expect(context.stats).to eq({})
+    expect(context.stats).to eq({
+      index_comparisons: 1,
+    })
   end
 end

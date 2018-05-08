@@ -58,6 +58,7 @@ RSpec.describe Kwery do
 
     expect(context.stats).to eq({
       index_tuples_scanned: 10,
+      index_comparisons: 14,
     })
   end
 end

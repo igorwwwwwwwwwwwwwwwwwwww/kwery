@@ -70,11 +70,11 @@ class BinarySearchTree
     compare @root, other.root
   end
 
-  def scan_leaf(leaf = @root, sargs = {}, scan_order = :asc)
-    scan_order == :asc ? scan_leaf_asc(leaf, sargs) : scan_leaf_desc(leaf, sargs)
+  def scan_leaf(context, leaf = @root, sargs = {}, scan_order = :asc)
+    scan_order == :asc ? scan_leaf_asc(context, leaf, sargs) : scan_leaf_desc(context, leaf, sargs)
   end
 
-  def scan_leaf_asc(leaf = @root, sargs = {})
+  def scan_leaf_asc(context, leaf = @root, sargs = {})
     return [] if leaf.nil?
 
     Enumerator.new do |y|
@@ -86,8 +86,10 @@ class BinarySearchTree
       below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
+      context.increment(:index_comparisons)
+
       if above_lower
-        scan_leaf_asc(leaf.left, sargs).each do |v|
+        scan_leaf_asc(context, leaf.left, sargs).each do |v|
           y << v
         end
       end
@@ -97,14 +99,14 @@ class BinarySearchTree
       end
 
       if below_upper
-        scan_leaf_asc(leaf.right, sargs).each do |v|
+        scan_leaf_asc(context, leaf.right, sargs).each do |v|
           y << v
         end
       end
     end
   end
 
-  def scan_leaf_desc(leaf = @root, sargs = {})
+  def scan_leaf_desc(context, leaf = @root, sargs = {})
     return [] if leaf.nil?
 
     Enumerator.new do |y|
@@ -116,8 +118,10 @@ class BinarySearchTree
       below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
+      context.increment(:index_comparisons)
+
       if below_upper
-        scan_leaf_desc(leaf.right, sargs).each do |v|
+        scan_leaf_desc(context, leaf.right, sargs).each do |v|
           y << v
         end
       end
@@ -127,7 +131,7 @@ class BinarySearchTree
       end
 
       if above_lower
-        scan_leaf_desc(leaf.left, sargs).each do |v|
+        scan_leaf_desc(context, leaf.left, sargs).each do |v|
           y << v
         end
       end
