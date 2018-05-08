@@ -7,6 +7,8 @@
 # * scan_leaf   to scan index based on sargs (search args)
 # * print_tree  print the full tree for debugging
 
+# TODO: remove unused parts, especially the stateful caching
+
 class BinarySearchTree
   attr_reader :size, :root, :comparator
 
