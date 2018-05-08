@@ -29,10 +29,8 @@ class BinarySearchTree
     @root.nil?
   end
 
-  def find(key)
-    @num_comparisons = 0
-    node = locate key, @root
-    @logger.debug "find operation completed in #{@num_comparisons} lookups..." if @logger # rubocop:disable Metrics/LineLength
+  def find(key, context = nil)
+    node = locate key, @root, context
     node
   end
 
@@ -70,43 +68,61 @@ class BinarySearchTree
     compare @root, other.root
   end
 
-  def scan_leaf(context, leaf = @root, sargs = {}, scan_order = :asc)
-    scan_order == :asc ? scan_leaf_asc(context, leaf, sargs) : scan_leaf_desc(context, leaf, sargs)
+  def scan_leaf(leaf = @root, sargs = {}, scan_order = :asc, context = nil)
+    return scan_leaf_eq(sargs, scan_order, context) if sargs[:eq]
+    return scan_leaf_in(sargs, scan_order, context) if sargs[:in]
+    scan_order == :asc ? scan_leaf_asc(leaf, sargs, context) : scan_leaf_desc(leaf, sargs, context)
   end
 
-  def scan_leaf_asc(context, leaf = @root, sargs = {})
+  def scan_leaf_eq(sargs = {}, scan_order = :asc, context = nil)
+    node = find(sargs[:eq], context)
+    return node ? [node.value] : []
+  end
+
+  def scan_leaf_in(sargs = {}, scan_order = :asc, context = nil)
+    keys = sargs[:in].sort(&@comparator)
+
+    return Enumerator.new do |y|
+      keys.each do |eq|
+        node = find(eq, context)
+        y << node.value if node
+      end
+    end
+  end
+
+  def scan_leaf_asc(leaf = @root, sargs = {}, context = nil)
     return [] if leaf.nil?
 
     Enumerator.new do |y|
       lower_bound = sargs[:gt] || sargs[:gte]
       upper_bound = sargs[:lt] || sargs[:lte]
-      equal_value = sargs[:gte] || sargs[:lte] || sargs[:eq]
+      equal_value = sargs[:gte] || sargs[:lte]
 
       above_lower = lower_bound.nil? || comparator.call(leaf.key, lower_bound) > 0
       below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
-      context.increment(:index_comparisons)
+      context&.increment(:index_comparisons)
 
       if above_lower
-        scan_leaf_asc(context, leaf.left, sargs).each do |v|
+        scan_leaf_asc(leaf.left, sargs, context).each do |v|
           y << v
         end
       end
 
-      if (above_lower && below_upper && !sargs[:eq]) || equal_match
+      if (above_lower && below_upper) || equal_match
         y << leaf.value
       end
 
       if below_upper
-        scan_leaf_asc(context, leaf.right, sargs).each do |v|
+        scan_leaf_asc(leaf.right, sargs, context).each do |v|
           y << v
         end
       end
     end
   end
 
-  def scan_leaf_desc(context, leaf = @root, sargs = {})
+  def scan_leaf_desc(leaf = @root, sargs = {}, context = nil)
     return [] if leaf.nil?
 
     Enumerator.new do |y|
@@ -118,10 +134,10 @@ class BinarySearchTree
       below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
       equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
 
-      context.increment(:index_comparisons)
+      context&.increment(:index_comparisons)
 
       if below_upper
-        scan_leaf_desc(context, leaf.right, sargs).each do |v|
+        scan_leaf_desc(leaf.right, sargs, context).each do |v|
           y << v
         end
       end
@@ -131,7 +147,7 @@ class BinarySearchTree
       end
 
       if above_lower
-        scan_leaf_desc(context, leaf.left, sargs).each do |v|
+        scan_leaf_desc(leaf.left, sargs, context).each do |v|
           y << v
         end
       end
@@ -142,8 +158,6 @@ class BinarySearchTree
   # insert a node this useful to find a starting point
   # for scans
   def find_insert_point(target, leaf = @root)
-    @num_comparisons += 1
-
     return nil if leaf.nil?
 
     case @comparator.call(leaf.key, target)
@@ -171,16 +185,16 @@ class BinarySearchTree
     @min = @max = nil
   end
 
-  def locate(target, leaf)
-    @num_comparisons += 1
-
+  def locate(target, leaf, context = nil)
     return nil if leaf.nil?
+
+    context&.increment(:index_comparisons)
 
     case @comparator.call(leaf.key, target)
     when -1
-      locate target, leaf.right
+      locate target, leaf.right, context
     when 1
-      locate target, leaf.left
+      locate target, leaf.left, context
     when 0
       leaf
     else

@@ -28,12 +28,14 @@ module Kwery
       end
 
       def call(context)
-        context.schema.index_scan(context, @index_name, @sargs, @scan_order).flat_map {|tids|
-          tids.map { |tid|
-            context.increment :index_tuples_scanned
-            context.schema.fetch(@table_name, tid)
+        context.schema
+          .index_scan(@index_name, @sargs, @scan_order, context)
+          .flat_map {|tids|
+            tids.map { |tid|
+              context.increment :index_tuples_scanned
+              context.schema.fetch(@table_name, tid)
+            }
           }
-        }
       end
     end
 

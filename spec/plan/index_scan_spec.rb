@@ -200,10 +200,9 @@ RSpec.describe Kwery::Plan::IndexScan do
       {id: 8,  name: "Quincy"},
     ])
 
-    # TODO: this should be log(n) comparisons
     expect(context.stats).to eq({
       index_tuples_scanned: 1,
-      index_comparisons: 10,
+      index_comparisons: 3,
     })
   end
 
@@ -218,9 +217,8 @@ RSpec.describe Kwery::Plan::IndexScan do
 
     expect(result.to_a).to eq([])
 
-    # TODO: this should be log(n) comparisons
     expect(context.stats).to eq({
-      index_comparisons: 10,
+      index_comparisons: 3,
     })
   end
 
@@ -407,6 +405,28 @@ RSpec.describe Kwery::Plan::IndexScan do
     expect(result.to_a).to eq([])
     expect(context.stats).to eq({
       index_comparisons: 1,
+    })
+  end
+
+  it "performs direct lookups with in sarg" do
+    sargs = {
+      in: [["Hedley"], ["Hope"], ["Kathleen"], ["Xantha"]],
+    }
+    plan = Kwery::Plan::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+
+    context = Kwery::Plan::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 4,  name: "Hedley"},
+      {id: 3,  name: "Hope"},
+      {id: 1,  name: "Kathleen"},
+      {id: 2,  name: "Xantha"},
+    ])
+
+    expect(context.stats).to eq({
+      index_comparisons: 9,
+      index_tuples_scanned: 4,
     })
   end
 end
