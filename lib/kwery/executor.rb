@@ -39,7 +39,7 @@ module Kwery
       end
 
       def explain
-        self.class
+        [self.class, @index_name, @sargs]
       end
     end
 

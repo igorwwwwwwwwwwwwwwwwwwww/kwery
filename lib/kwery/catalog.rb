@@ -41,7 +41,7 @@ module Kwery
         @indexed_exprs = indexed_exprs
       end
 
-      def reverse
+      def indexed_exprs_reverse
         indexed_exprs.map(&:reverse)
       end
     end

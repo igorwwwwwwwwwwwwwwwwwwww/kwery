@@ -18,13 +18,15 @@ module Kwery
     def index_scan_backward
       return unless @query.where.size > 0 && @query.order_by.size > 0
 
-      index = @catalog.tables[@query.from].indexes.values
-        .select { |idx| idx.reverse == @query.order_by }
+      index_name = @catalog.tables[@query.from].indexes
+        .map { |k| [k, @catalog.indexes[k]] }
+        .select { |name, idx| idx.indexed_exprs_reverse == @query.order_by }
+        .map { |k, _| k }
         .first
 
-      return unless index
+      return unless index_name
 
-      plan = Kwery::Executor::IndexScan.new(@query.from, index.name, {}, :desc)
+      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :desc)
 
       plan = where(plan)
       plan = limit(plan)
@@ -35,50 +37,51 @@ module Kwery
     def index_scan
       return unless @query.where.size > 0 || @query.order_by.size > 0
 
-      # TODO: extract index bounds from WHERE
       # TODO: support using index for both WHERE and ORDER BY
       if @query.where.size > 0
-        # * get all expressions being compared to constant values
-        # * search all indexes to see if any of them are satisfied
-        #   by our set of known constants
-        # * we can now compile that into a key (range) that can be
-        #   scanned by the index
+        match_cols_map = @query.where
+          .select { |expr| Kwery::Expr::Eq === expr }
+          .select { |expr| Kwery::Expr::Column === expr.left }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
+          .map { |expr| [expr.left.name, expr.right.value] }
+          .to_h
+        match_cols = match_cols_map.keys.to_set
 
-        # next steps: start with the executor, then we have a target
-        #   api to work against.
-        # then: try and find some papers on query planning, maybe
-        #   vldb has something.
+        index_name = @catalog.tables[@query.from].indexes
+          .map { |k| [k, @catalog.indexes[k]] }
+          .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
+          .map { |k, exprs| [k, exprs.map(&:name).to_set] }
+          .select { |k, indexed_cols| indexed_cols == match_cols }
+          .map { |k, _| k }
+          .first
 
-        # comparison_operators = Set.new([Kwery::Expr::Eq, Kwery::Expr::Gt])
-        # match_exprs_map = @query.where
-        #   .select { |expr| comparison_operators.include?(expr.class) }
-        #   .select { |expr| Kwery::Expr::Literal === expr.right }
-        #   .map { |expr| [expr.left, expr.right] }
-        #   .to_h
-        # match_exprs = match_exprs_map.keys.to_set
-        #
-        # matching_indexes = @catalog.tables[@query.from].indexes
-        #   .map { |k| [k, @catalog.indexes[k]] }
-        #   .map { |k, index| [k, index.indexed_exprs.map(&:expr).to_set] }
-        #   .select { |k, exprs| exprs == match_exprs }
-        #   .to_h
-        #
-        # index_name = matching_indexes.keys.first
-        #
-        # # TODO pass this as a condition to the index scan
-        # index_options = match_exprs_map
+        index = @catalog.indexes[index_name]
+        if index
+          eq_key = index.indexed_exprs
+            .map(&:expr)
+            .map(&:name)
+            .map { |k| match_cols_map[k] }
+
+          sargs = {eq: eq_key}
+
+          plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
+
+          plan = limit(plan)
+          plan = project(plan)
+          return plan
+        end
       end
 
-      # try to find index with exact match
-      index = @catalog.tables[@query.from].indexes
+      # exact match on order by
+      index_name = @catalog.tables[@query.from].indexes
         .map { |k| [k, @catalog.indexes[k]] }
         .select { |name, idx| idx.indexed_exprs == @query.order_by }
-        .map { |k| k }
+        .map { |k, _| k }
         .first
 
-      return unless index
+      return unless index_name
 
-      plan = Kwery::Executor::IndexScan.new(@query.from, index, {}, :asc)
+      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :asc)
 
       # TODO: extra where on index prefix match
       # TODO: extra sort on index prefix match
