@@ -457,6 +457,8 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     # ---
 
+    # TODO this probably breaks if there is more than one index entry
+    #      with the same prefix. e.g. index (active, name)
     sargs = {
       eq: ["Quincy"],
     }
