@@ -8,7 +8,13 @@ module Kwery
         @state[table_name] = []
       end
       catalog.indexes.each do |index_name, i|
-        @state[index_name] = Kwery::Index.new
+        @state[index_name] = Kwery::Index.new(
+          comparator: lambda { |a, b|
+            # prefix matching
+            prefix_min = [a.size, b.size].min
+            a.take(prefix_min) <=> b.take(prefix_min)
+          }
+        )
       end
     end
 

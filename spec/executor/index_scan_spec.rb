@@ -25,7 +25,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     {id: 7,  name: "Herrod"},
     {id: 8,  name: "Quincy"},
     {id: 9,  name: "Uta"},
-    {id: 10, name: "Anastasia"}
+    {id: 10, name: "Anastasia"},
   ])
   schema.reindex(:users, :users_idx_name)
 
@@ -427,6 +427,51 @@ RSpec.describe Kwery::Executor::IndexScan do
     expect(context.stats).to eq({
       index_comparisons: 9,
       index_tuples_scanned: 4,
+    })
+  end
+
+  it "performs a prefix lookup" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_name_active],
+    )
+    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active)),
+    ])
+
+    schema = catalog.new_schema
+    schema.bulk_insert(:users, [
+      {id: 6,  name: "Emi",       active: false},
+      {id: 7,  name: "Herrod",    active: true},
+      {id: 8,  name: "Quincy",    active: true},
+      {id: 9,  name: "Uta",       active: false},
+      {id: 10, name: "Anastasia", active: true},
+    ])
+    schema.reindex(:users, :users_idx_name_active)
+
+    # ---
+
+    sargs = {
+      eq: ["Quincy"],
+    }
+    plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_active, sargs, :asc)
+
+    context = Kwery::Executor::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 8,  name: "Quincy", active: true},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 1,
+      index_comparisons: 2,
     })
   end
 end

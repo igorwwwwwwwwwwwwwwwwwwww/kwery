@@ -125,6 +125,7 @@ module Kwery
           eq_key = index.indexed_exprs
             .map(&:expr)
             .map { |k| match_exprs_map[k] }
+            .select { |k| k }
 
           sargs = {eq: eq_key}
 

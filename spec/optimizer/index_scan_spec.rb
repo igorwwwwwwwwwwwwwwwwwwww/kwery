@@ -196,12 +196,10 @@ RSpec.describe Kwery::Optimizer do
 
     plan = query.plan(catalog)
 
-    # TODO actually handle a nil case (or prefix)
-
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_active,
-          {eq: ['Cara', nil]}]]
+          {eq: ['Cara']}]]
     )
   end
 
