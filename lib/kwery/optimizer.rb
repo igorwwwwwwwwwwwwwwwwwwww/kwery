@@ -34,15 +34,6 @@ module Kwery
       plan
     end
 
-    def match_prefix(index_exprs, match_exprs)
-      (1..index_exprs.size)
-        .map {|i| index_exprs.each_slice(i).to_a }
-        .reverse
-        .select { |prefix, remainder| prefix.to_set == match_exprs.to_set }
-        .map { |prefix, remainder| prefix }
-        .first
-    end
-
     def index_scan
       return unless @query.where.size > 0 || @query.order_by.size > 0
 
@@ -153,6 +144,15 @@ module Kwery
       plan = limit(plan)
       plan = project(plan)
       plan
+    end
+
+    def match_prefix(index_exprs, match_exprs)
+      (1..index_exprs.size)
+        .map {|i| index_exprs.each_slice(i).to_a }
+        .reverse
+        .select { |prefix, remainder| prefix.to_set == match_exprs.to_set }
+        .map { |prefix, remainder| prefix }
+        .first
     end
 
     # cut my plans into pieces
