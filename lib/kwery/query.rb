@@ -14,7 +14,7 @@ module Kwery
     end
 
     def plan(catalog)
-      Optimizer.new(catalog, self).call
+      Planner.new(catalog, self).call
     end
   end
 end

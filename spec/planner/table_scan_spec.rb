@@ -1,6 +1,6 @@
 require 'kwery'
 
-RSpec.describe Kwery::Optimizer do
+RSpec.describe Kwery::Planner do
   it "performs a table scan by default" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(

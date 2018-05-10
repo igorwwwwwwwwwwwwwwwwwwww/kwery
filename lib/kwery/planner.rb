@@ -1,9 +1,9 @@
 require 'set'
 
-# this is the "query planner"
+# this is the query planner, sometimes also called "optimizer"
 
 module Kwery
-  class Optimizer
+  class Planner
     def initialize(catalog, query)
       @catalog = catalog
       @query = query

@@ -1,6 +1,6 @@
 require 'kwery'
 
-RSpec.describe Kwery::Optimizer do
+RSpec.describe Kwery::Planner do
   it "performs an index scan for order by" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
