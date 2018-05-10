@@ -40,7 +40,7 @@ query = Kwery::Query.new(
 
 begin
   plan = query.plan(catalog)
-rescue Kwery::Plan::NoTableScanError => e
+rescue Kwery::Executor::NoTableScanError => e
   pp query
   puts
   puts "error: #{e}"
@@ -54,7 +54,7 @@ when 'query'
 when 'plan'
   pp plan
 when 'run'
-  context = Kwery::Plan::Context.new(schema)
+  context = Kwery::Executor::Context.new(schema)
   plan.call(context).each do |tup|
     puts tup
   end

@@ -25,7 +25,7 @@ module Kwery
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@query.from, index.name, {}, :desc)
+      plan = Kwery::Executor::IndexScan.new(@query.from, index.name, {}, :desc)
 
       plan = where(plan)
       plan = limit(plan)
@@ -80,7 +80,7 @@ module Kwery
         return
       end
 
-      plan = Kwery::Plan::IndexScan.new(@query.from, index_name, {}, :asc)
+      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :asc)
 
       # TODO: extra where on index prefix match
       # TODO: extra sort on index prefix match
@@ -94,10 +94,10 @@ module Kwery
     def table_scan
       if @query.options[:notablescan]
         # a notable scan indeed
-        raise Kwery::Plan::NoTableScanError.new("query resulted in table scan")
+        raise Kwery::Executor::NoTableScanError.new("query resulted in table scan")
       end
 
-      plan = Kwery::Plan::TableScan.new(@query.from)
+      plan = Kwery::Executor::TableScan.new(@query.from)
 
       plan = where(plan)
       plan = sort(plan)
@@ -113,7 +113,7 @@ module Kwery
     def where(plan)
       return plan unless @query.where
 
-      Kwery::Plan::Filter.new(
+      Kwery::Executor::Filter.new(
         lambda { |tup|
           @query.where.map { |cond| cond.call(tup) }.reduce(:&)
         },
@@ -124,13 +124,13 @@ module Kwery
     def limit(plan)
       return plan unless @query.limit
 
-      Kwery::Plan::Limit.new(@query.limit, plan)
+      Kwery::Executor::Limit.new(@query.limit, plan)
     end
 
     def sort(plan)
       return plan unless @query.order_by.size > 0
 
-      Kwery::Plan::Sort.new(
+      Kwery::Executor::Sort.new(
         lambda { |tup_a, tup_b|
           # => enum of ordered_col fields
           # => enum of ruby "spaceship" results (-1|0|1)
@@ -155,7 +155,7 @@ module Kwery
     end
 
     def project(plan)
-      plan = Kwery::Plan::Project.new(
+      plan = Kwery::Executor::Project.new(
         lambda { |tup| @query.select.map { |k, f| [k, f.call(tup)] }.to_h },
         plan
       )

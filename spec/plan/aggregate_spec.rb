@@ -1,6 +1,6 @@
 require 'kwery'
 
-RSpec.describe Kwery::Plan::Aggregate do
+RSpec.describe Kwery::Executor::Aggregate do
   catalog = Kwery::Catalog.new
 
   catalog.table :users, Kwery::Catalog::Table.new(
@@ -29,10 +29,10 @@ RSpec.describe Kwery::Plan::Aggregate do
     reduce = lambda { |sum, tup| sum + 1 }
     render = lambda { |state| {count: state} }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Aggregate.new(0, reduce, render, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Aggregate.new(0, reduce, render, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -49,10 +49,10 @@ RSpec.describe Kwery::Plan::Aggregate do
     reduce = lambda { |sum, tup| sum + 1 }
     render = lambda { |k, v| {active: k, count: v} }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::HashAggregate.new(0, group_by, reduce, render, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::HashAggregate.new(0, group_by, reduce, render, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([

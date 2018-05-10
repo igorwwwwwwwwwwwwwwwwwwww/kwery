@@ -40,7 +40,7 @@ RSpec.describe Kwery do
 
     plan = query.plan(catalog)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([

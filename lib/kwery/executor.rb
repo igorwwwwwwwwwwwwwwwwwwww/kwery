@@ -1,5 +1,5 @@
 module Kwery
-  module Plan
+  module Executor
     class NoTableScanError < StandardError
     end
 

@@ -1,6 +1,6 @@
 require 'kwery'
 
-RSpec.describe Kwery::Plan::TableScan do
+RSpec.describe Kwery::Executor::TableScan do
   catalog = Kwery::Catalog.new
 
   catalog.table :users, Kwery::Catalog::Table.new(
@@ -25,9 +25,9 @@ RSpec.describe Kwery::Plan::TableScan do
   ])
 
   it "scans the whole table" do
-    plan = Kwery::Plan::TableScan.new(:users)
+    plan = Kwery::Executor::TableScan.new(:users)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -49,10 +49,10 @@ RSpec.describe Kwery::Plan::TableScan do
   end
 
   it "scans only as much as needed by limit" do
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Limit.new(5, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Limit.new(5, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -71,10 +71,10 @@ RSpec.describe Kwery::Plan::TableScan do
   it "filters properly" do
     pred = lambda { |tup| tup[:id] == 8 }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Filter.new(pred, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Filter.new(pred, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -89,11 +89,11 @@ RSpec.describe Kwery::Plan::TableScan do
   it "filters lazily" do
     pred = lambda { |tup| tup[:id] == 8 }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Filter.new(pred, plan)
-    plan = Kwery::Plan::Limit.new(1, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Filter.new(pred, plan)
+    plan = Kwery::Executor::Limit.new(1, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -108,10 +108,10 @@ RSpec.describe Kwery::Plan::TableScan do
   it "sorts the result set" do
     comp = lambda { |tup_a, tup_b| tup_a[:name] <=> tup_b[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Sort.new(comp, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Sort.new(comp, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -135,11 +135,11 @@ RSpec.describe Kwery::Plan::TableScan do
   it "scans everything while sorting despite limit" do
     comp = lambda { |tup_a, tup_b| tup_a[:name] <=> tup_b[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Sort.new(comp, plan)
-    plan = Kwery::Plan::Limit.new(2, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Sort.new(comp, plan)
+    plan = Kwery::Executor::Limit.new(2, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
@@ -155,11 +155,11 @@ RSpec.describe Kwery::Plan::TableScan do
   it "projects selected values" do
     proj = lambda { |tup| tup[:name] }
 
-    plan = Kwery::Plan::TableScan.new(:users)
-    plan = Kwery::Plan::Project.new(proj, plan)
-    plan = Kwery::Plan::Limit.new(2, plan)
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::Project.new(proj, plan)
+    plan = Kwery::Executor::Limit.new(2, plan)
 
-    context = Kwery::Plan::Context.new(schema)
+    context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
