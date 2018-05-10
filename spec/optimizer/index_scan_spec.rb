@@ -61,7 +61,8 @@ RSpec.describe Kwery::Optimizer do
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
-        [Kwery::Executor::IndexScan, :users_idx_id, {eq: [10]}]]
+        [Kwery::Executor::IndexScan, :users_idx_id,
+          {eq: [10]}]]
     )
   end
 
@@ -73,9 +74,9 @@ RSpec.describe Kwery::Optimizer do
         name:   Kwery::Catalog::Column.new(:string),
         active: Kwery::Catalog::Column.new(:boolean),
       },
-      indexes: [:users_idx_id],
+      indexes: [:users_idx_upper_name],
     )
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
+    catalog.index :users_idx_upper_name, Kwery::Catalog::Index.new(:users, [
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
     ])
 
@@ -93,7 +94,43 @@ RSpec.describe Kwery::Optimizer do
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
-        [Kwery::Executor::IndexScan, :users_idx_id, {eq: ['CARA']}]]
+        [Kwery::Executor::IndexScan, :users_idx_upper_name,
+          {eq: ['CARA']}]]
+    )
+  end
+
+  it "matches a compound index" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_name_active],
+    )
+    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::IndexScan, :users_idx_name_active,
+          {eq: ['Cara', true]}]]
     )
   end
 end
