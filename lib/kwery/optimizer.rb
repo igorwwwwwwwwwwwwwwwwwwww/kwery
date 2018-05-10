@@ -34,6 +34,15 @@ module Kwery
       plan
     end
 
+    def match_prefix(index_exprs, match_exprs)
+      (1..index_exprs.size)
+        .map {|i| index_exprs.each_slice(i).to_a }
+        .reverse
+        .select { |prefix, remainder| prefix.to_set == match_exprs.to_set }
+        .map { |prefix, remainder| prefix }
+        .first
+    end
+
     def index_scan
       return unless @query.where.size > 0 || @query.order_by.size > 0
 
@@ -46,16 +55,53 @@ module Kwery
           .to_h
         match_exprs = match_exprs_map.keys.to_set
 
-        index_name = @catalog.tables[@query.from].indexes
+        range_exprs_map = @query.where
+          .select { |expr| Kwery::Expr::Gt === expr }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
+          .map { |expr| [expr.left, expr.right.value] }
+          .to_h
+        range_exprs = range_exprs_map.keys.to_set
+
+        index_exprs = @catalog.tables[@query.from].indexes
           .map { |k| [k, @catalog.indexes[k]] }
           .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
-          .map { |k, exprs| [k, exprs.to_set] }
-          .select { |k, exprs| exprs == match_exprs }
-          .map { |k, _| k }
+
+        # try exact range match
+        if match_exprs.size == 0 && range_exprs.size == 1
+          index_name = index_exprs
+            .select { |k, exprs| exprs.to_set == range_exprs }
+            .map { |k, exprs| k }
+            .first
+
+          if index_name
+            index = @catalog.indexes[index_name]
+
+            gt_key = index.indexed_exprs
+              .map(&:expr)
+              .map { |k| range_exprs_map[k] }
+
+            sargs = {gt: gt_key}
+
+            plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
+
+            plan = limit(plan)
+            plan = project(plan)
+            return plan
+          end
+        end
+
+        index_name, matched_prefix = index_exprs
+          .map { |k, exprs| [k, match_prefix(exprs, match_exprs)] }
+          .select { |k, prefix| prefix }
           .first
 
-        index = @catalog.indexes[index_name]
-        if index
+        if index_name
+          index = @catalog.indexes[index_name]
+
+          # match_remainder = index.indexed_exprs
+          #   .map(&:expr)
+          #   .drop(matched_prefix.size)
+
           eq_key = index.indexed_exprs
             .map(&:expr)
             .map { |k| match_exprs_map[k] }
@@ -105,9 +151,7 @@ module Kwery
       plan
     end
 
-    # TODO: change this to be DNF (OR of ANDs)
-    #
-    # therewhere clause is an array
+    # where clause is an array
     # of (implicitly) ANDed expressions
     def where(plan)
       return plan unless @query.where.size > 0

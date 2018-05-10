@@ -142,9 +142,9 @@ RSpec.describe Kwery::Optimizer do
         name:   Kwery::Catalog::Column.new(:string),
         active: Kwery::Catalog::Column.new(:boolean),
       },
-      indexes: [:users_idx_name_active],
+      indexes: [:users_idx_active_name],
     )
-    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
+    catalog.index :users_idx_active_name, Kwery::Catalog::Index.new(:users, [
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
     ])
@@ -164,8 +164,77 @@ RSpec.describe Kwery::Optimizer do
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
-        [Kwery::Executor::IndexScan, :users_idx_name_active,
+        [Kwery::Executor::IndexScan, :users_idx_active_name,
           {eq: [true, 'Cara']}]]
+    )
+  end
+
+  it "matches an index prefix" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_name_active],
+    )
+    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    # TODO actually handle a nil case (or prefix)
+
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::IndexScan, :users_idx_name_active,
+          {eq: ['Cara', nil]}]]
+    )
+  end
+
+  it "matches a >= constraint" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_id],
+    )
+    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::IndexScan, :users_idx_id,
+          {gt: [10]}]]
     )
   end
 end
