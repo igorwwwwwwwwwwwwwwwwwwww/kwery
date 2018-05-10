@@ -4,7 +4,7 @@ module Kwery
   class Query
     attr_accessor :select, :from, :where, :order_by, :limit, :options
 
-    def initialize(select:, from:, where: nil, order_by: [], limit: nil, options: {})
+    def initialize(select:, from:, where: [], order_by: [], limit: nil, options: {})
       @select = select
       @from = from
       @where = where

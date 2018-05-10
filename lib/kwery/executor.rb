@@ -37,6 +37,10 @@ module Kwery
             }
           }
       end
+
+      def explain
+        self.class
+      end
     end
 
     class TableScan
@@ -50,6 +54,10 @@ module Kwery
           tup
         }
       end
+
+      def explain
+        self.class
+      end
     end
 
     class Filter
@@ -60,6 +68,10 @@ module Kwery
 
       def call(context)
         @plan.call(context).select(&@pred)
+      end
+
+      def explain
+        [self.class, @plan.explain]
       end
     end
 
@@ -72,6 +84,10 @@ module Kwery
       def call(context)
         @plan.call(context).take(@limit)
       end
+
+      def explain
+        [self.class, @plan.explain]
+      end
     end
 
     class Sort
@@ -83,6 +99,10 @@ module Kwery
       def call(context)
         @plan.call(context).sort(&@comp)
       end
+
+      def explain
+        [self.class, @plan.explain]
+      end
     end
 
     class Project
@@ -93,6 +113,10 @@ module Kwery
 
       def call(context)
         @plan.call(context).map(&@proj)
+      end
+
+      def explain
+        [self.class, @plan.explain]
       end
     end
 
@@ -107,6 +131,10 @@ module Kwery
       def call(context)
         state = @plan.call(context).reduce(@init, &@reduce)
         [@render.call(state)]
+      end
+
+      def explain
+        [self.class, @plan.explain]
       end
     end
 
@@ -126,6 +154,10 @@ module Kwery
           .to_h
 
         state.map { |k, v| @render.call(k, v) }
+      end
+
+      def explain
+        [self.class, @plan.explain]
       end
     end
   end

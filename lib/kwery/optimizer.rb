@@ -1,5 +1,7 @@
 require 'set'
 
+# this is the "query planner"
+
 module Kwery
   class Optimizer
     def initialize(catalog, query)
@@ -14,16 +16,13 @@ module Kwery
     private
 
     def index_scan_backward
-      unless @query.order_by.size > 0
-        return
-      end
+      return unless @query.where.size > 0 && @query.order_by.size > 0
 
       index = @catalog.tables[@query.from].indexes.values
         .select { |idx| idx.reverse == @query.order_by }
         .first
-      unless index
-        return
-      end
+
+      return unless index
 
       plan = Kwery::Executor::IndexScan.new(@query.from, index.name, {}, :desc)
 
@@ -34,9 +33,11 @@ module Kwery
     end
 
     def index_scan
+      return unless @query.where.size > 0 || @query.order_by.size > 0
+
       # TODO: extract index bounds from WHERE
       # TODO: support using index for both WHERE and ORDER BY
-      if @query.where
+      if @query.where.size > 0
         # * get all expressions being compared to constant values
         # * search all indexes to see if any of them are satisfied
         #   by our set of known constants
@@ -48,39 +49,36 @@ module Kwery
         # then: try and find some papers on query planning, maybe
         #   vldb has something.
 
-        comparison_operators = Set.new([Kwery::Expr::Eq, Kwery::Expr::Gt])
-        match_exprs_map = @query.where
-          .select { |expr| comparison_operators.include?(expr.class) }
-          .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left, expr.right] }
-          .to_h
-        match_exprs = match_exprs_map.keys.to_set
-
-        matching_indexes = @catalog.tables[@query.from].indexes
-          .map { |k| [k, @catalog.indexes[k]] }
-          .map { |k, index| [k, index.indexed_exprs.map(&:expr).to_set] }
-          .select { |k, exprs| exprs == match_exprs }
-          .to_h
-
-        index_name = matching_indexes.keys.first
-
-        # TODO pass this as a condition to the index scan
-        index_options = match_exprs_map
+        # comparison_operators = Set.new([Kwery::Expr::Eq, Kwery::Expr::Gt])
+        # match_exprs_map = @query.where
+        #   .select { |expr| comparison_operators.include?(expr.class) }
+        #   .select { |expr| Kwery::Expr::Literal === expr.right }
+        #   .map { |expr| [expr.left, expr.right] }
+        #   .to_h
+        # match_exprs = match_exprs_map.keys.to_set
+        #
+        # matching_indexes = @catalog.tables[@query.from].indexes
+        #   .map { |k| [k, @catalog.indexes[k]] }
+        #   .map { |k, index| [k, index.indexed_exprs.map(&:expr).to_set] }
+        #   .select { |k, exprs| exprs == match_exprs }
+        #   .to_h
+        #
+        # index_name = matching_indexes.keys.first
+        #
+        # # TODO pass this as a condition to the index scan
+        # index_options = match_exprs_map
       end
 
-      unless index_name
-        # try to find index with exact match
-        index = @catalog.tables[@query.from].indexes
-          .select { |name, idx| idx.columns == @query.order_by }
-          .keys
-          .first
-      end
+      # try to find index with exact match
+      index = @catalog.tables[@query.from].indexes
+        .map { |k| [k, @catalog.indexes[k]] }
+        .select { |name, idx| idx.indexed_exprs == @query.order_by }
+        .map { |k| k }
+        .first
 
-      unless index_name
-        return
-      end
+      return unless index
 
-      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :asc)
+      plan = Kwery::Executor::IndexScan.new(@query.from, index, {}, :asc)
 
       # TODO: extra where on index prefix match
       # TODO: extra sort on index prefix match
@@ -111,7 +109,7 @@ module Kwery
     # therewhere clause is an array
     # of (implicitly) ANDed expressions
     def where(plan)
-      return plan unless @query.where
+      return plan unless @query.where.size > 0
 
       Kwery::Executor::Filter.new(
         lambda { |tup|
