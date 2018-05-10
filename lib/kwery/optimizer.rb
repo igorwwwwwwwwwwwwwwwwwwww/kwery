@@ -39,19 +39,18 @@ module Kwery
 
       # TODO: support using index for both WHERE and ORDER BY
       if @query.where.size > 0
-        match_cols_map = @query.where
+        match_exprs_map = @query.where
           .select { |expr| Kwery::Expr::Eq === expr }
-          .select { |expr| Kwery::Expr::Column === expr.left }
           .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left.name, expr.right.value] }
+          .map { |expr| [expr.left, expr.right.value] }
           .to_h
-        match_cols = match_cols_map.keys.to_set
+        match_exprs = match_exprs_map.keys.to_set
 
         index_name = @catalog.tables[@query.from].indexes
           .map { |k| [k, @catalog.indexes[k]] }
           .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
-          .map { |k, exprs| [k, exprs.map(&:name).to_set] }
-          .select { |k, indexed_cols| indexed_cols == match_cols }
+          .map { |k, exprs| [k, exprs.to_set] }
+          .select { |k, exprs| exprs == match_exprs }
           .map { |k, _| k }
           .first
 
@@ -59,8 +58,7 @@ module Kwery
         if index
           eq_key = index.indexed_exprs
             .map(&:expr)
-            .map(&:name)
-            .map { |k| match_cols_map[k] }
+            .map { |k| match_exprs_map[k] }
 
           sargs = {eq: eq_key}
 

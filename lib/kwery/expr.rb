@@ -25,5 +25,11 @@ module Kwery
         left.call(tup) > right.call(tup)
       end
     end
+
+    class Upper < Struct.new(:expr)
+      def call(tup)
+        expr.call(tup).upcase
+      end
+    end
   end
 end
