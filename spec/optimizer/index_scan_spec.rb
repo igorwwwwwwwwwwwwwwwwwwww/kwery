@@ -237,4 +237,39 @@ RSpec.describe Kwery::Optimizer do
           {gt: [10]}]]
     )
   end
+
+  it "matches a >= constraint with an index prefix" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_active_id],
+    )
+    catalog.index :users_idx_active_id, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
+        Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::IndexScan, :users_idx_active_id,
+          {gt: [true, 10]}]]
+    )
+  end
 end

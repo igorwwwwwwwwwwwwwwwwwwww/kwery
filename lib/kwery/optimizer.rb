@@ -66,6 +66,9 @@ module Kwery
           .map { |k| [k, @catalog.indexes[k]] }
           .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
 
+        # TODO: support multiple range expressions on the same column
+        #       e.g. id > 10 AND id < 20
+        #
         # try exact range match
         if match_exprs.size == 0 && range_exprs.size == 1
           index_name = index_exprs
@@ -98,9 +101,26 @@ module Kwery
         if index_name
           index = @catalog.indexes[index_name]
 
-          # match_remainder = index.indexed_exprs
-          #   .map(&:expr)
-          #   .drop(matched_prefix.size)
+          match_remainder = index.indexed_exprs
+            .map(&:expr)
+            .drop(matched_prefix.size)
+
+          # suffix range match
+          if range_exprs.size == 1 && match_remainder.to_set == range_exprs
+            index = @catalog.indexes[index_name]
+
+            gt_key = index.indexed_exprs
+              .map(&:expr)
+              .map { |k| match_exprs_map[k] || range_exprs_map[k] }
+
+            sargs = {gt: gt_key}
+
+            plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
+
+            plan = limit(plan)
+            plan = project(plan)
+            return plan
+          end
 
           eq_key = index.indexed_exprs
             .map(&:expr)
