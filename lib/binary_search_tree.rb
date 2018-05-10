@@ -16,13 +16,8 @@ class BinarySearchTree
     -1 == compute_and_check_height(@root) ? false : true
   end
 
-  def initialize(comparator: nil, logger: nil)
+  def initialize(comparator: nil)
     @comparator = comparator || lambda { |a, b| a <=> b }
-    @logger = logger
-    clear
-  end
-
-  def clear
     @root = nil
     @size = 0
   end
@@ -36,16 +31,12 @@ class BinarySearchTree
     node
   end
 
-  def find_value(value)
-    find_value_ex @root, value
-  end
-
   def min
-    @min ||= locate_min @root
+    locate_min @root
   end
 
   def max
-    @max ||= locate_max @root
+    locate_max @root
   end
 
   def insert(element, value)
@@ -54,10 +45,6 @@ class BinarySearchTree
 
   def remove(node_or_key)
     delete node_or_key
-  end
-
-  def remove_min
-    delete min
   end
 
   def nodes
@@ -156,35 +143,12 @@ class BinarySearchTree
     end
   end
 
-  # find exact match or parent node, where we could
-  # insert a node this useful to find a starting point
-  # for scans
-  def find_insert_point(target, leaf = @root)
-    return nil if leaf.nil?
-
-    case @comparator.call(leaf.key, target)
-    when -1
-      find_insert_point(target, leaf.right) || leaf
-    when 0
-      leaf
-    when 1
-      find_insert_point(target, leaf.left) || leaf
-    else
-      raise
-    end
-  end
-
-  def print_tree(leaf = @root, depth = 0)
-    return unless leaf
-    puts (" " * depth * 2) + leaf.key.inspect
-    print_tree(leaf.left, depth + 1)
-    print_tree(leaf.right, depth + 1)
-  end
-
-  private
-
-  def invalidate_cached_values
-    @min = @max = nil
+  def to_s(leaf = @root, depth = 0)
+    return "" unless leaf
+    buf = ""
+    buf += (" " * depth * 2) + leaf.key.inspect + "\n"
+    buf += to_s(leaf.left, depth + 1)
+    buf += to_s(leaf.right, depth + 1)
   end
 
   def locate(target, leaf, context = nil)
@@ -237,7 +201,6 @@ class BinarySearchTree
       # create that new node
       leaf = BinaryNode.new element, value, parent
       @size += 1
-      invalidate_cached_values
       if parent
         if 'left' == link_type
           parent.left = leaf
@@ -276,17 +239,6 @@ class BinarySearchTree
         raise
       end
     end
-  end
-
-  def find_value_ex(leaf, value)
-    if leaf
-      node_with_value = find_value_ex leaf.left, value
-      return node_with_value if node_with_value
-      return leaf if leaf.value == value
-      node_with_value = find_value_ex leaf.right, value
-      return node_with_value if node_with_value
-    end
-    nil
   end
 
   def serialize_nodes(leaf)
@@ -442,7 +394,6 @@ class BinarySearchTree
 
     if node
       @size -= 1
-      invalidate_cached_values
 
       # There are three cases:
       #
@@ -629,17 +580,8 @@ class BinaryNode
   end
 
   def balance_factor
-    left_height = if left
-                    left.height
-                  else
-                    -1
-                  end
-
-    right_height = if right
-                     right.height
-                   else
-                     -1
-                   end
+    left_height  = left  ? left.height  : -1
+    right_height = right ? right.height : -1
 
     left_height - right_height
   end
