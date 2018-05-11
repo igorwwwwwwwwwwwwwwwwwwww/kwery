@@ -459,6 +459,9 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     # TODO this probably breaks if there is more than one index entry
     #      with the same prefix. e.g. index (active, name)
+    #
+    #      it may make sense to remove support for prefix matching
+    #      and only use the prefix to build a key for a range scan
     sargs = {
       eq: ["Quincy"],
     }

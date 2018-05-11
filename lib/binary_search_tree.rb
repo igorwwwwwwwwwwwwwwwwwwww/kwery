@@ -6,8 +6,10 @@
 # * support custom comparator
 # * scan_leaf   to scan index based on sargs (search args)
 # * print_tree  print the full tree for debugging
-
-# TODO: remove unused parts, especially the stateful caching
+#
+# these may be good for further inspiration
+# * https://github.com/google/btree
+# * https://godoc.org/github.com/petar/GoLLRB/llrb
 
 class BinarySearchTree
   attr_reader :size, :root, :comparator
