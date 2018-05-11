@@ -10,29 +10,10 @@ module Kwery
     end
 
     def call
-      index_scan_backward || index_scan || table_scan
+      index_scan || table_scan
     end
 
     private
-
-    def index_scan_backward
-      return unless @query.where.size > 0 && @query.order_by.size > 0
-
-      index_name = @catalog.tables[@query.from].indexes
-        .map { |k| [k, @catalog.indexes[k]] }
-        .select { |name, idx| idx.indexed_exprs_reverse == @query.order_by }
-        .map { |k, _| k }
-        .first
-
-      return unless index_name
-
-      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :desc)
-
-      plan = where(plan)
-      plan = limit(plan)
-      plan = project(plan)
-      plan
-    end
 
     def index_scan
       return unless @query.where.size > 0 || @query.order_by.size > 0
