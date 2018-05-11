@@ -170,6 +170,9 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches an index prefix" do
+    # TODO: this should no longer work once prefix matching
+    #       is removed from the planner
+
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
       columns: {

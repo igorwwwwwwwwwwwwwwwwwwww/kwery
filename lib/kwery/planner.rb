@@ -37,6 +37,24 @@ module Kwery
     def index_scan
       return unless @query.where.size > 0 || @query.order_by.size > 0
 
+      # here is a rough outline for how all of this could be made
+      # somewhat more robust:
+      #
+      # * parse eq and range constraints from query (range constraints grouped
+      #   by column expr)
+      # * match eq against indexes       => fully satisfied indexes are candidates
+      # * match ranges against indexes   => fully satisfied indexes are candidates
+      # * match order_by against indexes => fully satisfied indexes are candidates
+      # * prefix match eq against indexes
+      #   * for each prefix, match (prefix || order_by)              => candidate
+      #   * for each prefix, and each range constraint
+      #     column expr, match (prefix || column expr)               => candidate
+      # * rank candidates by (indexed_exprs.size + 5 *
+      #   has_order_by), pick the highest one
+      # * figure out sargs for the index
+      # * figure out which query conditions have not been satisfied,
+      #   add Filter and Sort nodes if needed
+
       # TODO: support using index for both WHERE and ORDER BY
       if @query.where.size > 0
         match_exprs_map = @query.where
