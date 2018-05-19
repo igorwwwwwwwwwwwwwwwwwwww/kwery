@@ -16,130 +16,23 @@ module Kwery
     private
 
     def index_scan
-      return unless @query.where.size > 0 || @query.order_by.size > 0
+      matcher = IndexMatcher.new(@catalog, @query)
 
-      # here is a rough outline for how all of this could be made
-      # somewhat more robust:
-      #
-      # * parse eq and range constraints from query (range constraints grouped
-      #   by column expr)
-      # * match eq against indexes       => fully satisfied indexes are candidates
-      # * match ranges against indexes   => fully satisfied indexes are candidates
-      # * match order_by against indexes => fully satisfied indexes are candidates
-      # * prefix match eq against indexes
-      #   * for each prefix, match (prefix || order_by)              => candidate
-      #   * for each prefix, and each range constraint
-      #     column expr, match (prefix || column expr)               => candidate
-      # * rank candidates by (indexed_exprs.size + 5 *
-      #   has_order_by), pick the highest one
-      # * figure out sargs for the index
-      # * figure out which query conditions have not been satisfied,
-      #   add Filter and Sort nodes if needed
+      candidates = matcher.match
 
-      # TODO: support using index for both WHERE and ORDER BY
-      if @query.where.size > 0
-        match_exprs_map = @query.where
-          .select { |expr| Kwery::Expr::Eq === expr }
-          .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left, expr.right.value] }
-          .to_h
-        match_exprs = match_exprs_map.keys.to_set
+      return if candidates.empty?
 
-        range_exprs_map = @query.where
-          .select { |expr| Kwery::Expr::Gt === expr }
-          .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left, expr.right.value] }
-          .to_h
-        range_exprs = range_exprs_map.keys.to_set
+      # pick first candidate for now
+      # we can do cost-based planning later
+      candidate = candidates.first
 
-        index_exprs = @catalog.tables[@query.from].indexes
-          .map { |k| [k, @catalog.indexes[k]] }
-          .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
+      plan = Kwery::Executor::IndexScan.new(
+        @query.from,
+        candidate.index_name,
+        candidate.sargs,
+        :asc,
+      )
 
-        # TODO: support multiple range expressions on the same column
-        #       e.g. id > 10 AND id < 20
-        #
-        # try exact range match
-        if match_exprs.size == 0 && range_exprs.size == 1
-          index_name = index_exprs
-            .select { |k, exprs| exprs.to_set == range_exprs }
-            .map { |k, exprs| k }
-            .first
-
-          if index_name
-            index = @catalog.indexes[index_name]
-
-            gt_key = index.indexed_exprs
-              .map(&:expr)
-              .map { |k| range_exprs_map[k] }
-
-            sargs = {gt: gt_key}
-
-            plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
-
-            plan = limit(plan)
-            plan = project(plan)
-            return plan
-          end
-        end
-
-        index_name, matched_prefix = index_exprs
-          .map { |k, exprs| [k, match_prefix(exprs, match_exprs)] }
-          .select { |k, prefix| prefix }
-          .first
-
-        if index_name
-          index = @catalog.indexes[index_name]
-
-          match_remainder = index.indexed_exprs
-            .map(&:expr)
-            .drop(matched_prefix.size)
-
-          # suffix range match
-          if range_exprs.size == 1 && match_remainder.to_set == range_exprs
-            index = @catalog.indexes[index_name]
-
-            gt_key = index.indexed_exprs
-              .map(&:expr)
-              .map { |k| match_exprs_map[k] || range_exprs_map[k] }
-
-            sargs = {gt: gt_key}
-
-            plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
-
-            plan = limit(plan)
-            plan = project(plan)
-            return plan
-          end
-
-          eq_key = index.indexed_exprs
-            .map(&:expr)
-            .map { |k| match_exprs_map[k] }
-            .select { |k| k }
-
-          sargs = {eq: eq_key}
-
-          plan = Kwery::Executor::IndexScan.new(@query.from, index_name, sargs, :asc)
-
-          plan = limit(plan)
-          plan = project(plan)
-          return plan
-        end
-      end
-
-      # exact match on order by
-      index_name = @catalog.tables[@query.from].indexes
-        .map { |k| [k, @catalog.indexes[k]] }
-        .select { |name, idx| idx.indexed_exprs == @query.order_by }
-        .map { |k, _| k }
-        .first
-
-      return unless index_name
-
-      plan = Kwery::Executor::IndexScan.new(@query.from, index_name, {}, :asc)
-
-      # TODO: extra where on index prefix match
-      # TODO: extra sort on index prefix match
       plan = limit(plan)
       plan = project(plan)
       plan
