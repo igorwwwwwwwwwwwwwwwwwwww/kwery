@@ -69,13 +69,15 @@ module Kwery
         if neq_exprs.size == 1 && indexed_exprs.size == 1
           expr = indexed_exprs.map(&:expr).first
 
-          neq_expr, pair = neq_exprs.first
-          neq_op, neq_value = pair
+          neq_exprs.each do |neq_expr, neq_conds|
+            if expr == neq_expr
+              sargses << neq_conds
+                .map { |op, value| [op.sarg_key, [value]] }
+                .to_h
+            end
 
-          if expr == neq_expr
-            sargses << {
-              neq_op.sarg_key => [neq_value],
-            }
+            neq_conds.each do |neq_cond|
+            end
           end
         end
 
@@ -94,8 +96,9 @@ module Kwery
         @neq_exprs ||= @query.where
           .select { |expr| NEQ_OPERATORS.include?(expr.class) }
           .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left, [expr.class, expr.right.value]] }
-          .to_h
+          .map { |expr| [expr.left, expr.class, expr.right.value] }
+          .group_by { |args| args[0] }
+          .map { |k, argses| [k, argses.map { |args| [args[1], args[2]] }.to_h] }
       end
 
       class Candidate
