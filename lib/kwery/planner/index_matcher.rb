@@ -35,11 +35,11 @@ module Kwery
 
         index_exprs = @catalog.tables[@query.from].indexes
           .map { |k| [k, @catalog.indexes[k]] }
-          .map { |k, idx| [k, idx.indexed_exprs.map(&:expr)] }
+          .map { |k, idx| [k, idx.indexed_exprs] }
 
-        index_exprs.each do |index_name, exprs|
-          if match?(exprs, eq_exprs)
-            sargs = make_sargs(index_name, exprs, eq_exprs)
+        index_exprs.each do |index_name, indexed_exprs|
+          sargses = matches(index_name, indexed_exprs, eq_exprs)
+          sargses.each do |sargs|
             candidates << Candidate.new(
               index_name: index_name,
               sargs: sargs,
@@ -52,12 +52,22 @@ module Kwery
 
       private
 
-      def match?(index_exprs, eq_exprs)
-        index_exprs.all? { |expr| eq_exprs.keys.include?(expr) }
-      end
+      def matches(index_name, indexed_exprs, eq_exprs)
+        sargses = []
 
-      def make_sargs(index_name, index_exprs, eq_exprs)
-        { eq: index_exprs.map { |expr| eq_exprs[expr] } }
+        if indexed_exprs.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
+          sargses << {
+            eq: indexed_exprs
+                  .map(&:expr)
+                  .map { |expr| eq_exprs[expr] }
+          }
+        end
+
+        if indexed_exprs == @query.order_by
+          sargses << {}
+        end
+
+        sargses
       end
 
       class Candidate
