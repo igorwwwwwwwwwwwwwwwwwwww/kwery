@@ -24,6 +24,10 @@ module Kwery
       def call(tup)
         left.call(tup) > right.call(tup)
       end
+
+      def self.sarg_key
+        :gt
+      end
     end
 
     class Upper < Struct.new(:expr)

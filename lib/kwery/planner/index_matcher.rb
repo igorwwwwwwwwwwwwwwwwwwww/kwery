@@ -19,6 +19,10 @@
 module Kwery
   class Planner
     class IndexMatcher
+      NEQ_OPERATORS = [
+        Kwery::Expr::Gt,
+      ]
+
       def initialize(catalog, query)
         @catalog = catalog
         @query = query
@@ -27,18 +31,12 @@ module Kwery
       def match
         candidates = []
 
-        eq_exprs = @query.where
-          .select { |expr| Kwery::Expr::Eq === expr }
-          .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| [expr.left, expr.right.value] }
-          .to_h
-
         index_exprs = @catalog.tables[@query.from].indexes
           .map { |k| [k, @catalog.indexes[k]] }
           .map { |k, idx| [k, idx.indexed_exprs] }
 
         index_exprs.each do |index_name, indexed_exprs|
-          sargses = matches(index_name, indexed_exprs, eq_exprs)
+          sargses = matches(index_name, indexed_exprs)
           sargses.each do |sargs|
             candidates << Candidate.new(
               index_name: index_name,
@@ -52,7 +50,7 @@ module Kwery
 
       private
 
-      def matches(index_name, indexed_exprs, eq_exprs)
+      def matches(index_name, indexed_exprs)
         sargses = []
 
         if indexed_exprs.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
@@ -67,7 +65,36 @@ module Kwery
           sargses << {}
         end
 
+        if neq_exprs.size == 1 && indexed_exprs.size == 1
+          expr = indexed_exprs.map(&:expr).first
+
+          neq_expr, pair = neq_exprs.first
+          neq_op, neq_value = pair
+
+          if expr == neq_expr
+            sargses << {
+              neq_op.sarg_key => [neq_value],
+            }
+          end
+        end
+
         sargses
+      end
+
+      def eq_exprs
+        @eq_exprs ||= @query.where
+          .select { |expr| Kwery::Expr::Eq === expr }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
+          .map { |expr| [expr.left, expr.right.value] }
+          .to_h
+      end
+
+      def neq_exprs
+        @neq_exprs ||= @query.where
+          .select { |expr| NEQ_OPERATORS.include?(expr.class) }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
+          .map { |expr| [expr.left, [expr.class, expr.right.value]] }
+          .to_h
       end
 
       class Candidate
