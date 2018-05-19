@@ -54,6 +54,7 @@ module Kwery
       def matches(index_name, indexed_exprs)
         sargses = []
 
+        # * match eq against indexes       => fully satisfied indexes are candidates
         if indexed_exprs.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
           sargses << {
             eq: indexed_exprs
@@ -62,10 +63,12 @@ module Kwery
           }
         end
 
+        # * match order_by against indexes => fully satisfied indexes are candidates
         if indexed_exprs == @query.order_by
           sargses << {}
         end
 
+        # * match ranges against indexes   => fully satisfied indexes are candidates
         if neq_exprs.size == 1 && indexed_exprs.size == 1
           expr = indexed_exprs.map(&:expr).first
 
@@ -78,7 +81,9 @@ module Kwery
           end
         end
 
+        # * prefix match eq against indexes
         prefixes_for(indexed_exprs).each do |prefix|
+          #   * for each prefix, match (prefix || order_by)              => candidate
           if prefix.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
             if prefix.dup.concat(@query.order_by) == indexed_exprs
               sargs_prefix = prefix
@@ -87,6 +92,24 @@ module Kwery
               sargses << {
                 eq: sargs_prefix
               }
+            end
+
+            #   * for each prefix, and each range constraint
+            #     column expr, match (prefix || column expr)               => candidate
+            neq_exprs.each do |neq_expr, neq_conds|
+              if prefix.map(&:expr).dup.concat([neq_expr]) == indexed_exprs.map(&:expr)
+                sargs_prefix = prefix
+                  .map(&:expr)
+                  .map { |expr| eq_exprs[expr] }
+
+                sargs = neq_conds
+                  .map { |op, value| [op.sarg_key, sargs_prefix.dup.concat([value])] }
+                  .to_h
+
+                sargs[:prefix] = sargs_prefix
+
+                sargses << sargs
+              end
             end
           end
         end

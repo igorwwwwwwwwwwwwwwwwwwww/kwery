@@ -88,10 +88,12 @@ class BinarySearchTree
       lower_bound = sargs[:gt] || sargs[:gte]
       upper_bound = sargs[:lt] || sargs[:lte]
       equal_value = sargs[:gte] || sargs[:lte]
+      prefix_cond = sargs[:prefix]
 
-      above_lower = lower_bound.nil? || comparator.call(leaf.key, lower_bound) > 0
-      below_upper = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
-      equal_match = equal_value && comparator.call(leaf.key, equal_value) == 0
+      above_lower  = lower_bound.nil? || comparator.call(leaf.key, lower_bound) > 0
+      below_upper  = upper_bound.nil? || comparator.call(leaf.key, upper_bound) < 0
+      equal_match  = equal_value && comparator.call(leaf.key, equal_value) == 0
+      prefix_match = prefix_cond.nil? || comparator.call(leaf.key.slice(0, prefix_cond.size), prefix_cond) == 0
 
       context&.increment(:index_comparisons)
 
@@ -99,6 +101,10 @@ class BinarySearchTree
         scan_leaf_asc(leaf.left, sargs, context).each do |v|
           y << v
         end
+      end
+
+      if above_lower && !prefix_match
+        next
       end
 
       if (above_lower && below_upper) || equal_match

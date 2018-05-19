@@ -377,4 +377,46 @@ RSpec.describe Kwery::Planner do
           {eq: ['Cara']}]]
     )
   end
+
+  it "matches eq constraint prefix with gt" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_name_id],
+    )
+    catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
+        Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    # TODO: what is the lt condition for the upper bound even supposed to look like?
+    #         i really did not think this through...
+    #       what rdbms do is only use the index to find the starting point,
+    #         and then have a condition to stop.
+    #       i guess we could use eq for this purpose, with some changes in the
+    #         binary search tree. or we could introduce a new prefix_eq, or prefix_cond
+    #         argument.
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::IndexScan, :users_idx_name_id,
+          {prefix: ['Cara'], gt: ['Cara', 10]}]]
+    )
+  end
 end
