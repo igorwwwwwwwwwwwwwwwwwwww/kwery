@@ -75,8 +75,18 @@ module Kwery
                 .map { |op, value| [op.sarg_key, [value]] }
                 .to_h
             end
+          end
+        end
 
-            neq_conds.each do |neq_cond|
+        prefixes_for(indexed_exprs).each do |prefix|
+          if prefix.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
+            if prefix.dup.concat(@query.order_by) == indexed_exprs
+              sargs_prefix = prefix
+                .map(&:expr)
+                .map { |expr| eq_exprs[expr] }
+              sargses << {
+                eq: sargs_prefix
+              }
             end
           end
         end
@@ -99,6 +109,12 @@ module Kwery
           .map { |expr| [expr.left, expr.class, expr.right.value] }
           .group_by { |args| args[0] }
           .map { |k, argses| [k, argses.map { |args| [args[1], args[2]] }.to_h] }
+      end
+
+      def prefixes_for(indexed_exprs)
+        1.upto(indexed_exprs.size).map do |i|
+          indexed_exprs.slice(0, i)
+        end
       end
 
       class Candidate
