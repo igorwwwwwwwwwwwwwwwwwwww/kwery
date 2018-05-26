@@ -403,17 +403,10 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(catalog)
 
-    # TODO: what is the lt condition for the upper bound even supposed to look like?
-    #         i really did not think this through...
-    #       what rdbms do is only use the index to find the starting point,
-    #         and then have a condition to stop.
-    #       i guess we could use eq for this purpose, with some changes in the
-    #         binary search tree. or we could introduce a new prefix_eq, or prefix_cond
-    #         argument.
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_id,
-          {prefix: ['Cara'], gt: ['Cara', 10]}]]
+          {eq: ['Cara'], gt: ['Cara', 10]}]]
     )
   end
 end

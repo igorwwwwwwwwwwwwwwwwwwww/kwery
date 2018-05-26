@@ -474,4 +474,24 @@ RSpec.describe Kwery::Executor::IndexScan do
       index_comparisons: 6,
     })
   end
+
+  it "performs a compound prefix match" do
+    sargs = {
+      eq: ["Hope"],
+      gt: ["Hope", 2],
+    }
+    plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+
+    context = Kwery::Executor::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 3,  name: "Hope"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 1,
+      index_comparisons: 4,
+    })
+  end
 end

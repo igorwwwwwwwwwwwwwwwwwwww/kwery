@@ -106,7 +106,7 @@ module Kwery
                   .map { |op, value| [op.sarg_key, sargs_prefix.dup.concat([value])] }
                   .to_h
 
-                sargs[:prefix] = sargs_prefix
+                sargs[:eq] = sargs_prefix
 
                 sargses << sargs
               end
