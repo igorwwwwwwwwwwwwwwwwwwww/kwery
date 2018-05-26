@@ -534,7 +534,7 @@ RSpec.describe Kwery::Planner do
       },
       from: :users,
       where: [
-        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:where), Kwery::Expr::Literal.new('Cara')),
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
       ],
       order_by: [
         Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
