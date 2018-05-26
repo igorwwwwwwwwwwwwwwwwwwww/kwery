@@ -236,7 +236,7 @@ RSpec.describe Kwery::Planner do
     )
   end
 
-  xit "matches a > constraint with an index prefix" do
+  it "matches a > constraint with an index prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
       columns: {
@@ -267,7 +267,7 @@ RSpec.describe Kwery::Planner do
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_active_id,
-          {gt: [true, 10]}]]
+          {eq: [true], gt: [true, 10]}]]
     )
   end
 
@@ -304,7 +304,7 @@ RSpec.describe Kwery::Planner do
     )
   end
 
-  xit "matches a >= constraint with an index prefix" do
+  it "matches a >= constraint with an index prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
       columns: {
@@ -335,7 +335,7 @@ RSpec.describe Kwery::Planner do
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_active_id,
-          {gte: [true, 10]}]]
+          {eq: [true], gte: [true, 10]}]]
     )
   end
 
