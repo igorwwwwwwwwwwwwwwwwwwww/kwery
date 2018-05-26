@@ -30,6 +30,16 @@ module Kwery
       end
     end
 
+    class Gte < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) >= right.call(tup)
+      end
+
+      def self.sarg_key
+        :gte
+      end
+    end
+
     class Lt < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) < right.call(tup)
@@ -37,6 +47,16 @@ module Kwery
 
       def self.sarg_key
         :lt
+      end
+    end
+
+    class Lte < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) <= right.call(tup)
+      end
+
+      def self.sarg_key
+        :lte
       end
     end
 

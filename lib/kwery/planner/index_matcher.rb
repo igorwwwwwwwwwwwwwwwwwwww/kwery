@@ -21,7 +21,9 @@ module Kwery
     class IndexMatcher
       NEQ_OPERATORS = [
         Kwery::Expr::Gt,
+        Kwery::Expr::Gte,
         Kwery::Expr::Lt,
+        Kwery::Expr::Lte,
       ]
 
       def initialize(catalog, query)
