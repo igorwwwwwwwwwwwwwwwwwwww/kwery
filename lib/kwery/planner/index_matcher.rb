@@ -39,13 +39,8 @@ module Kwery
           .map { |k, idx| [k, idx.indexed_exprs] }
 
         index_exprs.each do |index_name, indexed_exprs|
-          sargses = matches(index_name, indexed_exprs)
-          sargses.each do |sargs|
-            candidates << Candidate.new(
-              index_name: index_name,
-              sargs: sargs,
-            )
-          end
+          index_candidates = matches(index_name, indexed_exprs)
+          candidates.concat(index_candidates)
         end
 
         candidates
@@ -54,20 +49,28 @@ module Kwery
       private
 
       def matches(index_name, indexed_exprs)
-        sargses = []
+        candidates = []
 
         # * match eq against indexes       => fully satisfied indexes are candidates
         if indexed_exprs.map(&:expr).all? { |expr| eq_exprs.keys.include?(expr) }
-          sargses << {
+          sargs = {
             eq: indexed_exprs
                   .map(&:expr)
                   .map { |expr| eq_exprs[expr] }
           }
+          candidates << Candidate.new(
+            index_name: index_name,
+            sargs: sargs,
+          )
         end
 
         # * match order_by against indexes => fully satisfied indexes are candidates
         if indexed_exprs == @query.order_by
-          sargses << {}
+          candidates << Candidate.new(
+            index_name: index_name,
+            sargs: {},
+            sorted: true,
+          )
         end
 
         # * match ranges against indexes   => fully satisfied indexes are candidates
@@ -76,9 +79,13 @@ module Kwery
 
           neq_exprs.each do |neq_expr, neq_conds|
             if expr == neq_expr
-              sargses << neq_conds
+              sargs = neq_conds
                 .map { |op, value| [op.sarg_key, [value]] }
                 .to_h
+              candidates << Candidate.new(
+                index_name: index_name,
+                sargs: sargs,
+              )
             end
           end
         end
@@ -91,9 +98,14 @@ module Kwery
               sargs_prefix = prefix
                 .map(&:expr)
                 .map { |expr| eq_exprs[expr] }
-              sargses << {
+              sargs = {
                 eq: sargs_prefix
               }
+              candidates << Candidate.new(
+                index_name: index_name,
+                sargs: sargs,
+                sorted: true,
+              )
             end
           end
 
@@ -111,12 +123,15 @@ module Kwery
 
               sargs[:eq] = sargs_prefix
 
-              sargses << sargs
+              candidates << Candidate.new(
+                index_name: index_name,
+                sargs: sargs,
+              )
             end
           end
         end
 
-        sargses
+        candidates
       end
 
       def eq_exprs
@@ -143,11 +158,12 @@ module Kwery
       end
 
       class Candidate
-        attr_accessor :index_name, :sargs
+        attr_accessor :index_name, :sargs, :sorted
 
-        def initialize(index_name:, sargs:)
+        def initialize(index_name:, sargs:, sorted: false)
           @index_name = index_name
           @sargs = sargs
+          @sorted = sorted
         end
       end
     end
