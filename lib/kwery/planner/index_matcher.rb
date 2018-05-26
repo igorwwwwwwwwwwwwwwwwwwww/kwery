@@ -95,23 +95,23 @@ module Kwery
                 eq: sargs_prefix
               }
             end
+          end
 
-            #   * for each prefix, and each range constraint
-            #     column expr, match (prefix || column expr)               => candidate
-            neq_exprs.each do |neq_expr, neq_conds|
-              if prefix.map(&:expr).dup.concat([neq_expr]) == indexed_exprs.map(&:expr)
-                sargs_prefix = prefix
-                  .map(&:expr)
-                  .map { |expr| eq_exprs[expr] }
+          #   * for each prefix, and each range constraint
+          #     column expr, match (prefix || column expr)               => candidate
+          neq_exprs.each do |neq_expr, neq_conds|
+            if prefix.map(&:expr).dup.concat([neq_expr]) == indexed_exprs.map(&:expr)
+              sargs_prefix = prefix
+                .map(&:expr)
+                .map { |expr| eq_exprs[expr] }
 
-                sargs = neq_conds
-                  .map { |op, value| [op.sarg_key, sargs_prefix.dup.concat([value])] }
-                  .to_h
+              sargs = neq_conds
+                .map { |op, value| [op.sarg_key, sargs_prefix.dup.concat([value])] }
+                .to_h
 
-                sargs[:eq] = sargs_prefix
+              sargs[:eq] = sargs_prefix
 
-                sargses << sargs
-              end
+              sargses << sargs
             end
           end
         end
