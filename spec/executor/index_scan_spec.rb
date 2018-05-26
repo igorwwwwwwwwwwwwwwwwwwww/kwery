@@ -13,6 +13,10 @@ RSpec.describe Kwery::Executor::IndexScan do
   catalog.index :users_idx_name, Kwery::Catalog::Index.new(:users, [
     Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
   ])
+  catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
+    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id)),
+  ])
 
   schema = catalog.new_schema
   schema.bulk_insert(:users, [
@@ -28,6 +32,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     {id: 10, name: "Anastasia"},
   ])
   schema.reindex(:users, :users_idx_name)
+  schema.reindex(:users, :users_idx_name_id)
 
   it "scans the whole index in sorted order" do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
@@ -427,6 +432,46 @@ RSpec.describe Kwery::Executor::IndexScan do
     expect(context.stats).to eq({
       index_comparisons: 9,
       index_tuples_scanned: 4,
+    })
+  end
+
+  it "performs a prefix match with eq sarg" do
+    sargs = {
+      eq: ["Hope"],
+    }
+    plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+
+    context = Kwery::Executor::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 3,  name: "Hope"},
+    ])
+
+    expect(context.stats).to eq({
+      index_comparisons: 3,
+      index_tuples_scanned: 1,
+    })
+  end
+
+  it "performs a prefix match with gt and lt sargs" do
+    sargs = {
+      gt: ["Herrod"],
+      lt: ["Quincy"],
+    }
+    plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+
+    context = Kwery::Executor::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {id: 3,  name: "Hope"},
+      {id: 1,  name: "Kathleen"},
+    ])
+
+    expect(context.stats).to eq({
+      index_tuples_scanned: 2,
+      index_comparisons: 6,
     })
   end
 end

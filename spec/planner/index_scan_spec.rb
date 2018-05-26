@@ -368,9 +368,6 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(catalog)
 
-    # TODO: is the executor even able to run this plan?
-    #       this would require prefix seeking in the binary search tree.
-    #       ranges are easier because those are full gt/lt sargs.
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_id,

@@ -19,7 +19,10 @@ class BinarySearchTree
   end
 
   def initialize(comparator: nil)
-    @comparator = comparator || lambda { |a, b| a <=> b }
+    @comparator = comparator || lambda { |a, b|
+      min = [a.length, b.length].min
+      a.slice(0, min) <=> b.slice(0, min)
+    }
     @root = nil
     @size = 0
   end
