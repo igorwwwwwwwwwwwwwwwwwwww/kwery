@@ -33,7 +33,8 @@ module Kwery
         :asc,
       )
 
-      plan = sort(plan) unless candidate.sorted
+      plan = where(plan)  if candidate.recheck
+      plan = sort(plan)   unless candidate.sorted
       plan = limit(plan)
       plan = project(plan)
       plan

@@ -16,6 +16,8 @@
 # * figure out which query conditions have not been satisfied,
 #   add Filter and Sort nodes if needed
 
+require 'set'
+
 module Kwery
   class Planner
     class IndexMatcher
@@ -61,6 +63,7 @@ module Kwery
           candidates << Candidate.new(
             index_name: index_name,
             sargs: sargs,
+            recheck: recheck?(indexed_exprs),
           )
         end
 
@@ -70,6 +73,7 @@ module Kwery
             index_name: index_name,
             sargs: {},
             sorted: true,
+            recheck: recheck?(indexed_exprs),
           )
         end
 
@@ -85,6 +89,7 @@ module Kwery
               candidates << Candidate.new(
                 index_name: index_name,
                 sargs: sargs,
+                recheck: recheck?(indexed_exprs),
               )
             end
           end
@@ -105,6 +110,7 @@ module Kwery
                 index_name: index_name,
                 sargs: sargs,
                 sorted: true,
+                recheck: recheck?(indexed_exprs),
               )
             end
           end
@@ -126,6 +132,7 @@ module Kwery
               candidates << Candidate.new(
                 index_name: index_name,
                 sargs: sargs,
+                recheck: recheck?(indexed_exprs),
               )
             end
           end
@@ -149,6 +156,7 @@ module Kwery
           .map { |expr| [expr.left, expr.class, expr.right.value] }
           .group_by { |args| args[0] }
           .map { |k, argses| [k, argses.map { |args| [args[1], args[2]] }.to_h] }
+          .to_h
       end
 
       def prefixes_for(indexed_exprs)
@@ -157,13 +165,23 @@ module Kwery
         end
       end
 
-      class Candidate
-        attr_accessor :index_name, :sargs, :sorted
+      # assume we are matching against the whole index
+      # in the future we should check which fields of
+      # the index are actually used by the sargs
+      def recheck?(indexed_exprs)
+        query_exprs = eq_exprs.keys.to_set + neq_exprs.keys.to_set
+        remaining_exprs = query_exprs - indexed_exprs.map(&:expr)
+        remaining_exprs.size > 0
+      end
 
-        def initialize(index_name:, sargs:, sorted: false)
+      class Candidate
+        attr_accessor :index_name, :sargs, :sorted, :recheck
+
+        def initialize(index_name:, sargs:, sorted: false, recheck: false)
           @index_name = index_name
           @sargs = sargs
           @sorted = sorted
+          @recheck = recheck
         end
       end
     end

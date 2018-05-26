@@ -513,4 +513,40 @@ RSpec.describe Kwery::Planner do
           [Kwery::Executor::IndexScan, :users_idx_id, {eq: [10]}]]]
     )
   end
+
+  it "performs an extra where if index is only used for sorting" do
+    catalog = Kwery::Catalog.new
+    catalog.table :users, Kwery::Catalog::Table.new(
+      columns: {
+        id:     Kwery::Catalog::Column.new(:integer),
+        name:   Kwery::Catalog::Column.new(:string),
+        active: Kwery::Catalog::Column.new(:boolean),
+      },
+      indexes: [:users_idx_id],
+    )
+    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
+      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    ])
+
+    query = Kwery::Query.new(
+      select: {
+        id: Kwery::Expr::Column.new(:id)
+      },
+      from: :users,
+      where: [
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:where), Kwery::Expr::Literal.new('Cara')),
+      ],
+      order_by: [
+        Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      ],
+    )
+
+    plan = query.plan(catalog)
+
+    expect(plan.explain).to eq(
+      [Kwery::Executor::Project,
+        [Kwery::Executor::Filter,
+          [Kwery::Executor::IndexScan, :users_idx_id, {}]]]
+    )
+  end
 end
