@@ -14,15 +14,19 @@ module Kwery
         t
       end
 
+      token :BOOL, /(true|false)/ do |t|
+        t.value = t.value == 'true'
+        t
+      end
+
       token :STRING, /(?:'(?<val>[^'\\]*(?:\\.[^'\\]*)*)')/ do |t|
         t.value = t.value[1..-2].gsub("\\'", "'")
         t
       end
 
-      token :ID, /[a-zA-Z*]+/
       token :STAR, /\*/
-
       token :COMPARE, /(=|<|>|<=|>=|<>)/
+      token :ID, /[a-zA-Z*]+/
 
       def to_enum
         Enumerator.new do |g|

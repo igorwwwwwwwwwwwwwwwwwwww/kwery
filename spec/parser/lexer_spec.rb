@@ -61,13 +61,23 @@ RSpec.describe Kwery::Parser::Lexer do
     ])
   end
 
+  it "lexes select bool" do
+    tokens =
+    sql = 'SELECT true'
+    lex = Kwery::Parser::Lexer.new(sql)
+    expect(lex.pairs).to eq([
+      [:SELECT, 'SELECT'],
+      [:BOOL, true],
+    ])
+  end
+
   it "lexes select * from users" do
     tokens =
     sql = "SELECT * FROM users"
     lex = Kwery::Parser::Lexer.new(sql)
     expect(lex.pairs).to eq([
       [:SELECT, 'SELECT'],
-      [:ID, '*'],
+      [:STAR, '*'],
       [:FROM, 'FROM'],
       [:ID, 'users'],
     ])
@@ -79,7 +89,7 @@ RSpec.describe Kwery::Parser::Lexer do
     lex = Kwery::Parser::Lexer.new(sql)
     expect(lex.pairs).to eq([
       [:SELECT, 'SELECT'],
-      [:ID, '*'],
+      [:STAR, '*'],
       [:FROM, 'FROM'],
       [:ID, 'users'],
       [:WHERE, 'WHERE'],
