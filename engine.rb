@@ -29,9 +29,9 @@ sql = ARGV.shift
 
 unless mode && sql
   puts 'Usage:'
-  puts '  ruby engine.rb run   <sql>'
-  puts '  ruby engine.rb query <sql>'
-  puts '  ruby engine.rb plan  <sql>'
+  puts '  ruby engine.rb run     <sql>'
+  puts '  ruby engine.rb query   <sql>'
+  puts '  ruby engine.rb explain <sql>'
   exit 1
 end
 
@@ -57,8 +57,8 @@ end
 case mode
 when 'query'
   pp query
-when 'plan'
-  pp plan
+when 'explain'
+  pp plan.explain
 when 'run'
   context = Kwery::Executor::Context.new(schema)
   plan.call(context).each do |tup|
