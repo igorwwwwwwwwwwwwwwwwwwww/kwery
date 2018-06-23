@@ -31,6 +31,7 @@ module Kwery
         candidate.index_name,
         candidate.sargs,
         :asc,
+        @query.options,
       )
 
       plan = where(plan)  if candidate.recheck
@@ -43,12 +44,10 @@ module Kwery
     # cut my plans into pieces
     # this is my last resort
     def table_scan
-      if @query.options[:notablescan]
-        # a notable scan indeed
-        raise Kwery::Executor::NoTableScanError.new("query resulted in table scan")
-      end
-
-      plan = Kwery::Executor::TableScan.new(@query.from)
+      plan = Kwery::Executor::TableScan.new(
+        @query.from,
+        @query.options,
+      )
 
       plan = where(plan)
       plan = sort(plan)

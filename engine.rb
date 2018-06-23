@@ -36,22 +36,9 @@ end
 
 parser = Kwery::Parser.new
 query = parser.parse(sql, ENV['DEBUG'] == 'true')
-
-unless query
-  puts 'could not parse query'
-  exit 1
-end
-
 query.options = { notablescan: ENV['NOTABLESCAN'] == 'true' }
 
-begin
-  plan = query.plan(catalog)
-rescue Kwery::Executor::NoTableScanError => e
-  pp query
-  puts
-  puts "error: #{e}"
-  exit 1
-end
+plan = query.plan(catalog)
 
 case mode
 when 'query'

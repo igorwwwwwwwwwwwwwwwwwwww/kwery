@@ -20,11 +20,12 @@ module Kwery
     class IndexScan
       # sargs = search args
       # see: Access Path Selection in a Relational Database Management System
-      def initialize(table_name, index_name, sargs = {}, scan_order = :asc)
+      def initialize(table_name, index_name, sargs = {}, scan_order = :asc, options = {})
         @table_name = table_name
         @index_name = index_name
         @sargs = sargs
         @scan_order = scan_order
+        @options = options
       end
 
       def call(context)
@@ -44,11 +45,17 @@ module Kwery
     end
 
     class TableScan
-      def initialize(table_name)
+      def initialize(table_name, options = {})
         @table_name = table_name
+        @options = options
       end
 
       def call(context)
+        if @options[:notablescan]
+          # a notable scan indeed
+          raise Kwery::Executor::NoTableScanError.new("query resulted in table scan")
+        end
+
         context.schema.table_scan(@table_name).map {|tup|
           context.increment :table_tuples_scanned
           tup
