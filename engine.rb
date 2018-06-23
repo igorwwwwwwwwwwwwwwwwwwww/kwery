@@ -34,7 +34,7 @@ unless mode && sql
   exit 1
 end
 
-parser = Kwery::Parser::Parser.new
+parser = Kwery::Parser.new
 query = parser.parse(sql, ENV['DEBUG'] == 'true')
 
 unless query
