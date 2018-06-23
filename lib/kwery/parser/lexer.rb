@@ -14,8 +14,8 @@ module Kwery
         t
       end
 
-      token :BOOL, /(true|false)/ do |t|
-        t.value = t.value == 'true'
+      token :BOOL, /(true|false|t|f)/ do |t|
+        t.value = ['true', 't'].include?(t.value)
         t
       end
 

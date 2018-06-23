@@ -71,6 +71,16 @@ RSpec.describe Kwery::Parser::Lexer do
     ])
   end
 
+  it "lexes short bool" do
+    tokens =
+    sql = 'SELECT t'
+    lex = Kwery::Parser::Lexer.new(sql)
+    expect(lex.pairs).to eq([
+      [:SELECT, 'SELECT'],
+      [:BOOL, true],
+    ])
+  end
+
   it "lexes select * from users" do
     tokens =
     sql = "SELECT * FROM users"
