@@ -37,7 +37,7 @@ options = {}
 options[:notablescan] = true if ENV['NOTABLESCAN'] == 'true'
 
 parser = Kwery::Parser.new(options)
-query = parser.parse(sql, ENV['DEBUG'] == 'true')
+query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
 
 plan = query.plan(catalog)
 
@@ -50,5 +50,8 @@ plan.call(context).each do |tup|
     puts tup
   end
 end
-puts
-puts "stats: #{context.stats}"
+
+if ENV['DEBUG_STATS'] == 'true'
+  puts
+  puts "stats: #{context.stats}"
+end
