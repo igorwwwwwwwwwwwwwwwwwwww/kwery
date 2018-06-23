@@ -4,11 +4,6 @@ RSpec.describe Kwery::Planner do
   it "performs an index scan for order by" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -36,11 +31,6 @@ RSpec.describe Kwery::Planner do
   it "performs an index scan for where" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -69,11 +59,6 @@ RSpec.describe Kwery::Planner do
   it "matches an indexed expression" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_upper_name],
     )
     catalog.index :users_idx_upper_name, Kwery::Catalog::Index.new(:users, [
@@ -102,11 +87,6 @@ RSpec.describe Kwery::Planner do
   it "matches a compound index" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_name_active],
     )
     catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
@@ -137,11 +117,6 @@ RSpec.describe Kwery::Planner do
   it "matches a compound index with reverse field order" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_active_name],
     )
     catalog.index :users_idx_active_name, Kwery::Catalog::Index.new(:users, [
@@ -172,11 +147,6 @@ RSpec.describe Kwery::Planner do
   xit "matches an index prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_name_active],
     )
     catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
@@ -206,11 +176,6 @@ RSpec.describe Kwery::Planner do
   it "matches a > constraint" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -239,11 +204,6 @@ RSpec.describe Kwery::Planner do
   it "matches a > constraint with an index prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_active_id],
     )
     catalog.index :users_idx_active_id, Kwery::Catalog::Index.new(:users, [
@@ -274,11 +234,6 @@ RSpec.describe Kwery::Planner do
   it "matches a >= constraint" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -307,11 +262,6 @@ RSpec.describe Kwery::Planner do
   it "matches a >= constraint with an index prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_active_id],
     )
     catalog.index :users_idx_active_id, Kwery::Catalog::Index.new(:users, [
@@ -342,11 +292,6 @@ RSpec.describe Kwery::Planner do
   it "matches a < constraint" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -375,11 +320,6 @@ RSpec.describe Kwery::Planner do
   it "matches a between constraint" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -409,11 +349,6 @@ RSpec.describe Kwery::Planner do
   it "matches order by and an eq constraint prefix" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_name_id],
     )
     catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
@@ -446,11 +381,6 @@ RSpec.describe Kwery::Planner do
   it "matches eq constraint prefix with gt" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_name_id],
     )
     catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
@@ -481,11 +411,6 @@ RSpec.describe Kwery::Planner do
   it "performs an extra sort if index is only used for matching" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -517,11 +442,6 @@ RSpec.describe Kwery::Planner do
   it "performs an extra where if index is only used for sorting" do
     catalog = Kwery::Catalog.new
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [

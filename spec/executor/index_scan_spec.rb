@@ -4,10 +4,6 @@ RSpec.describe Kwery::Executor::IndexScan do
   catalog = Kwery::Catalog.new
 
   catalog.table :users, Kwery::Catalog::Table.new(
-    columns: {
-      id:     Kwery::Catalog::Column.new(:integer),
-      name:   Kwery::Catalog::Column.new(:string),
-    },
     indexes: [:users_idx_name],
   )
   catalog.index :users_idx_name, Kwery::Catalog::Index.new(:users, [

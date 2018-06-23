@@ -3,13 +3,7 @@ require 'kwery'
 RSpec.describe Kwery::Planner do
   it "performs a table scan by default" do
     catalog = Kwery::Catalog.new
-    catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
-    )
+    catalog.table :users, Kwery::Catalog::Table.new
 
     query = Kwery::Query.new(
       select: {

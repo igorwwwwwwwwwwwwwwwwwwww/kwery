@@ -6,11 +6,6 @@ RSpec.describe Kwery do
     catalog = Kwery::Catalog.new
 
     catalog.table :users, Kwery::Catalog::Table.new(
-      columns: {
-        id:     Kwery::Catalog::Column.new(:integer),
-        name:   Kwery::Catalog::Column.new(:string),
-        active: Kwery::Catalog::Column.new(:boolean),
-      },
       indexes: [:users_idx_id],
     )
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
@@ -21,7 +16,7 @@ RSpec.describe Kwery do
     schema = catalog.new_schema
 
     importer = Kwery::Importer.new(catalog, schema)
-    importer.load(:users, 'data/users.csv')
+    importer.load(:users, 'data/users.csv', { id: :integer, active: :boolean })
 
     schema.reindex(:users, :users_idx_id)
 

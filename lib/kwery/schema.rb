@@ -31,16 +31,12 @@ module Kwery
       tup
     end
 
-    def insert(table_name, row)
-      bulk_insert(table_name, [row])
+    def insert(table_name, tup)
+      bulk_insert(table_name, [tup])
     end
 
-    def bulk_insert(table_name, rows)
-      rows.each do |row|
-        table_meta = @catalog.tables[table_name]
-
-        tup = tuple(table_name, row)
-
+    def bulk_insert(table_name, tups)
+      tups.each do |tup|
         relation = @state[table_name]
         relation << tup
         tid = relation.size - 1
@@ -57,32 +53,6 @@ module Kwery
           .map(&:expr)
           .map { |expr| expr.call(tup) }
         index.insert(key, tid)
-      end
-    end
-
-    def tuple(table_name, row)
-      table_meta = @catalog.tables[table_name]
-
-      tup = {}
-      table_meta.columns.each do |name, column|
-        type = column.type
-        tup[name] = apply_type(row[name], type)
-      end
-      tup
-    end
-
-    def apply_type(v, type)
-      return nil if v.nil?
-      case type
-      when :integer
-        Integer(v)
-      when :string
-        v
-      when :boolean
-        return v if [true, false].include? v
-        v.downcase == 'true' ? true : false
-      else
-        raise "unknown type #{type}"
       end
     end
   end

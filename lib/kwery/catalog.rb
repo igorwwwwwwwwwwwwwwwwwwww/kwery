@@ -21,16 +21,11 @@ module Kwery
     end
 
     class Table
-      attr_accessor :columns
       attr_accessor :indexes
 
-      def initialize(columns:, indexes: [])
-        @columns = columns
+      def initialize(indexes: [])
         @indexes = indexes
       end
-    end
-
-    class Column < Struct.new(:type)
     end
 
     class Index

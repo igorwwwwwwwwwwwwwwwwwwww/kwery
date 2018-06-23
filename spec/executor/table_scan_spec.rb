@@ -3,12 +3,7 @@ require 'kwery'
 RSpec.describe Kwery::Executor::TableScan do
   catalog = Kwery::Catalog.new
 
-  catalog.table :users, Kwery::Catalog::Table.new(
-    columns: {
-      id:     Kwery::Catalog::Column.new(:integer),
-      name:   Kwery::Catalog::Column.new(:string),
-    },
-  )
+  catalog.table :users, Kwery::Catalog::Table.new
 
   schema = catalog.new_schema
   schema.bulk_insert(:users, [
