@@ -78,9 +78,9 @@ RSpec.describe Kwery::Parser::Lexer do
     lex = Kwery::Parser::Lexer.new(sql)
     expect(lex.pairs).to eq([
       [:SELECT, 'SELECT'],
-      [:ID, 'name'],
+      [:ID, :name],
       [:FROM, 'FROM'],
-      [:ID, 'users'],
+      [:ID, :users],
     ])
   end
 
@@ -89,11 +89,11 @@ RSpec.describe Kwery::Parser::Lexer do
     lex = Kwery::Parser::Lexer.new(sql)
     expect(lex.pairs).to eq([
       [:SELECT, 'SELECT'],
-      [:ID, 'name'],
+      [:ID, :name],
       [:FROM, 'FROM'],
-      [:ID, 'users'],
+      [:ID, :users],
       [:WHERE, 'WHERE'],
-      [:ID, 'id'],
+      [:ID, :id],
       [:COMPARE, '='],
       [:NUMBER, 1],
     ])

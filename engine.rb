@@ -24,19 +24,26 @@ importer.load(:users, 'data/users.csv')
 
 schema.reindex(:users, :users_idx_id)
 
-query = Kwery::Query.new(
-  select: {
-    id: Kwery::Expr::Column.new(:id),
-    name: Kwery::Expr::Column.new(:name),
-  },
-  from: :users,
-  where: [
-    Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
-    Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
-  ],
-  limit: 10,
-  options: { notablescan: ENV['NOTABLESCAN'] == 'true' },
-)
+mode = ARGV.shift
+sql = ARGV.shift
+
+unless mode && sql
+  puts 'Usage:'
+  puts '  ruby engine.rb run   <sql>'
+  puts '  ruby engine.rb query <sql>'
+  puts '  ruby engine.rb plan  <sql>'
+  exit 1
+end
+
+parser = Kwery::Parser::Parser.new
+query = parser.parse(sql, ENV['DEBUG'] == 'true')
+
+unless query
+  puts 'could not parse query'
+  exit 1
+end
+
+query.options = { notablescan: ENV['NOTABLESCAN'] == 'true' }
 
 begin
   plan = query.plan(catalog)
@@ -47,7 +54,6 @@ rescue Kwery::Executor::NoTableScanError => e
   exit 1
 end
 
-mode = ARGV.shift || 'run'
 case mode
 when 'query'
   pp query

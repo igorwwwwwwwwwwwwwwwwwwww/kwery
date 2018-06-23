@@ -8,6 +8,7 @@ module Kwery
       token :SELECT, /SELECT/i
       token :FROM, /FROM/i
       token :WHERE, /WHERE/i
+      token :AS, /AS/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
@@ -25,7 +26,11 @@ module Kwery
       end
 
       token :COMPARE, /(=|<|>|<=|>=|<>)/
-      token :ID, /[a-zA-Z*]+/
+
+      token :ID, /[a-zA-Z*]+/ do |t|
+        t.value = t.value.to_sym
+        t
+      end
 
       def to_enum
         Enumerator.new do |g|
