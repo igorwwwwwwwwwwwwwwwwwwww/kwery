@@ -5,7 +5,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT 1'
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, 1]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(1))
     )
   end
 
@@ -13,7 +13,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'select 1'
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, 1]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(1))
     )
   end
 
@@ -21,7 +21,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT 64'
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, 64]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(64))
     )
   end
 
@@ -29,7 +29,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT 'foo'"
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, 'foo']]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new('foo'))
     )
   end
 
@@ -37,7 +37,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT ''"
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, '']]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(''))
     )
   end
 
@@ -45,7 +45,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT '\\''"
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, "'"]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new("'"))
     )
   end
 
@@ -53,7 +53,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT true'
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, true]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(true))
     )
   end
 
@@ -61,26 +61,18 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT t'
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:value, true]]
+      Kwery::Query.new(select: Kwery::Expr::Literal.new(true))
     )
   end
 
-  it "parses select * from users" do
-    sql = "SELECT * FROM users"
+  it "parses select name from users" do
+    sql = "SELECT name FROM users"
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:id, '*'],
-       [:from, 'users']]
-    )
-  end
-
-  it "parses select * from users where id = 1" do
-    sql = "SELECT * FROM users WHERE id = 1"
-    parser = Kwery::Parser::Parser.new
-    expect(parser.parse(sql)).to eq(
-      [:select, [:id, '*'],
-       [:from, 'users'],
-       [:where, ['=', [:id, 'id'], [:value, 1]]]]
+      Kwery::Query.new(
+        select: Kwery::Expr::Column.new(:name),
+        from: :users,
+      )
     )
   end
 
@@ -88,9 +80,14 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT name FROM users WHERE id = 1"
     parser = Kwery::Parser::Parser.new
     expect(parser.parse(sql)).to eq(
-      [:select, [:id, 'name'],
-       [:from, 'users'],
-       [:where, ['=', [:id, 'id'], [:value, 1]]]]
+      Kwery::Query.new(
+        select: Kwery::Expr::Column.new(:name),
+        from: :users,
+        where: Kwery::Expr::Eq.new(
+          Kwery::Expr::Column.new(:id),
+          Kwery::Expr::Literal.new(1),
+        ),
+      )
     )
   end
 end

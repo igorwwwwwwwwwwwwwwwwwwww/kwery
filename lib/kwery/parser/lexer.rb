@@ -24,7 +24,6 @@ module Kwery
         t
       end
 
-      token :STAR, /\*/
       token :COMPARE, /(=|<|>|<=|>=|<>)/
       token :ID, /[a-zA-Z*]+/
 

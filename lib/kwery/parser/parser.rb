@@ -7,18 +7,36 @@ module Kwery
         super(Kwery::Parser::Lexer.new)
       end
 
-      rule 'program : SELECT expr
-                    | SELECT expr FROM ID
-                    | SELECT expr FROM ID WHERE expr' do |st, _, e1, t2, e2, t3, e3|
-        st.value = [:select, e1.value]
-        st.value << [t2.type.downcase, e2.value] if e2
-        st.value << [t3.type.downcase, e3.value] if e3
+      rule 'query : SELECT expr
+                  | SELECT expr FROM ID
+                  | SELECT expr FROM ID WHERE expr' do |st, _, e1, t2, e2, t3, e3|
+        args = {}
+        args[:select] = e1.value
+        args[t2.type.downcase] = e2.value if e2
+        args[t3.type.downcase] = e3.value if e3
+
+        args[:from] = args[:from].to_sym if args[:from]
+
+        st.value = Kwery::Query.new(**args)
       end
 
       rule 'expr : value
                  | expr COMPARE expr' do |st, e1, c, e2|
         if e2
-          st.value = [c.value, e1.value, e2.value]
+          case c.value
+          when '='
+            st.value = Kwery::Expr::Eq.new(e1.value, e2.value)
+          when '<'
+            st.value = Kwery::Expr::Lt.new(e1.value, e2.value)
+          when '>'
+            st.value = Kwery::Expr::Gt.new(e1.value, e2.value)
+          when '<='
+            st.value = Kwery::Expr::Lte.new(e1.value, e2.value)
+          when '>='
+            st.value = Kwery::Expr::Gte.new(e1.value, e2.value)
+          when '<>'
+            raise NotImplementedError
+          end
         else
           st.value = e1.value
         end
@@ -27,12 +45,16 @@ module Kwery
       rule 'value : NUMBER
                   | STRING
                   | BOOL
-                  | ID
-                  | STAR' do |st, e1|
-        if [:ID, :STAR].include?(e1.type)
-          st.value = [:id, e1.value]
-        else
-          st.value = [:value, e1.value]
+                  | ID' do |st, e1|
+        case e1.type
+        when :NUMBER
+          st.value = Kwery::Expr::Literal.new(e1.value)
+        when :STRING
+          st.value = Kwery::Expr::Literal.new(e1.value)
+        when :BOOL
+          st.value = Kwery::Expr::Literal.new(e1.value)
+        when :ID
+          st.value = Kwery::Expr::Column.new(e1.value.to_sym)
         end
       end
     end
