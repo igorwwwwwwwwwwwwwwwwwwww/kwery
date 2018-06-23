@@ -83,10 +83,9 @@ RSpec.describe Kwery::Parser::Lexer do
       Kwery::Query.new(
         select: { name: Kwery::Expr::Column.new(:name) },
         from: :users,
-        where: Kwery::Expr::Eq.new(
-          Kwery::Expr::Column.new(:id),
-          Kwery::Expr::Literal.new(1),
-        ),
+        where: [
+          Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(1)),
+        ],
       )
     )
   end

@@ -14,7 +14,6 @@ catalog.table :users, Kwery::Catalog::Table.new(
 )
 catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
   Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
-  Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
 ])
 
 schema = catalog.new_schema

@@ -8,9 +8,9 @@ module Kwery
         @anon_fields = 0
       end
 
-      rule 'query : SELECT fields
-                  | SELECT fields FROM ID
-                  | SELECT fields FROM ID WHERE expr' do |st, _, e1, t2, e2, t3, e3|
+      rule 'query : SELECT select_expr
+                  | SELECT select_expr FROM ID
+                  | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
         args = {}
         args[:select] = e1.value
         args[t2.type.downcase] = e2.value if e2
@@ -19,8 +19,8 @@ module Kwery
         st.value = Kwery::Query.new(**args)
       end
 
-      rule 'fields : expr
-                   | expr AS ID' do |st, e1, _, e2|
+      rule 'select_expr : expr
+                        | expr AS ID' do |st, e1, _, e2|
         field_alias = e2&.value || e1.value
         if e2
           field_alias = e2.value
@@ -31,6 +31,10 @@ module Kwery
           @anon_fields += 1
         end
         st.value = {field_alias => e1.value}
+      end
+
+      rule 'where_expr : expr' do |st, e1|
+        st.value = [e1.value]
       end
 
       rule 'column : ID' do |st, e1|
