@@ -2,18 +2,26 @@ require 'rly'
 
 module Kwery
   class Parser < Rly::Yacc
-    def initialize
+    def initialize(options = {})
       super(Kwery::Parser::Lexer.new)
+      @options = options
       @anon_fields = 0
     end
 
-    rule 'query : SELECT select_expr
-                | SELECT select_expr FROM ID
-                | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
+    rule 'query : select_query
+                | EXPLAIN select_query' do |st, e1, e2|
+      st.value = (e2 || e1).value
+      st.value.options[:explain] = true if e2
+    end
+
+    rule 'select_query : SELECT select_expr
+                       | SELECT select_expr FROM ID
+                       | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
       args = {}
       args[:select] = e1.value
       args[t2.type.downcase] = e2.value if e2
       args[t3.type.downcase] = e3.value if e3
+      args[:options] = @options
 
       st.value = Kwery::Query.new(**args)
     end

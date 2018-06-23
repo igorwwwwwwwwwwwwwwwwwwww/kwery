@@ -23,35 +23,30 @@ importer.load(:users, 'data/users.csv')
 
 schema.reindex(:users, :users_idx_id)
 
-mode = ARGV.shift
 sql = ARGV.shift
 
-unless mode && sql
+unless sql
   puts 'Usage:'
-  puts '  ruby engine.rb run     <sql>'
-  puts '  ruby engine.rb query   <sql>'
-  puts '  ruby engine.rb explain <sql>'
+  puts '  ruby engine.rb <sql>'
   exit 1
 end
 
-parser = Kwery::Parser.new
+options = {}
+options[:notablescan] = true if ENV['NOTABLESCAN'] == 'true'
+
+parser = Kwery::Parser.new(options)
 query = parser.parse(sql, ENV['DEBUG'] == 'true')
-query.options = { notablescan: ENV['NOTABLESCAN'] == 'true' }
 
 plan = query.plan(catalog)
 
-case mode
-when 'query'
-  pp query
-when 'explain'
-  pp plan.explain
-when 'run'
-  context = Kwery::Executor::Context.new(schema)
-  plan.call(context).each do |tup|
+context = Kwery::Executor::Context.new(schema)
+plan.call(context).each do |tup|
+  if tup[:_pretty]
+    tup.delete(:_pretty)
+    pp tup
+  else
     puts tup
   end
-  puts
-  puts "stats: #{context.stats}"
-else
-  raise "invalid mode #{mode}"
 end
+puts
+puts "stats: #{context.stats}"

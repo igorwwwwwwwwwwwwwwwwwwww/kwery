@@ -5,6 +5,7 @@ module Kwery
     class Lexer < Rly::Lex
       ignore " \t\n"
 
+      token :EXPLAIN, /EXPLAIN/i
       token :SELECT, /SELECT/i
       token :FROM, /FROM/i
       token :WHERE, /WHERE/i

@@ -167,5 +167,22 @@ module Kwery
         [self.class, @plan.explain]
       end
     end
+
+    class Explain
+      def initialize(plan)
+        @plan = plan
+      end
+
+      def call(context)
+        [{
+          _pretty: true,
+          explain: @plan.explain,
+        }]
+      end
+
+      def explain
+        [self.class, @plan.explain]
+      end
+    end
   end
 end

@@ -10,7 +10,9 @@ module Kwery
     end
 
     def call
-      index_scan || table_scan
+      plan = index_scan || table_scan
+      plan = explain(plan) if @query.options[:explain]
+      plan
     end
 
     private
@@ -108,6 +110,11 @@ module Kwery
         plan
       )
 
+      plan
+    end
+
+    def explain(plan)
+      plan = Kwery::Executor::Explain.new(plan)
       plan
     end
   end
