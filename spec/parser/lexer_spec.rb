@@ -50,4 +50,32 @@ RSpec.describe Kwery::Parser::Lexer do
       [:STRING, "'"],
     ])
   end
+
+  it "lexes select * from users" do
+    tokens =
+    sql = "SELECT * FROM users"
+    lex = Kwery::Parser::Lexer.new(sql)
+    expect(lex.pairs).to eq([
+      [:SELECT, 'SELECT'],
+      [:ID, '*'],
+      [:FROM, 'FROM'],
+      [:ID, 'users'],
+    ])
+  end
+
+  it "lexes select * from users where id = 1" do
+    tokens =
+    sql = "SELECT * FROM users WHERE id = 1"
+    lex = Kwery::Parser::Lexer.new(sql)
+    expect(lex.pairs).to eq([
+      [:SELECT, 'SELECT'],
+      [:ID, '*'],
+      [:FROM, 'FROM'],
+      [:ID, 'users'],
+      [:WHERE, 'WHERE'],
+      [:ID, 'id'],
+      [:COMPARE, '='],
+      [:NUMBER, 1],
+    ])
+  end
 end

@@ -6,6 +6,8 @@ module Kwery
       ignore " \t\n"
 
       token :SELECT, /SELECT/
+      token :FROM, /FROM/
+      token :WHERE, /WHERE/
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
@@ -16,6 +18,11 @@ module Kwery
         t.value = t.value[1..-2].gsub("\\'", "'")
         t
       end
+
+      token :ID, /[a-zA-Z*]+/
+      token :STAR, /\*/
+
+      token :COMPARE, /(=|<|>|<=|>=|<>)/
 
       def to_enum
         Enumerator.new do |g|
