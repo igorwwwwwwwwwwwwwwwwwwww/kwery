@@ -4,9 +4,16 @@ module Kwery
   class Parser
     class Lexer < Rly::Lex
       ignore " \t\n"
+
       token :SELECT, /SELECT/
+
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
+        t
+      end
+
+      token :STRING, /(?:'(?<val>[^'\\]*(?:\\.[^'\\]*)*)'|"(?<val>[^"\\]*(?:\\.[^"\\]*)*"))/ do |t, a|
+        t.value = t.value[1..-2].gsub("\\'", "'")
         t
       end
 
