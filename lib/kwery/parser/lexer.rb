@@ -12,7 +12,7 @@ module Kwery
         t
       end
 
-      token :STRING, /(?:'(?<val>[^'\\]*(?:\\.[^'\\]*)*)'|"(?<val>[^"\\]*(?:\\.[^"\\]*)*"))/ do |t, a|
+      token :STRING, /(?:'(?<val>[^'\\]*(?:\\.[^'\\]*)*)')/ do |t|
         t.value = t.value[1..-2].gsub("\\'", "'")
         t
       end
