@@ -1,3 +1,5 @@
+require 'kwery/parser/lexer'
+require 'kwery/parser/parser'
 require 'kwery/expr'
 require 'kwery/catalog'
 require 'kwery/schema'
