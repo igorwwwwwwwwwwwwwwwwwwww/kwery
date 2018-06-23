@@ -3,7 +3,7 @@ require 'kwery'
 RSpec.describe Kwery::Executor::Aggregate do
   catalog = Kwery::Catalog.new
 
-  catalog.table :users, Kwery::Catalog::Table.new
+  catalog.table :users
 
   schema = catalog.new_schema
   schema.bulk_insert(:users, [

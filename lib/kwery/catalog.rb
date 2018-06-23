@@ -4,28 +4,24 @@ module Kwery
     attr_accessor :indexes
 
     def initialize
-      @tables = {}
+      @tables = []
       @indexes = {}
     end
 
-    def table(name, table)
-      @tables[name] = table
+    def table(name)
+      @tables << name
     end
 
     def index(name, index)
       @indexes[name] = index
     end
 
-    def new_schema
-      Kwery::Schema.new(self)
+    def indexes_for(table_name)
+      @indexes.select { |k, idx| idx.table == table_name }
     end
 
-    class Table
-      attr_accessor :indexes
-
-      def initialize(indexes: [])
-        @indexes = indexes
-      end
+    def new_schema
+      Kwery::Schema.new(self)
     end
 
     class Index

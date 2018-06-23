@@ -36,8 +36,7 @@ module Kwery
       def match
         candidates = []
 
-        index_exprs = @catalog.tables[@query.from].indexes
-          .map { |k| [k, @catalog.indexes[k]] }
+        index_exprs = @catalog.indexes_for(@query.from)
           .map { |k, idx| [k, idx.indexed_exprs] }
 
         index_exprs.each do |index_name, indexed_exprs|

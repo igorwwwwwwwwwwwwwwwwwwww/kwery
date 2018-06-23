@@ -4,7 +4,7 @@ module Kwery
       @catalog = catalog
       @state = {}
 
-      catalog.tables.each do |table_name, t|
+      catalog.tables.each do |table_name|
         @state[table_name] = []
       end
       catalog.indexes.each do |index_name, i|

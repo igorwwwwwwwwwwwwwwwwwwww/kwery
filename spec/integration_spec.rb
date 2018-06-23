@@ -5,9 +5,7 @@ RSpec.describe Kwery do
   it "executes a query" do
     catalog = Kwery::Catalog.new
 
-    catalog.table :users, Kwery::Catalog::Table.new(
-      indexes: [:users_idx_id],
-    )
+    catalog.table :users
     catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),

@@ -3,9 +3,7 @@ require 'kwery'
 RSpec.describe Kwery::Executor::IndexScan do
   catalog = Kwery::Catalog.new
 
-  catalog.table :users, Kwery::Catalog::Table.new(
-    indexes: [:users_idx_name],
-  )
+  catalog.table :users
   catalog.index :users_idx_name, Kwery::Catalog::Index.new(:users, [
     Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
   ])
