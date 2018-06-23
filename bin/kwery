@@ -29,7 +29,7 @@ sql = ARGV.shift
 
 unless sql
   puts 'Usage:'
-  puts '  ruby engine.rb <sql>'
+  puts '  bin/kwery <sql>'
   exit 1
 end
 
