@@ -4,8 +4,8 @@ require 'set'
 
 module Kwery
   class Planner
-    def initialize(catalog, query)
-      @catalog = catalog
+    def initialize(schema, query)
+      @schema = schema
       @query = query
     end
 
@@ -18,7 +18,7 @@ module Kwery
     private
 
     def index_scan
-      matcher = IndexMatcher.new(@catalog, @query)
+      matcher = IndexMatcher.new(@schema, @query)
 
       candidates = matcher.match
 

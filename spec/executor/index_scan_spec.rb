@@ -1,18 +1,9 @@
 require 'kwery'
 
 RSpec.describe Kwery::Executor::IndexScan do
-  catalog = Kwery::Catalog.new
+  schema = Kwery::Schema.new
+  schema.create_table(:users)
 
-  catalog.table :users
-  catalog.index :users_idx_name, Kwery::Catalog::Index.new(:users, [
-    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
-  ])
-  catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
-    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
-    Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id)),
-  ])
-
-  schema = catalog.new_schema
   schema.bulk_insert(:users, [
     {id: 1,  name: "Kathleen"},
     {id: 2,  name: "Xantha"},
@@ -25,8 +16,14 @@ RSpec.describe Kwery::Executor::IndexScan do
     {id: 9,  name: "Uta"},
     {id: 10, name: "Anastasia"},
   ])
-  schema.reindex(:users, :users_idx_name)
-  schema.reindex(:users, :users_idx_name_id)
+
+  schema.create_index(:users, :users_idx_name, [
+    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+  ])
+  schema.create_index(:users, :users_idx_name_id, [
+    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id)),
+  ])
 
   it "scans the whole index in sorted order" do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)

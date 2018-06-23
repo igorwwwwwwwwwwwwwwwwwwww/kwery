@@ -3,20 +3,16 @@ require 'csv'
 
 RSpec.describe Kwery do
   it "executes a query" do
-    catalog = Kwery::Catalog.new
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
 
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-    ])
-
-    schema = catalog.new_schema
-
-    importer = Kwery::Importer.new(catalog, schema)
+    importer = Kwery::Importer.new(schema)
     importer.load(:users, 'data/users.csv', { id: :integer, active: :boolean })
 
-    schema.reindex(:users, :users_idx_id)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+    ])
 
     query = Kwery::Query.new(
       select: {
@@ -31,7 +27,7 @@ RSpec.describe Kwery do
       limit: 10,
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)

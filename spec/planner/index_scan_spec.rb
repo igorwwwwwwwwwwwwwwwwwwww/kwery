@@ -2,10 +2,10 @@ require 'kwery'
 
 RSpec.describe Kwery::Planner do
   it "performs an index scan for order by" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -14,11 +14,11 @@ RSpec.describe Kwery::Planner do
       },
       from: :users,
       order_by: [
-        Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -27,10 +27,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "performs an index scan for where" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -43,7 +43,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -53,10 +53,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches an indexed expression" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_upper_name, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_upper_name, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -69,7 +69,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -79,11 +79,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a compound index" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_name_active, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -97,7 +97,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -107,11 +107,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a compound index with reverse field order" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_active_name, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_active_name, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -125,7 +125,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -135,11 +135,11 @@ RSpec.describe Kwery::Planner do
   end
 
   xit "matches an index prefix" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_name_active, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_name_active, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -152,7 +152,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -162,10 +162,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a > constraint" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -178,7 +178,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -188,11 +188,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a > constraint with an index prefix" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_active_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_active_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -206,7 +206,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -216,10 +216,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a >= constraint" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -232,7 +232,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -242,11 +242,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a >= constraint with an index prefix" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_active_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_active_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -260,7 +260,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -270,10 +270,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a < constraint" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -286,7 +286,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -296,10 +296,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches a between constraint" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -313,7 +313,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -323,11 +323,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches order by and an eq constraint prefix" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_name_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -339,11 +339,11 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
       ],
       order_by: [
-        Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -353,11 +353,11 @@ RSpec.describe Kwery::Planner do
   end
 
   it "matches eq constraint prefix with gt" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_name_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_name_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -371,7 +371,7 @@ RSpec.describe Kwery::Planner do
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -381,10 +381,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "performs an extra sort if index is only used for matching" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -396,11 +396,11 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
       ],
       order_by: [
-        Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,
@@ -410,10 +410,10 @@ RSpec.describe Kwery::Planner do
   end
 
   it "performs an extra where if index is only used for sorting" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
-    catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-      Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
+    schema.create_index(:users, :users_idx_id, [
+      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -425,11 +425,11 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
       ],
       order_by: [
-        Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project,

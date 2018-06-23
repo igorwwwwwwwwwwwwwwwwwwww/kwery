@@ -1,11 +1,9 @@
 require 'kwery'
 
 RSpec.describe Kwery::Executor::TableScan do
-  catalog = Kwery::Catalog.new
+  schema = Kwery::Schema.new
+  schema.create_table(:users)
 
-  catalog.table :users
-
-  schema = catalog.new_schema
   schema.bulk_insert(:users, [
     {id: 1,  name: "Kathleen"},
     {id: 2,  name: "Xantha"},

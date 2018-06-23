@@ -4,19 +4,15 @@ $: << 'lib'
 
 require 'kwery'
 
-catalog = Kwery::Catalog.new
+schema = Kwery::Schema.new
+schema.create_table(:users)
 
-catalog.table :users
-catalog.index :users_idx_id, Kwery::Catalog::Index.new(:users, [
-  Kwery::Catalog::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
-])
-
-schema = catalog.new_schema
-
-importer = Kwery::Importer.new(catalog, schema)
+importer = Kwery::Importer.new(schema)
 importer.load(:users, 'data/users.csv', { id: :integer, active: :boolean })
 
-schema.reindex(:users, :users_idx_id)
+schema.create_index(:users, :users_idx_id, [
+  Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+])
 
 sql = ARGV.shift
 
@@ -32,7 +28,7 @@ options[:notablescan] = true if ENV['NOTABLESCAN'] == 'true'
 parser = Kwery::Parser.new(options)
 query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
 
-plan = query.plan(catalog)
+plan = query.plan(schema)
 
 context = Kwery::Executor::Context.new(schema)
 plan.call(context).each do |tup|

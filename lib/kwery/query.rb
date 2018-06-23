@@ -13,8 +13,8 @@ module Kwery
       @options = options
     end
 
-    def plan(catalog)
-      Planner.new(catalog, self).call
+    def plan(schema)
+      Planner.new(schema, self).call
     end
 
      def ==(other)

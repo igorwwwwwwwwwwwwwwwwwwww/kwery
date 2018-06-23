@@ -28,15 +28,15 @@ module Kwery
         Kwery::Expr::Lte,
       ]
 
-      def initialize(catalog, query)
-        @catalog = catalog
+      def initialize(schema, query)
+        @schema = schema
         @query = query
       end
 
       def match
         candidates = []
 
-        index_exprs = @catalog.indexes_for(@query.from)
+        index_exprs = @schema.indexes_for(@query.from)
           .map { |k, idx| [k, idx.indexed_exprs] }
 
         index_exprs.each do |index_name, indexed_exprs|

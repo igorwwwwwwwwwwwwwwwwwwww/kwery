@@ -1,7 +1,6 @@
 require 'kwery/parser'
 require 'kwery/parser/lexer'
 require 'kwery/expr'
-require 'kwery/catalog'
 require 'kwery/schema'
 require 'kwery/index'
 require 'kwery/executor'

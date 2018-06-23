@@ -2,8 +2,8 @@ require 'kwery'
 
 RSpec.describe Kwery::Planner do
   it "performs a table scan by default" do
-    catalog = Kwery::Catalog.new
-    catalog.table :users
+    schema = Kwery::Schema.new
+    schema.create_table(:users)
 
     query = Kwery::Query.new(
       select: {
@@ -12,7 +12,7 @@ RSpec.describe Kwery::Planner do
       from: :users,
     )
 
-    plan = query.plan(catalog)
+    plan = query.plan(schema)
 
     expect(plan.explain).to eq(
       [Kwery::Executor::Project, Kwery::Executor::TableScan]

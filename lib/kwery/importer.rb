@@ -2,8 +2,7 @@ require 'csv'
 
 module Kwery
   class Importer
-    def initialize(catalog, schema)
-      @catalog = catalog
+    def initialize(schema)
       @schema = schema
     end
 
