@@ -11,6 +11,16 @@ RSpec.describe Kwery::Parser::Lexer do
     ])
   end
 
+  it "lexes lower case select" do
+    tokens =
+    sql = 'select 1'
+    lex = Kwery::Parser::Lexer.new(sql)
+    expect(lex.pairs).to eq([
+      [:SELECT, 'select'],
+      [:NUMBER, 1],
+    ])
+  end
+
   it "lexes select num+" do
     tokens =
     sql = 'SELECT 64'

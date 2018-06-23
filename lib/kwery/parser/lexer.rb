@@ -5,9 +5,9 @@ module Kwery
     class Lexer < Rly::Lex
       ignore " \t\n"
 
-      token :SELECT, /SELECT/
-      token :FROM, /FROM/
-      token :WHERE, /WHERE/
+      token :SELECT, /SELECT/i
+      token :FROM, /FROM/i
+      token :WHERE, /WHERE/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
