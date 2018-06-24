@@ -16,6 +16,9 @@ module Kwery
         key = @indexed_exprs
           .map(&:expr)
           .map { |expr| expr.call(tup) }
+        if key.all? { |k| k.nil? }
+          raise "invalid index key #{key} for tup #{tup}"
+        end
         insert(key, tid)
     end
 

@@ -5,13 +5,21 @@ $: << 'lib'
 require 'kwery'
 
 schema = Kwery::Schema.new
-schema.create_table(:users)
 
-importer = Kwery::Importer.new(schema)
-importer.load(:users, 'data/users.csv', { id: :integer, active: :boolean })
-
+schema.import_csv(:users, 'data/users.csv', { id: :integer, active: :boolean })
 schema.create_index(:users, :users_idx_id, [
   Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+])
+
+schema.import_json(:clickhouse_users, 'data/clickhouse_users.json')
+schema.create_index(:clickhouse_users, :clickhouse_users_idx_id, [
+  Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+])
+schema.create_index(:clickhouse_users, :clickhouse_users_idx_guid, [
+  Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:guid), :asc),
+])
+schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
+  Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
 ])
 
 sql = ARGV.shift

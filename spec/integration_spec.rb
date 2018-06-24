@@ -4,11 +4,7 @@ require 'csv'
 RSpec.describe Kwery do
   it "executes a query" do
     schema = Kwery::Schema.new
-    schema.create_table(:users)
-
-    importer = Kwery::Importer.new(schema)
-    importer.load(:users, 'data/users.csv', { id: :integer, active: :boolean })
-
+    schema.import_csv(:users, 'data/users.csv', { id: :integer, active: :boolean })
     schema.create_index(:users, :users_idx_id, [
       Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
