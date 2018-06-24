@@ -8,6 +8,19 @@ module Kwery
       @anon_fields = 0
     end
 
+    def normalize_where(node)
+      exprs = []
+
+      if Kwery::Expr::And === node
+        exprs += normalize_where(node.left)
+        exprs += normalize_where(node.right)
+      else
+        exprs << node
+      end
+
+      exprs
+    end
+
     rule 'query : select_query
                 | EXPLAIN select_query' do |st, e1, e2|
       st.value = (e2 || e1).value
@@ -26,8 +39,6 @@ module Kwery
       args = args.compact.to_h
       args[:select_star] = args[:select].delete(:*) != nil
       args[:options] = @options
-
-      # TODO: normalize top-level :where ANDs to be more optimizer-friendly
 
       st.value = Kwery::Query.new(**args)
     end
@@ -67,8 +78,8 @@ module Kwery
       st.value = [:where, e1.value] if e1
     end
 
-    rule 'where_exprs : where_expr' do |st, e1, _, e2|
-      st.value = [e1.value]
+    rule 'where_exprs : where_expr' do |st, e1|
+      st.value = normalize_where(e1.value)
     end
 
     rule 'where_expr : expr
