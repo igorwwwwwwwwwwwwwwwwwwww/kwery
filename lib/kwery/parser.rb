@@ -48,7 +48,7 @@ module Kwery
         next
       end
 
-      if e1.value.is_a?(Kwery::Expr::Column)
+      if Kwery::Expr::Column === e1.value
         field_alias = e1.value.name
         st.value ||= {}
         st.value[field_alias] = e1.value
