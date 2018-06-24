@@ -43,7 +43,7 @@ RSpec.describe Kwery do
 
     # TODO: missing index prefix-matching support
     # expect(context.stats).to eq({
-    #   index_tuples_scanned: 10,
+    #   index_tuples_fetched: 10,
     #   index_comparisons: 14,
     # })
   end

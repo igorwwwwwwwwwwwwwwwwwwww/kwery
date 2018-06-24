@@ -33,7 +33,7 @@ module Kwery
           .index_scan(@index_name, @sargs, @scan_order, context)
           .flat_map {|tids|
             tids.map { |tid|
-              context.increment :index_tuples_scanned
+              context.increment :index_tuples_fetched
               context.schema.fetch(@table_name, tid)
             }
           }

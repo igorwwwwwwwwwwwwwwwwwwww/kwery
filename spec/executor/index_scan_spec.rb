@@ -45,7 +45,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 10,
+      index_tuples_fetched: 10,
       index_comparisons: 10,
     })
   end
@@ -68,7 +68,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     # theory: this is 6 because the iterator advances to the next
     # item before limit effectively limits it
     expect(context.stats).to eq({
-      index_tuples_scanned: 5,
+      index_tuples_fetched: 5,
       index_comparisons: 6,
     })
   end
@@ -87,7 +87,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 10,
+      index_tuples_fetched: 10,
       index_comparisons: 10,
     })
   end
@@ -107,7 +107,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 7,
+      index_tuples_fetched: 7,
       index_comparisons: 8,
     })
   end
@@ -135,7 +135,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 10,
+      index_tuples_fetched: 10,
       index_comparisons: 10,
     })
   end
@@ -156,7 +156,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 10,
+      index_tuples_fetched: 10,
       index_comparisons: 10,
     })
   end
@@ -178,7 +178,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     # not sure why we have 4 comparisons here
     expect(context.stats).to eq({
-      index_tuples_scanned: 2,
+      index_tuples_fetched: 2,
       index_comparisons: 4,
     })
   end
@@ -197,7 +197,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 1,
+      index_tuples_fetched: 1,
       index_comparisons: 3,
     })
   end
@@ -235,7 +235,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 4,
+      index_tuples_fetched: 4,
       index_comparisons: 5,
     })
   end
@@ -272,7 +272,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 4,
+      index_tuples_fetched: 4,
       index_comparisons: 5,
     })
   end
@@ -293,7 +293,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 3,
+      index_tuples_fetched: 3,
       index_comparisons: 6,
     })
   end
@@ -315,7 +315,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 4,
+      index_tuples_fetched: 4,
       index_comparisons: 6,
     })
   end
@@ -340,7 +340,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 10,
+      index_tuples_fetched: 10,
       index_comparisons: 10,
     })
   end
@@ -362,7 +362,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 4,
+      index_tuples_fetched: 4,
       index_comparisons: 5,
     })
   end
@@ -383,7 +383,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 2,
+      index_tuples_fetched: 2,
       index_comparisons: 6,
     })
   end
@@ -422,7 +422,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     expect(context.stats).to eq({
       index_comparisons: 9,
-      index_tuples_scanned: 4,
+      index_tuples_fetched: 4,
     })
   end
 
@@ -441,7 +441,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     expect(context.stats).to eq({
       index_comparisons: 3,
-      index_tuples_scanned: 1,
+      index_tuples_fetched: 1,
     })
   end
 
@@ -461,7 +461,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 2,
+      index_tuples_fetched: 2,
       index_comparisons: 6,
     })
   end
@@ -481,7 +481,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     ])
 
     expect(context.stats).to eq({
-      index_tuples_scanned: 1,
+      index_tuples_fetched: 1,
       index_comparisons: 4,
     })
   end
