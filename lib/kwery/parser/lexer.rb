@@ -13,6 +13,9 @@ module Kwery
       token :WHERE, /\bWHERE\b/i
       token :AND, /\bAND\b/i
       token :OR, /\bOR\b/i
+      token :ORDER_BY, /\bORDER BY\b/i
+      token :ASC_DESC, /\b(ASC|DESC)\b/i
+      token :LIMIT, /\bLIMIT\b/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i

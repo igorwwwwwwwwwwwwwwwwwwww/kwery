@@ -18,11 +18,11 @@ RSpec.describe Kwery::Executor::IndexScan do
   ])
 
   schema.create_index(:users, :users_idx_name, [
-    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+    Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
   ])
   schema.create_index(:users, :users_idx_name_id, [
-    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
-    Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id)),
+    Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name)),
+    Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id)),
   ])
 
   it "scans the whole index in sorted order" do

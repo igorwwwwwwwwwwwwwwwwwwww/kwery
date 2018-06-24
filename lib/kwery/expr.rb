@@ -77,5 +77,14 @@ module Kwery
         expr.call(tup).upcase
       end
     end
+
+    class IndexedExpr < Struct.new(:expr, :order)
+      def reverse
+        Kwery::Expr::IndexedExpr.new(
+          expr,
+          order == :asc ? :desc : :asc,
+        )
+      end
+    end
   end
 end

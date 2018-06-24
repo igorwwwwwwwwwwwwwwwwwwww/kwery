@@ -5,7 +5,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -14,7 +14,7 @@ RSpec.describe Kwery::Planner do
       },
       from: :users,
       order_by: [
-        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 
@@ -30,7 +30,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -56,7 +56,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_upper_name, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -82,8 +82,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_name_active, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -110,8 +110,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_active_name, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -138,8 +138,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_name_active, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -165,7 +165,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -191,8 +191,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_active_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -219,7 +219,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -245,8 +245,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_active_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -273,7 +273,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -299,7 +299,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -326,8 +326,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_name_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -339,7 +339,7 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
       ],
       order_by: [
-        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 
@@ -356,8 +356,8 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_name_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -384,7 +384,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -396,7 +396,7 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
       ],
       order_by: [
-        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
+        Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
       ],
     )
 
@@ -413,7 +413,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -425,7 +425,7 @@ RSpec.describe Kwery::Planner do
         Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
       ],
       order_by: [
-        Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+        Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
       ],
     )
 

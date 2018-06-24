@@ -14,56 +14,66 @@ module Kwery
       st.value.options[:explain] = true if e2
     end
 
-    rule 'select_query : SELECT select_expr
-                       | SELECT select_expr FROM ID
-                       | SELECT select_expr WHERE where_expr
-                       | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
-      args = {}
-      args[:select_star] = e1.value.delete(:*) != nil
-      args[:select] = e1.value
-      args[t2.type.downcase] = e2.value if e2
-      args[t3.type.downcase] = e3.value if e3
+    rule 'select_query : select_clause from_clause where_clause order_by_clause limit_clause
+        ' do |st, e1, e2, e3, e4, e5|
+      args = []
+      args << e1.value
+      args << e2.value if e2
+      args << e3.value if e3
+      args << e4.value if e4
+      args << e5.value if e5
+
+      args = args.compact.to_h
+      args[:select_star] = args[:select].delete(:*) != nil
       args[:options] = @options
 
-      # TODO: normalize top-level ANDs to be more optimizer-friendly
-      args[:where] = [args[:where]] if args[:where]
+      # TODO: normalize top-level :where ANDs to be more optimizer-friendly
 
       st.value = Kwery::Query.new(**args)
     end
 
+    rule 'select_clause : SELECT select_exprs' do |st, _, e1|
+      st.value = [:select, e1.value.to_h]
+    end
+
+    rule 'select_exprs : select_expr
+                       | select_expr "," select_exprs' do |st, e1, _, e2|
+      st.value ||= []
+      st.value << e1.value
+      st.value += e2.value if e2
+    end
+
     rule 'select_expr : expr
-                      | expr AS ID
-                      | select_expr "," select_expr' do |st, e1, _, e2|
-      if e2&.type == :select_expr
-        st.value ||= {}
-        st.value.merge!(e1.value)
-        st.value.merge!(e2.value)
-        next
-      end
-
-      if e2&.type == :ID
+                      | expr AS ID' do |st, e1, _, e2|
+      if e2
         field_alias = e2.value
-        st.value ||= {}
-        st.value[field_alias] = e1.value
-        next
-      end
-
-      if Kwery::Expr::Column === e1.value
+      elsif Kwery::Expr::Column === e1.value
         field_alias = e1.value.name
-        st.value ||= {}
-        st.value[field_alias] = e1.value
-        next
+      else
+        field_alias = "_#{@anon_fields}".to_sym
+        @anon_fields += 1
       end
 
-      field_alias = "_#{@anon_fields}".to_sym
-      @anon_fields += 1
-      st.value ||= {}
-      st.value[field_alias] = e1.value
+      st.value = [field_alias, e1.value]
+    end
+
+    rule 'from_clause : FROM ID
+                      |' do |st, _, e1|
+      st.value = [:from, e1.value] if e1
+    end
+
+    rule 'where_clause : WHERE where_exprs
+                       |' do |st, _, e1|
+      st.value = [:where, e1.value] if e1
+    end
+
+    rule 'where_exprs : where_expr' do |st, e1, _, e2|
+      st.value = [e1.value]
     end
 
     rule 'where_expr : expr
-                     | where_expr AND where_expr
-                     | where_expr OR where_expr' do |st, e1, op, e2|
+                     | expr AND expr
+                     | expr OR expr' do |st, e1, op, e2|
       if op
         if op.type == :AND
           st.value = Kwery::Expr::And.new(e1.value, e2.value)
@@ -72,12 +82,31 @@ module Kwery
         end
         next
       end
-
       st.value = e1.value
     end
 
-    rule 'column : ID' do |st, e1|
-      st.value = Kwery::Expr::Column.new(e1.value)
+    rule 'order_by_clause : ORDER_BY order_by_exprs
+                          |' do |st, _, e1|
+      st.value = [:order_by, e1.value] if e1
+    end
+
+    rule 'order_by_exprs : order_by_expr
+                         | order_by_expr "," order_by_exprs' do |st, e1, _, e2|
+      st.value ||= []
+      st.value << e1.value
+      st.value += e2.value if e2
+    end
+
+    rule 'order_by_expr : expr
+                        | expr ASC_DESC' do |st, e1, e2|
+      order = :asc
+      order = e2.value.to_sym.downcase if e2
+      st.value = Kwery::Expr::IndexedExpr.new(e1.value, order)
+    end
+
+    rule 'limit_clause : LIMIT NUMBER
+                       |' do |st, _, e1|
+      st.value = [:limit, e1.value] if e1
     end
 
     rule 'expr : value

@@ -6,8 +6,8 @@ RSpec.describe Kwery do
     schema = Kwery::Schema.new
     schema.import_csv(:users, 'data/users.csv', { id: :integer, active: :boolean })
     schema.create_index(:users, :users_idx_id, [
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
-      Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
     query = Kwery::Query.new(

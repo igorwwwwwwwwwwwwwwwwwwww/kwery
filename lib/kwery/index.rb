@@ -34,14 +34,5 @@ module Kwery
     def scan(sargs = {}, scan_order = :asc, context)
       @bst.scan_leaf(@bst.root, sargs, scan_order, context)
     end
-
-    class IndexedExpr < Struct.new(:expr, :order)
-      def reverse
-        Kwery::Index::IndexedExpr.new(
-          expr,
-          order == :asc ? :desc : :asc,
-        )
-      end
-    end
   end
 end
