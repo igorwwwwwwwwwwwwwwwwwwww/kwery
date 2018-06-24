@@ -4,7 +4,7 @@ module Kwery
   class Parser
     class Lexer < Rly::Lex
       ignore " \t\n"
-      literals ','
+      literals ',()'
 
       token :EXPLAIN, /\bEXPLAIN\b/i
       token :SELECT, /\bSELECT\b/i
@@ -13,6 +13,7 @@ module Kwery
       token :WHERE, /\bWHERE\b/i
       token :AND, /\bAND\b/i
       token :OR, /\bOR\b/i
+      token :IN, /\bIN\b/i
       token :ORDER_BY, /\bORDER BY\b/i
       token :ASC_DESC, /\b(ASC|DESC)\b/i
       token :LIMIT, /\bLIMIT\b/i

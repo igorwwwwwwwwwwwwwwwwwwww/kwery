@@ -18,6 +18,8 @@
 
 require 'set'
 
+# TODO: support for extracting sargs from IN query
+
 module Kwery
   class Planner
     class IndexMatcher

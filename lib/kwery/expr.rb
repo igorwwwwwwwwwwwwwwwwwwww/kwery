@@ -26,6 +26,12 @@ module Kwery
       end
     end
 
+    class In < Struct.new(:expr, :vals)
+      def call(tup)
+        vals.map { |val| val.call(tup) }.include?(expr.call(tup))
+      end
+    end
+
     class Eq < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) == right.call(tup)

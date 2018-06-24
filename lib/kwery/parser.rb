@@ -38,7 +38,7 @@ module Kwery
 
     rule 'select_exprs : select_expr
                        | select_expr "," select_exprs' do |st, e1, _, e2|
-      st.value ||= []
+      st.value = []
       st.value << e1.value
       st.value += e2.value if e2
     end
@@ -72,13 +72,17 @@ module Kwery
     end
 
     rule 'where_expr : expr
-                     | expr AND expr
-                     | expr OR expr' do |st, e1, op, e2|
+                     | where_expr AND where_expr
+                     | where_expr OR where_expr
+                     | expr IN "(" exprs ")"' do |st, e1, op, e2, e3|
       if op
-        if op.type == :AND
+        case op.type
+        when :AND
           st.value = Kwery::Expr::And.new(e1.value, e2.value)
-        else
+        when :OR
           st.value = Kwery::Expr::Or.new(e1.value, e2.value)
+        when :IN
+          st.value = Kwery::Expr::In.new(e1.value, e3.value)
         end
         next
       end
@@ -92,7 +96,7 @@ module Kwery
 
     rule 'order_by_exprs : order_by_expr
                          | order_by_expr "," order_by_exprs' do |st, e1, _, e2|
-      st.value ||= []
+      st.value = []
       st.value << e1.value
       st.value += e2.value if e2
     end
@@ -107,6 +111,13 @@ module Kwery
     rule 'limit_clause : LIMIT NUMBER
                        |' do |st, _, e1|
       st.value = [:limit, e1.value] if e1
+    end
+
+    rule 'exprs : expr
+                | expr "," exprs' do |st, e1, _, e2|
+      st.value = []
+      st.value << e1.value
+      st.value += e2.value if e2
     end
 
     rule 'expr : value
