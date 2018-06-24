@@ -139,8 +139,7 @@ RSpec.describe Kwery::Parser::Lexer do
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
       Kwery::Query.new(
-        select: {},
-        select_star: true,
+        select: { :* => Kwery::Expr::Column.new(:*) },
         from: :users,
       )
     )

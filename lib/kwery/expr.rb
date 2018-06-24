@@ -90,6 +90,24 @@ module Kwery
       end
     end
 
+    class AggCount < Struct.new(:exprs)
+      def init
+        0
+      end
+
+      def reduce(sum, tup)
+        sum + 1
+      end
+
+      def render(state)
+        {count: state}
+      end
+    end
+
+    AGG_FN_TABLE = {
+      count: Kwery::Expr::AggCount,
+    }
+
     class IndexedExpr < Struct.new(:expr, :order)
       def reverse
         Kwery::Expr::IndexedExpr.new(

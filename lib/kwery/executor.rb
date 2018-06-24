@@ -137,6 +137,9 @@ module Kwery
       end
     end
 
+    # TODO: support multiple aggregations side-by-side
+    #   e.g. select count(*), avg(experience) from pokemon
+
     class Aggregate
       def initialize(init, reduce, render, plan)
         @init = init

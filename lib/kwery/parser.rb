@@ -37,7 +37,6 @@ module Kwery
       args << e5.value if e5
 
       args = args.compact.to_h
-      args[:select_star] = args[:select].delete(:*) != nil
       args[:options] = @options
 
       st.value = Kwery::Query.new(**args)

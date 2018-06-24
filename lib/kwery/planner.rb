@@ -40,6 +40,7 @@ module Kwery
       plan = sort(plan)   unless candidate.sorted
       plan = limit(plan)
       plan = project(plan)
+      plan = aggregate(plan)
       plan
     end
 
@@ -57,6 +58,7 @@ module Kwery
       plan = sort(plan)
       plan = limit(plan)
       plan = project(plan)
+      plan = aggregate(plan)
       plan
     end
 
@@ -66,6 +68,7 @@ module Kwery
       # at most one tuple, no sort or limit needed
       plan = where(plan)
       plan = project(plan)
+      plan = aggregate(plan)
       plan
     end
 
@@ -116,14 +119,32 @@ module Kwery
     end
 
     def project(plan)
-      plan = Kwery::Executor::Project.new(
-        lambda { |tup|
-          if @query.select_star
-            tup.merge(@query.select.map { |k, f| [k, f.call(tup)] }.to_h)
-          else
-            @query.select.map { |k, f| [k, f.call(tup)] }.to_h
-          end
-        },
+      return plan if select_agg.size > 0
+
+      if @query.select[:*]
+        plan = Kwery::Executor::Project.new(
+          lambda { |tup| tup.merge(@query.select.map { |k, f| [k, f.call(tup)] }.to_h) },
+          plan
+        )
+      else
+        plan = Kwery::Executor::Project.new(
+          lambda { |tup| @query.select.map { |k, f| [k, f.call(tup)] }.to_h },
+          plan
+        )
+      end
+
+      plan
+    end
+
+    def aggregate(plan)
+      return plan unless select_agg.size > 0
+
+      agg = select_agg.first
+
+      plan = Kwery::Executor::Aggregate.new(
+        agg.init,
+        agg.method(:reduce),
+        agg.method(:render),
         plan
       )
 
@@ -133,6 +154,14 @@ module Kwery
     def explain(plan)
       plan = Kwery::Executor::Explain.new(plan)
       plan
+    end
+
+    def select_agg
+      @select_agg ||= @query.select
+        .select { |k,v|
+          Kwery::Expr::FnCall === v && Kwery::Expr::AGG_FN_TABLE[v.fn_name]
+        }
+        .map { |k,v| Kwery::Expr::AGG_FN_TABLE[v.fn_name].new(v.exprs) }
     end
   end
 end
