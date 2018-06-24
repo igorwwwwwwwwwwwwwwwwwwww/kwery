@@ -84,6 +84,8 @@ module Kwery
 
     class FnCall < Struct.new(:fn_name, :exprs)
       def call(tup)
+        raise "no function named #{fn_name}" unless FN_TABLE[fn_name]
+
         args = exprs.map { |expr| expr.call(tup) }
         fn = FN_TABLE[fn_name]
         fn.call(*args)
@@ -95,8 +97,8 @@ module Kwery
         0
       end
 
-      def reduce(sum, tup)
-        sum + 1
+      def reduce(state, tup)
+        state + 1
       end
 
       def render(state)
@@ -104,8 +106,31 @@ module Kwery
       end
     end
 
+    class AggAvg < Struct.new(:exprs)
+      def init
+        {count: 0, sum: 0}
+      end
+
+      def reduce(state, tup)
+        val = exprs[0].call(tup)
+        {
+          count: state[:count] + 1,
+          sum:   state[:sum] + val,
+        }
+      end
+
+      def render(state)
+        if state[:count] > 0
+          {avg: state[:sum] / state[:count]}
+        else
+          {avg: 0}
+        end
+      end
+    end
+
     AGG_FN_TABLE = {
       count: Kwery::Expr::AggCount,
+      avg: Kwery::Expr::AggAvg
     }
 
     class IndexedExpr < Struct.new(:expr, :order)
