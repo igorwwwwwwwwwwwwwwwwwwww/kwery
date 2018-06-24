@@ -88,8 +88,7 @@ module Kwery
 
     on_error lambda { |errtoken|
       if errtoken
-        location_info = lookahead.location_info
-        raise "Syntax error at #{location_info}, token='#{errtoken}'"
+        raise "Syntax error at #{errtoken.location_info}, token='#{errtoken}'"
       else
         raise "Parse error in input. EOF"
       end

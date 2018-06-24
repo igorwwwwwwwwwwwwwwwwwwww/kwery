@@ -5,18 +5,18 @@ module Kwery
     class Lexer < Rly::Lex
       ignore " \t\n"
 
-      token :EXPLAIN, /EXPLAIN/i
-      token :SELECT, /SELECT/i
-      token :FROM, /FROM/i
-      token :WHERE, /WHERE/i
-      token :AS, /AS/i
+      token :EXPLAIN, /\bEXPLAIN\b/i
+      token :SELECT, /\bSELECT\b/i
+      token :FROM, /\bFROM\b/i
+      token :WHERE, /\bWHERE\b/i
+      token :AS, /\bAS\b/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
         t
       end
 
-      token :BOOL, /(true|false|t|f)/ do |t|
+      token :BOOL, /\b(true|false|t|f)\b/ do |t|
         t.value = ['true', 't'].include?(t.value)
         t
       end
@@ -28,7 +28,7 @@ module Kwery
 
       token :COMPARE, /(=|<|>|<=|>=|<>)/
 
-      token :ID, /[a-zA-Z_*]+/ do |t|
+      token :ID, /\b[a-zA-Z_*]+\b/ do |t|
         t.value = t.value.to_sym
         t
       end
