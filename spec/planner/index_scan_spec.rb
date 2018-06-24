@@ -56,7 +56,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
     schema.create_index(:users, :users_idx_upper_name, [
-      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), :asc),
+      Kwery::Expr::IndexedExpr.new(Kwery::Expr::FnCall.new(:upper, [Kwery::Expr::Column.new(:name)]), :asc),
     ])
 
     query = Kwery::Query.new(
@@ -65,7 +65,7 @@ RSpec.describe Kwery::Planner do
       },
       from: :users,
       where: [
-        Kwery::Expr::Eq.new(Kwery::Expr::Upper.new(Kwery::Expr::Column.new(:name)), Kwery::Expr::Literal.new('CARA')),
+        Kwery::Expr::Eq.new(Kwery::Expr::FnCall.new(:upper, [Kwery::Expr::Column.new(:name)]), Kwery::Expr::Literal.new('CARA')),
       ],
     )
 

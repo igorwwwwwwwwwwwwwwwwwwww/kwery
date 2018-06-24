@@ -132,25 +132,32 @@ module Kwery
     end
 
     rule 'expr : value
-               | expr COMPARE expr' do |st, e1, c, e2|
-      if e2
-        case c.value
+               | expr COMPARE expr
+               | ID "(" exprs ")"' do |st, e1, e2, e3|
+      if e2&.type == :COMPARE
+        case e2.value
         when '='
-          st.value = Kwery::Expr::Eq.new(e1.value, e2.value)
+          st.value = Kwery::Expr::Eq.new(e1.value, e3.value)
         when '<'
-          st.value = Kwery::Expr::Lt.new(e1.value, e2.value)
+          st.value = Kwery::Expr::Lt.new(e1.value, e3.value)
         when '>'
-          st.value = Kwery::Expr::Gt.new(e1.value, e2.value)
+          st.value = Kwery::Expr::Gt.new(e1.value, e3.value)
         when '<='
-          st.value = Kwery::Expr::Lte.new(e1.value, e2.value)
+          st.value = Kwery::Expr::Lte.new(e1.value, e3.value)
         when '>='
-          st.value = Kwery::Expr::Gte.new(e1.value, e2.value)
+          st.value = Kwery::Expr::Gte.new(e1.value, e3.value)
         when '<>'
           raise NotImplementedError
         end
-      else
-        st.value = e1.value
+        next
       end
+
+      if e1&.type == :ID
+        st.value = Kwery::Expr::FnCall.new(e1.value, e3.value)
+        next
+      end
+
+      st.value = e1.value
     end
 
     rule 'value : NUMBER

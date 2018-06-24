@@ -2,6 +2,10 @@ require 'set'
 
 module Kwery
   module Expr
+    FN_TABLE = {
+      upper: lambda { |x| x.upcase }
+    }
+
     class Column < Struct.new(:name)
       def call(tup)
         tup[name]
@@ -78,9 +82,11 @@ module Kwery
       end
     end
 
-    class Upper < Struct.new(:expr)
+    class FnCall < Struct.new(:fn_name, :exprs)
       def call(tup)
-        expr.call(tup).upcase
+        args = exprs.map { |expr| expr.call(tup) }
+        fn = FN_TABLE[fn_name]
+        fn.call(*args)
       end
     end
 
