@@ -27,17 +27,33 @@ module Kwery
     end
 
     rule 'select_expr : expr
-                      | expr AS ID' do |st, e1, _, e2|
-      field_alias = e2&.value || e1.value
-      if e2
-        field_alias = e2.value
-      elsif e1.value.is_a?(Kwery::Expr::Column)
-        field_alias = e1.value.name
-      else
-        field_alias = "_#{@anon_fields}".to_sym
-        @anon_fields += 1
+                      | expr AS ID
+                      | select_expr "," select_expr' do |st, e1, _, e2|
+      if e2&.type == :select_expr
+        st.value ||= {}
+        st.value.merge!(e1.value)
+        st.value.merge!(e2.value)
+        next
       end
-      st.value = {field_alias => e1.value}
+
+      if e2&.type == :ID
+        field_alias = e2.value
+        st.value ||= {}
+        st.value[field_alias] = e1.value
+        next
+      end
+
+      if e1.value.is_a?(Kwery::Expr::Column)
+        field_alias = e1.value.name
+        st.value ||= {}
+        st.value[field_alias] = e1.value
+        next
+      end
+
+      field_alias = "_#{@anon_fields}".to_sym
+      @anon_fields += 1
+      st.value ||= {}
+      st.value[field_alias] = e1.value
     end
 
     rule 'where_expr : expr' do |st, e1|

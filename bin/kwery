@@ -55,6 +55,10 @@ schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
 parser = Kwery::Parser.new(options)
 query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
 
+if ENV['DEBUG_QUERY'] == 'true'
+  warn "query: #{query.inspect}"
+end
+
 plan = query.plan(schema)
 
 context = Kwery::Executor::Context.new(schema)

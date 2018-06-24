@@ -4,6 +4,7 @@ module Kwery
   class Parser
     class Lexer < Rly::Lex
       ignore " \t\n"
+      literals ','
 
       token :EXPLAIN, /\bEXPLAIN\b/i
       token :SELECT, /\bSELECT\b/i

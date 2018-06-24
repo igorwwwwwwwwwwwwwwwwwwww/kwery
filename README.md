@@ -26,4 +26,5 @@ $ bin/kwery 'explain select name from users where id = 1'
 
 ### Debug
 
+* `DEBUG_QUERY=true` display the query ast
 * `DEBUG_PARSER=true` display a trace of the parser
