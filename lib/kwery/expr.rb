@@ -14,6 +14,18 @@ module Kwery
       end
     end
 
+    class And < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) && right.call(tup)
+      end
+    end
+
+    class Or < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) || right.call(tup)
+      end
+    end
+
     class Eq < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) == right.call(tup)

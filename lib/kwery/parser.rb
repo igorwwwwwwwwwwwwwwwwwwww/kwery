@@ -25,6 +25,9 @@ module Kwery
       args[t3.type.downcase] = e3.value if e3
       args[:options] = @options
 
+      # TODO: normalize top-level ANDs to be more optimizer-friendly
+      args[:where] = [args[:where]] if args[:where]
+
       st.value = Kwery::Query.new(**args)
     end
 
@@ -58,8 +61,19 @@ module Kwery
       st.value[field_alias] = e1.value
     end
 
-    rule 'where_expr : expr' do |st, e1|
-      st.value = [e1.value]
+    rule 'where_expr : expr
+                     | where_expr AND where_expr
+                     | where_expr OR where_expr' do |st, e1, op, e2|
+      if op
+        if op.type == :AND
+          st.value = Kwery::Expr::And.new(e1.value, e2.value)
+        else
+          st.value = Kwery::Expr::Or.new(e1.value, e2.value)
+        end
+        next
+      end
+
+      st.value = e1.value
     end
 
     rule 'column : ID' do |st, e1|

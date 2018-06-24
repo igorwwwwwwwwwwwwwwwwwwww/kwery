@@ -11,6 +11,8 @@ module Kwery
       token :AS, /\bAS\b/i
       token :FROM, /\bFROM\b/i
       token :WHERE, /\bWHERE\b/i
+      token :AND, /\bAND\b/i
+      token :OR, /\bOR\b/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
