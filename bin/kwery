@@ -3,6 +3,36 @@
 $: << 'lib'
 
 require 'kwery'
+require 'optparse'
+require 'json'
+
+options = {}
+opts = OptionParser.new do |opts|
+  opts.banner = <<~HEREDOC
+    Usage: bin/kwery <sql> [options]
+
+  HEREDOC
+
+  opts.on('', '--format=default|json|pretty', 'output format') do |v|
+    options[:format] = v
+  end
+
+  opts.on('', '--stats', 'display runtime stats') do |_|
+    options[:stats] = true
+  end
+
+  opts.on('', '--notablescan', 'disallow table scans (index scans only)') do |_|
+    options[:notablescan] = true
+  end
+end
+opts.parse!
+
+sql = ARGV.shift
+
+unless sql
+  puts opts
+  exit 1
+end
 
 schema = Kwery::Schema.new
 
@@ -22,17 +52,6 @@ schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
   Kwery::Index::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
 ])
 
-sql = ARGV.shift
-
-unless sql
-  puts 'Usage:'
-  puts '  bin/kwery <sql>'
-  exit 1
-end
-
-options = {}
-options[:notablescan] = true if ENV['NOTABLESCAN'] == 'true'
-
 parser = Kwery::Parser.new(options)
 query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
 
@@ -40,15 +59,25 @@ plan = query.plan(schema)
 
 context = Kwery::Executor::Context.new(schema)
 plan.call(context).each do |tup|
-  if tup[:_pretty]
-    tup.delete(:_pretty)
+  if tup.delete(:_pretty) && !options[:format]
+    options[:format] = 'pretty'
+  end
+
+  options[:format] = 'default' unless options[:format]
+
+  case options[:format]
+  when 'json'
+    puts JSON.dump(tup)
+  when 'pretty'
     pp tup
-  else
+  when 'default'
     puts tup
+  else
+    raise "invalid format #{options[:format]}"
   end
 end
 
-if ENV['DEBUG_STATS'] == 'true'
-  puts
-  puts "stats: #{context.stats}"
+if options[:stats]
+  warn ''
+  warn "stats: #{context.stats}"
 end
