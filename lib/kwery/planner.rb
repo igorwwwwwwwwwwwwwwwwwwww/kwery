@@ -106,7 +106,13 @@ module Kwery
 
     def project(plan)
       plan = Kwery::Executor::Project.new(
-        lambda { |tup| @query.select.map { |k, f| [k, f.call(tup)] }.to_h },
+        lambda { |tup|
+          if @query.select_star
+            tup.merge(@query.select.map { |k, f| [k, f.call(tup)] }.to_h)
+          else
+            @query.select.map { |k, f| [k, f.call(tup)] }.to_h
+          end
+        },
         plan
       )
 

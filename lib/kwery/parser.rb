@@ -18,6 +18,7 @@ module Kwery
                        | SELECT select_expr FROM ID
                        | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
       args = {}
+      args[:select_star] = e1.value.delete(:*) != nil
       args[:select] = e1.value
       args[t2.type.downcase] = e2.value if e2
       args[t3.type.downcase] = e3.value if e3

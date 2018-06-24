@@ -29,7 +29,7 @@ module Kwery
 
       token :COMPARE, /(=|<|>|<=|>=|<>)/
 
-      token :ID, /\b[a-zA-Z_*]+\b/ do |t|
+      token :ID, /(\b[a-zA-Z_]+\b|\*)/ do |t|
         t.value = t.value.to_sym
         t
       end
