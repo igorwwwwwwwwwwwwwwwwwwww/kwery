@@ -8,9 +8,9 @@ module Kwery
 
       token :EXPLAIN, /\bEXPLAIN\b/i
       token :SELECT, /\bSELECT\b/i
+      token :AS, /\bAS\b/i
       token :FROM, /\bFROM\b/i
       token :WHERE, /\bWHERE\b/i
-      token :AS, /\bAS\b/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i

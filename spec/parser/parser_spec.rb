@@ -76,6 +76,35 @@ RSpec.describe Kwery::Parser::Lexer do
     )
   end
 
+  it "parses select id, name from users" do
+    sql = "SELECT id, name FROM users"
+    parser = Kwery::Parser.new
+    expect(parser.parse(sql)).to eq(
+      Kwery::Query.new(
+        select: {
+          id: Kwery::Expr::Column.new(:id),
+          name: Kwery::Expr::Column.new(:name),
+        },
+        from: :users,
+      )
+    )
+  end
+
+  it "parses select id, name, tags from users" do
+    sql = "SELECT id, name, tags FROM users"
+    parser = Kwery::Parser.new
+    expect(parser.parse(sql)).to eq(
+      Kwery::Query.new(
+        select: {
+          id: Kwery::Expr::Column.new(:id),
+          name: Kwery::Expr::Column.new(:name),
+          tags: Kwery::Expr::Column.new(:tags),
+        },
+        from: :users,
+      )
+    )
+  end
+
   it "parses select name from users where id = 1" do
     sql = "SELECT name FROM users WHERE id = 1"
     parser = Kwery::Parser.new
@@ -86,6 +115,33 @@ RSpec.describe Kwery::Parser::Lexer do
         where: [
           Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(1)),
         ],
+      )
+    )
+  end
+
+  it "parses explain" do
+    sql = "EXPLAIN SELECT name FROM users WHERE id = 1"
+    parser = Kwery::Parser.new
+    expect(parser.parse(sql)).to eq(
+      Kwery::Query.new(
+        select: { name: Kwery::Expr::Column.new(:name) },
+        from: :users,
+        where: [
+          Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(1)),
+        ],
+        options: { explain: true },
+      )
+    )
+  end
+
+  it "parses select *" do
+    sql = "SELECT * FROM users"
+    parser = Kwery::Parser.new
+    expect(parser.parse(sql)).to eq(
+      Kwery::Query.new(
+        select: {},
+        select_star: true,
+        from: :users,
       )
     )
   end

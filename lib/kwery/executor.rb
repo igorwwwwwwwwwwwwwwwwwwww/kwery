@@ -67,6 +67,16 @@ module Kwery
       end
     end
 
+    class EmptyScan
+      def call(context)
+        [{}]
+      end
+
+      def explain
+        self.class
+      end
+    end
+
     class Filter
       def initialize(pred, plan)
         @pred = pred

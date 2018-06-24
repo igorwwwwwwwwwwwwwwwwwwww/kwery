@@ -10,7 +10,7 @@ module Kwery
     end
 
     def call
-      plan = index_scan || table_scan
+      plan = index_scan || table_scan || empty_scan
       plan = explain(plan) if @query.options[:explain]
       plan
     end
@@ -46,6 +46,8 @@ module Kwery
     # cut my plans into pieces
     # this is my last resort
     def table_scan
+      return unless @query.from
+
       plan = Kwery::Executor::TableScan.new(
         @query.from,
         @query.options,
@@ -54,6 +56,15 @@ module Kwery
       plan = where(plan)
       plan = sort(plan)
       plan = limit(plan)
+      plan = project(plan)
+      plan
+    end
+
+    def empty_scan
+      plan = Kwery::Executor::EmptyScan.new
+
+      # at most one tuple, no sort or limit needed
+      plan = where(plan)
       plan = project(plan)
       plan
     end

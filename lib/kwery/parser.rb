@@ -16,6 +16,7 @@ module Kwery
 
     rule 'select_query : SELECT select_expr
                        | SELECT select_expr FROM ID
+                       | SELECT select_expr WHERE where_expr
                        | SELECT select_expr FROM ID WHERE where_expr' do |st, _, e1, t2, e2, t3, e3|
       args = {}
       args[:select_star] = e1.value.delete(:*) != nil
