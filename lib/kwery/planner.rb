@@ -10,12 +10,51 @@ module Kwery
     end
 
     def call
-      plan = agg_scan || index_scan || table_scan || empty_scan
+      plan = index_only_scan || agg_scan || index_scan || table_scan || empty_scan
       plan = explain(plan) if @query.options[:explain]
       plan
     end
 
     private
+
+    def index_only_scan
+      return unless select_agg.size == 1
+      return unless @query.select.size == 1
+      return unless @query.from
+      return unless @query.group_by.size == 0
+
+      # select count(*)
+      k, _ = @query.select.find do |k, v|
+        Kwery::Expr::FnCall === v &&
+          v.fn_name == :count &&
+          Kwery::Expr::Column === v.exprs.first &&
+          v.exprs.first.name == :*
+      end
+
+      return unless k
+
+      candidates = IndexMatcher.new(@schema, @query).match
+      candidate = candidates.reject { |c| c.sorted || c.recheck }.first
+
+      return unless candidate
+
+      plan = Kwery::Executor::IndexOnlyScan.new(
+        candidate.index_name,
+        candidate.sargs,
+        :asc,
+        @query.options,
+      )
+
+      plan = Kwery::Executor::Aggregate.new(
+        k,
+        Kwery::Executor::AggregateSum.new([
+          lambda { |tup| tup[:_count] }
+        ]),
+        plan
+      )
+
+      plan
+    end
 
     def agg_scan
       return unless select_agg.size > 0
@@ -55,13 +94,12 @@ module Kwery
     end
 
     def index_scan
-      candidates = IndexMatcher.new(@schema, @query).match
-
-      return if candidates.empty?
-
       # pick first candidate for now
       # we can do cost-based planning later
+      candidates = IndexMatcher.new(@schema, @query).match
       candidate = candidates.first
+
+      return unless candidate
 
       plan = Kwery::Executor::IndexScan.new(
         @query.from,
@@ -169,6 +207,7 @@ module Kwery
     end
 
     def group_by(plan)
+      # TODO: support more than one aggregation
       k, agg = select_agg.first
 
       group_by = lambda { |tup|
@@ -191,6 +230,7 @@ module Kwery
     end
 
     def aggregate(plan)
+      # TODO: support more than one aggregation
       k, agg = select_agg.first
       Kwery::Executor::Aggregate.new(
         k,

@@ -69,8 +69,9 @@ class BinarySearchTree
   end
 
   def scan_leaf_eq(sargs = {}, scan_order = :asc, context = nil)
-    node = find(sargs[:eq], context)
-    return node ? [node.value] : []
+    k = sargs[:eq]
+    node = find(k, context)
+    return node ? [[k, node.value]] : []
   end
 
   def scan_leaf_in(sargs = {}, scan_order = :asc, context = nil)
@@ -79,7 +80,7 @@ class BinarySearchTree
     return Enumerator.new do |y|
       keys.each do |eq|
         node = find(eq, context)
-        y << node.value if node
+        y << [node.key, node.value] if node
       end
     end
   end
@@ -111,7 +112,7 @@ class BinarySearchTree
       end
 
       if (above_lower && below_upper) || equal_match
-        y << leaf.value
+        y << [leaf.key, leaf.value]
       end
 
       if below_upper
@@ -149,7 +150,7 @@ class BinarySearchTree
       end
 
       if (above_lower && below_upper) || equal_match
-        y << leaf.value
+        y << [leaf.key, leaf.value]
       end
 
       if above_lower

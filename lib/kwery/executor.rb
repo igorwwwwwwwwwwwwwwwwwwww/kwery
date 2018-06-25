@@ -17,6 +17,27 @@ module Kwery
       end
     end
 
+    class IndexOnlyScan
+      def initialize(index_name, sargs = {}, scan_order = :asc, options = {})
+        @index_name = index_name
+        @sargs = sargs
+        @scan_order = scan_order
+        @options = options
+      end
+
+      def call(context)
+        context.schema
+          .index_scan(@index_name, @sargs, @scan_order, context)
+          .map {|k,tids|
+            { _key: k, _count: tids.size, _tids: tids }
+          }
+      end
+
+      def explain
+        [self.class, @index_name, @sargs]
+      end
+    end
+
     class IndexScan
       # sargs = search args
       # see: Access Path Selection in a Relational Database Management System
@@ -31,7 +52,7 @@ module Kwery
       def call(context)
         context.schema
           .index_scan(@index_name, @sargs, @scan_order, context)
-          .flat_map {|tids|
+          .flat_map {|k,tids|
             tids.map { |tid|
               context.increment :index_tuples_fetched
               context.schema.fetch(@table_name, tid)
@@ -154,7 +175,7 @@ module Kwery
       end
 
       def explain
-        [self.class, @plan.explain]
+        [self.class, @agg.class, @plan.explain]
       end
     end
 
@@ -193,6 +214,22 @@ module Kwery
 
       def reduce(state, tup)
         state + 1
+      end
+
+      def render(state)
+        state
+      end
+    end
+
+    class AggregateSum < Struct.new(:exprs)
+      def init
+        0
+      end
+
+      def reduce(state, tup)
+        val = exprs[0].call(tup)
+        raise "sum: invalid expr #{exprs[0]} on called on tup #{tup}" unless val
+        state + val
       end
 
       def render(state)

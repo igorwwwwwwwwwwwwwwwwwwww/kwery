@@ -59,6 +59,10 @@ module Kwery
       @indexes[index_name] = index
     end
 
+    def index(index_name)
+      @indexes[index_name]
+    end
+
     def indexes_for(table_name)
       @indexes.select { |k, idx| idx.table_name == table_name }
     end
