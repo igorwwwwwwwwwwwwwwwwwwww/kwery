@@ -18,17 +18,16 @@ RSpec.describe Kwery::Executor::Aggregate do
   ])
 
   it "counts all records" do
-    reduce = lambda { |sum, tup| sum + 1 }
-    render = lambda { |state| {count: state} }
+    agg = Kwery::Executor::AggCount.new
 
     plan = Kwery::Executor::TableScan.new(:users)
-    plan = Kwery::Executor::Aggregate.new(0, reduce, render, plan)
+    plan = Kwery::Executor::Aggregate.new(:_0, agg, plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
-      {count: 10},
+      {_0: 10},
     ])
 
     expect(context.stats).to eq({
@@ -37,19 +36,38 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by active" do
+    agg = Kwery::Executor::AggCount.new
     group_by = lambda { |tup| tup[:active] }
-    reduce = lambda { |sum, tup| sum + 1 }
-    render = lambda { |k, v| {active: k, count: v} }
 
     plan = Kwery::Executor::TableScan.new(:users)
-    plan = Kwery::Executor::HashAggregate.new(0, group_by, reduce, render, plan)
+    plan = Kwery::Executor::HashAggregate.new(:_0, agg, :active, group_by, plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
 
     expect(result.to_a).to eq([
-      {active: false, count: 4},
-      {active: true,  count: 6},
+      {active: false, _0: 4},
+      {active: true,  _0: 6},
+    ])
+
+    expect(context.stats).to eq({
+      table_tuples_scanned: 10,
+    })
+  end
+
+  it "counts records grouped by without group key" do
+    agg = Kwery::Executor::AggCount.new
+    group_by = lambda { |tup| tup[:active] }
+
+    plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::HashAggregate.new(:_0, agg, nil, group_by, plan)
+
+    context = Kwery::Executor::Context.new(schema)
+    result = plan.call(context)
+
+    expect(result.to_a).to eq([
+      {_0: 4},
+      {_0: 6},
     ])
 
     expect(context.stats).to eq({

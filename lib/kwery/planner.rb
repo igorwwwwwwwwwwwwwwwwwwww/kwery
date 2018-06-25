@@ -139,12 +139,11 @@ module Kwery
     def aggregate(plan)
       return plan unless select_agg.size > 0
 
-      agg = select_agg.first
+      k, agg = select_agg.first
 
       plan = Kwery::Executor::Aggregate.new(
-        agg.init,
-        agg.method(:reduce),
-        agg.method(:render),
+        k,
+        agg,
         plan
       )
 
@@ -159,9 +158,10 @@ module Kwery
     def select_agg
       @select_agg ||= @query.select
         .select { |k,v|
-          Kwery::Expr::FnCall === v && Kwery::Expr::AGG_FN_TABLE[v.fn_name]
+          Kwery::Expr::FnCall === v && Kwery::Executor::AGG_FN_TABLE[v.fn_name]
         }
-        .map { |k,v| Kwery::Expr::AGG_FN_TABLE[v.fn_name].new(v.exprs) }
+        .map { |k,v| [k, Kwery::Executor::AGG_FN_TABLE[v.fn_name].new(v.exprs)] }
+        .to_h
     end
   end
 end

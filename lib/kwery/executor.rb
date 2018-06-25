@@ -141,16 +141,16 @@ module Kwery
     #   e.g. select count(*), avg(experience) from pokemon
 
     class Aggregate
-      def initialize(init, reduce, render, plan)
-        @init = init
-        @reduce = reduce
-        @render = render
+      def initialize(k, agg, plan)
+        @k = k
+        @agg = agg
         @plan = plan
       end
 
       def call(context)
-        state = @plan.call(context).reduce(@init, &@reduce)
-        [@render.call(state)]
+        state = @plan.call(context).reduce(@agg.init, &@agg.method(:reduce))
+        val = @agg.render(state)
+        [{ @k => val }]
       end
 
       def explain
@@ -159,27 +159,72 @@ module Kwery
     end
 
     class HashAggregate
-      def initialize(init, group_by, reduce, render, plan)
-        @init = init
+      def initialize(k, agg, group_name, group_by, plan)
+        @k = k
+        @agg = agg
+        @group_name = group_name
         @group_by = group_by
-        @reduce = reduce
-        @render = render
         @plan = plan
       end
 
       def call(context)
-        state = @plan.call(context)
+        states = @plan.call(context)
           .group_by(&@group_by)
-          .map { |k, vs| [k, vs.reduce(@init, &@reduce)] }
+          .map { |k, vs| [k, vs.reduce(@agg.init, &@agg.method(:reduce))] }
           .to_h
 
-        state.map { |k, v| @render.call(k, v) }
+        states.map do |k, state|
+          tup = { @k => @agg.render(state) }
+          tup[@group_name] = k if @group_name
+          tup
+        end
       end
 
       def explain
         [self.class, @plan.explain]
       end
     end
+
+    class AggCount < Struct.new(:exprs)
+      def init
+        0
+      end
+
+      def reduce(state, tup)
+        state + 1
+      end
+
+      def render(state)
+        state
+      end
+    end
+
+    class AggAvg < Struct.new(:exprs)
+      def init
+        {count: 0, sum: 0}
+      end
+
+      def reduce(state, tup)
+        val = exprs[0].call(tup)
+        {
+          count: state[:count] + 1,
+          sum:   state[:sum] + val,
+        }
+      end
+
+      def render(state)
+        if state[:count] > 0
+          state[:sum] / state[:count]
+        else
+          0
+        end
+      end
+    end
+
+    AGG_FN_TABLE = {
+      count: Kwery::Executor::AggCount,
+      avg: Kwery::Executor::AggAvg,
+    }
 
     class Explain
       def initialize(plan)
