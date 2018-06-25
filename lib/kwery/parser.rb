@@ -159,7 +159,9 @@ module Kwery
         when '>='
           st.value = Kwery::Expr::Gte.new(e1.value, e3.value)
         when '<>'
-          raise NotImplementedError
+          st.value = Kwery::Expr::Neq.new(e1.value, e3.value)
+        when '!='
+          st.value = Kwery::Expr::Neq.new(e1.value, e3.value)
         end
         next
       end

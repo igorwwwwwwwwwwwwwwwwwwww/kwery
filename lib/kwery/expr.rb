@@ -88,6 +88,12 @@ module Kwery
       end
     end
 
+    class Neq < Struct.new(:left, :right)
+      def call(tup)
+        left.call(tup) != right.call(tup)
+      end
+    end
+
     class FnCall < Struct.new(:fn_name, :exprs)
       def call(tup)
         raise "no function named #{fn_name}" unless FN_TABLE[fn_name]
