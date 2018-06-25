@@ -158,9 +158,9 @@ module Kwery
     def select_agg
       @select_agg ||= @query.select
         .select { |k,v|
-          Kwery::Expr::FnCall === v && Kwery::Executor::AGG_FN_TABLE[v.fn_name]
+          Kwery::Expr::FnCall === v && Kwery::Expr::AGG_FN_TABLE[v.fn_name]
         }
-        .map { |k,v| [k, Kwery::Executor::AGG_FN_TABLE[v.fn_name].new(v.exprs)] }
+        .map { |k,v| [k, Kwery::Expr::AGG_FN_TABLE[v.fn_name].call(v.exprs)] }
         .to_h
     end
   end

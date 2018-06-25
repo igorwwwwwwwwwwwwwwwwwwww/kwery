@@ -6,6 +6,11 @@ module Kwery
       upper: lambda { |x| x.upcase }
     }
 
+    AGG_FN_TABLE = {
+      count: lambda { |x| Kwery::Executor::AggregateCount.new(x) },
+      avg:   lambda { |x| Kwery::Executor::AggregateAvg.new(x) },
+    }
+
     class Column < Struct.new(:name)
       def call(tup)
         tup[name]

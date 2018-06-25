@@ -222,11 +222,6 @@ module Kwery
       end
     end
 
-    AGG_FN_TABLE = {
-      count: Kwery::Executor::AggregateCount,
-      avg:   Kwery::Executor::AggregateAvg,
-    }
-
     class Explain
       def initialize(plan)
         @plan = plan
