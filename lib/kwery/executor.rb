@@ -206,6 +206,7 @@ module Kwery
 
       def reduce(state, tup)
         val = exprs[0].call(tup)
+        raise "avg: invalid expr #{exprs[0]} on called on tup #{tup}" unless val
         {
           count: state[:count] + 1,
           sum:   state[:sum] + val,
