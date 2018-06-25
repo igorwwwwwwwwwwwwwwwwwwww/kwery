@@ -185,7 +185,7 @@ module Kwery
       end
     end
 
-    class AggCount < Struct.new(:exprs)
+    class AggregateCount < Struct.new(:exprs)
       def init
         0
       end
@@ -199,7 +199,7 @@ module Kwery
       end
     end
 
-    class AggAvg < Struct.new(:exprs)
+    class AggregateAvg < Struct.new(:exprs)
       def init
         {count: 0, sum: 0}
       end
@@ -223,8 +223,8 @@ module Kwery
     end
 
     AGG_FN_TABLE = {
-      count: Kwery::Executor::AggCount,
-      avg: Kwery::Executor::AggAvg,
+      count: Kwery::Executor::AggregateCount,
+      avg:   Kwery::Executor::AggregateAvg,
     }
 
     class Explain

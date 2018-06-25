@@ -18,7 +18,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   ])
 
   it "counts all records" do
-    agg = Kwery::Executor::AggCount.new
+    agg = Kwery::Executor::AggregateCount.new
 
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Aggregate.new(:_0, agg, plan)
@@ -36,7 +36,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by active" do
-    agg = Kwery::Executor::AggCount.new
+    agg = Kwery::Executor::AggregateCount.new
     group_by = lambda { |tup| tup[:active] }
 
     plan = Kwery::Executor::TableScan.new(:users)
@@ -56,7 +56,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by without group key" do
-    agg = Kwery::Executor::AggCount.new
+    agg = Kwery::Executor::AggregateCount.new
     group_by = lambda { |tup| tup[:active] }
 
     plan = Kwery::Executor::TableScan.new(:users)
