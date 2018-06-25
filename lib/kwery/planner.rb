@@ -19,16 +19,30 @@ module Kwery
 
     def agg_scan
       return unless select_agg.size > 0
+      return unless @query.from
 
-      # TODO: use index to satisfy where cond
       # TODO: index-only scan
 
-      plan = Kwery::Executor::TableScan.new(
-        @query.from,
-        @query.options,
-      )
+      candidates = IndexMatcher.new(@schema, @query).match
+      candidate = candidates.reject { |c| c.sorted }.first
 
-      plan = where(plan)
+      if candidate
+        plan = Kwery::Executor::IndexScan.new(
+          @query.from,
+          candidate.index_name,
+          candidate.sargs,
+          :asc,
+          @query.options,
+        )
+        plan = where(plan) if candidate.recheck
+      else
+        plan = Kwery::Executor::TableScan.new(
+          @query.from,
+          @query.options,
+        )
+        plan = where(plan)
+      end
+
       if @query.group_by.size > 0
         plan = group_by(plan)
         plan = sort(plan)
