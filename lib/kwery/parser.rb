@@ -27,14 +27,15 @@ module Kwery
       st.value.options[:explain] = true if e2
     end
 
-    rule 'select_query : select_clause from_clause where_clause order_by_clause limit_clause
-        ' do |st, e1, e2, e3, e4, e5|
+    rule 'select_query : select_clause from_clause where_clause group_by_clause order_by_clause limit_clause
+        ' do |st, e1, e2, e3, e4, e5, e6|
       args = []
       args << e1.value
       args << e2.value if e2
       args << e3.value if e3
       args << e4.value if e4
       args << e5.value if e5
+      args << e6.value if e6
 
       args = args.compact.to_h
       args[:options] = @options
@@ -97,6 +98,18 @@ module Kwery
         next
       end
       st.value = e1.value
+    end
+
+    rule 'group_by_clause : GROUP_BY group_by_exprs
+                          |' do |st, _, e1|
+      st.value = [:group_by, e1.value] if e1
+    end
+
+    rule 'group_by_exprs : expr
+                         | expr "," exprs' do |st, e1, _, e2|
+      st.value = []
+      st.value << e1.value
+      st.value += e2.value if e2
     end
 
     rule 'order_by_clause : ORDER_BY order_by_exprs

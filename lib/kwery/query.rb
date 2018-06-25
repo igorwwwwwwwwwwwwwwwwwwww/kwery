@@ -2,13 +2,14 @@ require 'set'
 
 module Kwery
   class Query
-    attr_accessor :select, :from, :where, :order_by, :limit, :options
+    attr_accessor :select, :from, :where, :order_by, :group_by, :limit, :options
 
-    def initialize(select:, from: nil, where: [], order_by: [], limit: nil, options: {})
+    def initialize(select:, from: nil, where: [], order_by: [], group_by: [], limit: nil, options: {})
       @select = select
       @from = from
       @where = where
       @order_by = order_by
+      @group_by = group_by
       @limit = limit
       @options = options
     end
@@ -22,7 +23,7 @@ module Kwery
      end
 
     def parts
-      [select, from, where, order_by, limit, options]
+      [select, from, where, order_by, group_by, limit, options]
     end
   end
 end

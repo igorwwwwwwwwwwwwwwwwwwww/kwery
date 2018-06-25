@@ -15,6 +15,7 @@ module Kwery
       token :OR, /\bOR\b/i
       token :IN, /\bIN\b/i
       token :ORDER_BY, /\bORDER BY\b/i
+      token :GROUP_BY, /\bGROUP BY\b/i
       token :ASC_DESC, /\b(ASC|DESC)\b/i
       token :LIMIT, /\bLIMIT\b/i
 
@@ -35,7 +36,7 @@ module Kwery
 
       token :COMPARE, /(=|<|>|<=|>=|<>)/
 
-      token :ID, /(\b[a-zA-Z_]+\b|\*)/ do |t|
+      token :ID, /(\b[a-zA-Z_][a-zA-Z0-9_]*\b|\*)/ do |t|
         t.value = t.value.to_sym
         t
       end

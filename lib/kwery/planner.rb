@@ -10,17 +10,38 @@ module Kwery
     end
 
     def call
-      plan = index_scan || table_scan || empty_scan
+      plan = agg_scan || index_scan || table_scan || empty_scan
       plan = explain(plan) if @query.options[:explain]
       plan
     end
 
     private
 
-    def index_scan
-      matcher = IndexMatcher.new(@schema, @query)
+    def agg_scan
+      return unless select_agg.size > 0
 
-      candidates = matcher.match
+      # TODO: use index to satisfy where cond
+      # TODO: index-only scan
+
+      plan = Kwery::Executor::TableScan.new(
+        @query.from,
+        @query.options,
+      )
+
+      plan = where(plan)
+      if @query.group_by.size > 0
+        plan = group_by(plan)
+        plan = sort(plan)
+        plan = limit(plan)
+      else
+        # single tup result, no sort or limit needed
+        plan = aggregate(plan)
+      end
+      plan
+    end
+
+    def index_scan
+      candidates = IndexMatcher.new(@schema, @query).match
 
       return if candidates.empty?
 
@@ -40,7 +61,6 @@ module Kwery
       plan = sort(plan)   unless candidate.sorted
       plan = limit(plan)
       plan = project(plan)
-      plan = aggregate(plan)
       plan
     end
 
@@ -58,7 +78,6 @@ module Kwery
       plan = sort(plan)
       plan = limit(plan)
       plan = project(plan)
-      plan = aggregate(plan)
       plan
     end
 
@@ -68,7 +87,6 @@ module Kwery
       # at most one tuple, no sort or limit needed
       plan = where(plan)
       plan = project(plan)
-      plan = aggregate(plan)
       plan
     end
 
@@ -136,18 +154,35 @@ module Kwery
       plan
     end
 
-    def aggregate(plan)
-      return plan unless select_agg.size > 0
-
+    def group_by(plan)
       k, agg = select_agg.first
 
-      plan = Kwery::Executor::Aggregate.new(
+      group_by = lambda { |tup|
+        @query.group_by.map { |expr| expr.call(tup) }
+      }
+
+      group_keys = @query.group_by.map do |g|
+        @query.select
+          .find { |k,v| v == g }
+          &.first # key of pair
+      end
+
+      Kwery::Executor::HashAggregate.new(
+        k,
+        agg,
+        group_by,
+        group_keys,
+        plan
+      )
+    end
+
+    def aggregate(plan)
+      k, agg = select_agg.first
+      Kwery::Executor::Aggregate.new(
         k,
         agg,
         plan
       )
-
-      plan
     end
 
     def explain(plan)

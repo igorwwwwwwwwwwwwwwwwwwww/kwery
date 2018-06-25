@@ -159,11 +159,11 @@ module Kwery
     end
 
     class HashAggregate
-      def initialize(k, agg, group_name, group_by, plan)
+      def initialize(k, agg, group_by, group_keys, plan)
         @k = k
         @agg = agg
-        @group_name = group_name
         @group_by = group_by
+        @group_keys = group_keys
         @plan = plan
       end
 
@@ -174,8 +174,9 @@ module Kwery
           .to_h
 
         states.map do |k, state|
-          tup = { @k => @agg.render(state) }
-          tup[@group_name] = k if @group_name
+          tup = {}
+          tup.merge!(Hash[@group_keys.zip(k)].reject { |k| k.nil? })
+          tup.merge!({ @k => @agg.render(state) })
           tup
         end
       end
