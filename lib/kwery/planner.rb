@@ -44,9 +44,7 @@ module Kwery
 
       plan = Kwery::Executor::Aggregate.new(
         k,
-        Kwery::Executor::AggregateSum.new([
-          lambda { |tup| tup[:_count] }
-        ]),
+        Kwery::Executor::AggregateIndexOnlyScanCount.new,
         plan
       )
 

@@ -207,6 +207,20 @@ module Kwery
       end
     end
 
+    class AggregateIndexOnlyScanCount
+      def init
+        0
+      end
+
+      def reduce(state, tup)
+        state + tup[:_count]
+      end
+
+      def render(state)
+        state
+      end
+    end
+
     class AggregateCount < Struct.new(:exprs)
       def init
         0
