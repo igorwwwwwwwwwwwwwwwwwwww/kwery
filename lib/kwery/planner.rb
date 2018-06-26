@@ -25,10 +25,7 @@ module Kwery
 
       # select count(*)
       k, _ = @query.select.find do |k, v|
-        Kwery::Expr::FnCall === v &&
-          v.fn_name == :count &&
-          Kwery::Expr::Column === v.exprs.first &&
-          v.exprs.first.name == :*
+        v == Kwery::Expr::FnCall.new(:count, [Kwery::Expr::Column.new(:*)])
       end
 
       return unless k
