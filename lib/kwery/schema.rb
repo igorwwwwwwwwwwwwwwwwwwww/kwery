@@ -1,18 +1,73 @@
 module Kwery
   class Schema
-    def initialize
+    def initialize(log: nil)
+      # "buffer pool"
       @tables = {}
       @indexes = {}
+      @log = log || Kwery::Log.new
+    end
+
+    def recover
+      @log.recover.each do |tx|
+        apply_tx(tx)
+      end
+    end
+
+    def apply_tx(tx)
+      op, payload = tx
+
+      case op.to_sym
+      when :insert
+        table_name, tid, tup = payload
+
+        table = @tables[table_name.to_sym]
+        table[tid] = tup
+
+        indexes = indexes_for(table_name.to_sym)
+        indexes.each do |k, idx|
+          idx.insert_tup(tid, tup)
+        end
+      when :update
+        # TODO implement as delete + insert?
+
+        table_name, tid, tup1, tup2 = payload
+
+        indexes = indexes_for(table_name.to_sym)
+        indexes.each do |k, idx|
+          idx.delete_tup(tid, tup1)
+          idx.insert_tup(tid, tup2)
+        end
+
+        table = @tables[table_name.to_sym]
+        table[tid] = tup2
+      when :delete
+        table_name, tid, tup = payload
+
+        indexes = indexes_for(table_name.to_sym)
+        indexes.each do |k, idx|
+          idx.delete_tup(tid, tup)
+        end
+
+        table = @tables[table_name.to_sym]
+        table[tid] = nil
+      else
+        raise "apply_tx: unsupported op #{op}"
+      end
     end
 
     def index_scan(index_name, sargs = {}, scan_order = :asc, context = nil)
-      index = @indexes[index_name] or raise "no index of name #{index_name}"
+      raise "no index of name #{index_name}" unless @indexes[index_name]
 
+      index = @indexes[index_name]
       index.scan(sargs, scan_order, context).lazy
     end
 
     def table_scan(table_name)
       raise "no table of name #{@tables[table_name]}" unless @tables[table_name]
+
+      # TODO: tup.dup to protect against change-by-reference?
+      #       we probably rely on change by ref currently, so
+      #       we'd likely need to rewrite things to be mvcc-like
 
       table = @tables[table_name]
       table.lazy.reject { |tup| tup.nil? }
@@ -38,17 +93,19 @@ module Kwery
     def bulk_insert(table_name, tups)
       count = 0
       indexes = indexes_for(table_name)
+      table = @tables[table_name]
 
       tups.each do |tup|
-        table = @tables[table_name]
-        table << tup
-        tid = table.size - 1
-
+        tid = table.size
         tup[:_tid] = tid
+
+        table << tup
 
         indexes.each do |k, idx|
           idx.insert_tup(tid, tup)
         end
+
+        @log.append(:insert, [table_name, tid, tup])
 
         count += 1
       end
@@ -58,19 +115,19 @@ module Kwery
 
     # TODO: batchify?
     def update(table_name, tup, update)
-      indexes = indexes_for(table_name)
-
       tid = tup[:_tid]
 
-      indexes.each do |k, idx|
-        idx.delete_tup(tid, tup)
-      end
-
+      tup1 = tup.dup
       update.call(tup)
+      tup2 = tup.dup
 
+      indexes = indexes_for(table_name)
       indexes.each do |k, idx|
-        idx.insert_tup(tid, tup)
+        idx.delete_tup(tid, tup1)
+        idx.insert_tup(tid, tup2)
       end
+
+      @log.append(:update, [table_name, tid, tup1, tup2])
     end
 
     # TODO: batchify?
@@ -85,6 +142,8 @@ module Kwery
 
       table = @tables[table_name]
       table[tid] = nil
+
+      @log.append(:delete, [table_name, tid, tup])
     end
 
     def create_index(table_name, index_name, indexed_exprs)

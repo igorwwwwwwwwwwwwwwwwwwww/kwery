@@ -4,12 +4,17 @@ require 'sinatra'
 require 'kwery'
 require 'json'
 
-schema = Kwery::Schema.new
+log = Kwery::Log.new('data/wal')
+log.start_flush_thread
+
+schema = Kwery::Schema.new(log: log)
 
 schema.create_table(:users)
 schema.create_index(:users, :users_idx_id, [
   Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
 ])
+
+schema.recover
 
 post '/insert/:table' do
   table = params[:table].to_sym

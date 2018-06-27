@@ -34,7 +34,10 @@ unless sql
   exit 1
 end
 
-schema = Kwery::Schema.new
+log = Kwery::Log.new('data/wal')
+# log.start_flush_thread
+
+schema = Kwery::Schema.new(log: log)
 
 schema.import_csv(:users, 'data/users.csv', { id: :integer, active: :boolean })
 schema.create_index(:users, :users_idx_id, [
@@ -51,6 +54,8 @@ schema.create_index(:clickhouse_users, :clickhouse_users_idx_guid, [
 schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
   Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
 ])
+
+# schema.recover
 
 parser = Kwery::Parser.new(options)
 query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
