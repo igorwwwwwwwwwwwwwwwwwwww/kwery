@@ -19,6 +19,7 @@ RSpec.describe Kwery::Executor::TableScan do
 
   it "scans the whole table" do
     plan = Kwery::Executor::TableScan.new(:users)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -44,6 +45,7 @@ RSpec.describe Kwery::Executor::TableScan do
   it "scans only as much as needed by limit" do
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Limit.new(5, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -66,6 +68,7 @@ RSpec.describe Kwery::Executor::TableScan do
 
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Filter.new(pred, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -85,6 +88,7 @@ RSpec.describe Kwery::Executor::TableScan do
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Filter.new(pred, plan)
     plan = Kwery::Executor::Limit.new(1, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -103,6 +107,7 @@ RSpec.describe Kwery::Executor::TableScan do
 
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Sort.new(comp, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -131,6 +136,7 @@ RSpec.describe Kwery::Executor::TableScan do
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Sort.new(comp, plan)
     plan = Kwery::Executor::Limit.new(2, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -149,8 +155,8 @@ RSpec.describe Kwery::Executor::TableScan do
     proj = lambda { |tup| tup[:name] }
 
     plan = Kwery::Executor::TableScan.new(:users)
-    plan = Kwery::Executor::Project.new(proj, plan)
     plan = Kwery::Executor::Limit.new(2, plan)
+    plan = Kwery::Executor::Project.new(proj, plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)

@@ -94,7 +94,7 @@ RSpec.describe Kwery::Parser::Lexer do
       [:ID, :users],
       [:WHERE, 'WHERE'],
       [:ID, :id],
-      [:COMPARE, '='],
+      [:EQ, '='],
       [:NUMBER, 1],
     ])
   end

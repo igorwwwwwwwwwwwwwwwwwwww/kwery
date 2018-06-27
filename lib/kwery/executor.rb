@@ -158,6 +158,22 @@ module Kwery
       end
     end
 
+    class WithoutTid
+      def initialize(plan)
+        @plan = plan
+      end
+
+      def call(context)
+        @plan.call(context).map do |tup|
+          tup.dup.tap { |t| t.delete(:_tid) }
+        end
+      end
+
+      def explain
+        [self.class, @plan.explain]
+      end
+    end
+
     # TODO: support multiple aggregations side-by-side
     #   e.g. select count(*), avg(experience) from pokemon
 
@@ -271,6 +287,78 @@ module Kwery
         else
           0
         end
+      end
+    end
+
+    class Insert
+      def initialize(table_name, tups)
+        @table_name = table_name
+        @tups = tups
+      end
+
+      def call(context)
+        # TODO: auto-increment and return last_id?
+
+        count = context.schema.bulk_insert(@table_name, @tups)
+
+        [{
+          count: count,
+        }]
+      end
+
+      def explain
+        [self.class]
+      end
+    end
+
+    class Update
+      def initialize(table_name, update, plan)
+        @table_name = table_name
+        @update = update
+        @plan = plan
+      end
+
+      def call(context)
+        # TODO fetch tids and update the index separately to prevent
+        #      issues with the index changing while we are iterating
+        #      over it
+
+        count = 0
+        @plan.call(context).each do |tup|
+          context.schema.update(@table_name, tup, @update)
+          count += 1
+        end
+
+        [{
+          count: count,
+        }]
+      end
+
+      def explain
+        [self.class, @plan]
+      end
+    end
+
+    class Delete
+      def initialize(table_name, plan)
+        @table_name = table_name
+        @plan = plan
+      end
+
+      def call(context)
+        count = 0
+        @plan.call(context).each do |tup|
+          context.schema.delete(@table_name, tup)
+          count += 1
+        end
+
+        [{
+          count: count,
+        }]
+      end
+
+      def explain
+        [self.class, @plan]
       end
     end
 

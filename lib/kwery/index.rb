@@ -19,16 +19,25 @@ module Kwery
         if key.all? { |k| k.nil? }
           raise "invalid index key #{key} for tup #{tup}"
         end
-        insert(key, tid)
+
+        vals = @bst.find(key)&.value
+        unless vals
+          vals = Set.new
+          @bst.insert(key, vals)
+        end
+        vals << tid
     end
 
-    def insert(k, v)
-      vals = @bst.find(k)&.value
-      unless vals
-        vals = Set.new
-        @bst.insert(k, vals)
+    def delete_tup(tid, tup)
+      key = @indexed_exprs
+        .map(&:expr)
+        .map { |expr| expr.call(tup) }
+      if key.all? { |k| k.nil? }
+        raise "invalid index key #{key} for tup #{tup}"
       end
-      vals << v
+
+      vals = @bst.find(key)&.value
+      vals.delete(tid) if vals
     end
 
     def scan(sargs = {}, scan_order = :asc, context)

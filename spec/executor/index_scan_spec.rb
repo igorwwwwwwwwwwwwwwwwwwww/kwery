@@ -27,6 +27,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
   it "scans the whole index in sorted order" do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -53,6 +54,7 @@ RSpec.describe Kwery::Executor::IndexScan do
   it "scans only as much as needed by limit" do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
     plan = Kwery::Executor::Limit.new(5, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -78,6 +80,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
     plan = Kwery::Executor::Filter.new(pred, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -98,6 +101,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
     plan = Kwery::Executor::Filter.new(pred, plan)
     plan = Kwery::Executor::Limit.new(1, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -117,6 +121,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
     plan = Kwery::Executor::Sort.new(comp, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -146,6 +151,7 @@ RSpec.describe Kwery::Executor::IndexScan do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name)
     plan = Kwery::Executor::Sort.new(comp, plan)
     plan = Kwery::Executor::Limit.new(2, plan)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -188,6 +194,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       eq: ["Quincy"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -207,6 +214,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       eq: ["Quixote"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -223,6 +231,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       gt: ["Kathleen"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -245,6 +254,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       gt: ["Yves"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -260,6 +270,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       gte: ["Quincy"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -282,6 +293,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       lt: ["Herrod"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -303,6 +315,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       lte: ["Herrod"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -322,6 +335,7 @@ RSpec.describe Kwery::Executor::IndexScan do
 
   it "scans the whole index backwards" do
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, {}, :desc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -350,6 +364,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       gt: ["Kathleen"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :desc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -373,6 +388,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       lt: ["Quincy"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -394,6 +410,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       lt: ["Herrod"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -409,6 +426,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       in: [["Hedley"], ["Hope"], ["Kathleen"], ["Xantha"]],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -431,6 +449,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       eq: ["Hope"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -451,6 +470,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       lt: ["Quincy"],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)
@@ -472,6 +492,7 @@ RSpec.describe Kwery::Executor::IndexScan do
       gt: ["Hope", 2],
     }
     plan = Kwery::Executor::IndexScan.new(:users, :users_idx_name_id, sargs, :asc)
+    plan = Kwery::Executor::WithoutTid.new(plan)
 
     context = Kwery::Executor::Context.new(schema)
     result = plan.call(context)

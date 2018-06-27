@@ -10,7 +10,7 @@ RSpec.describe Kwery do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id),
         name: Kwery::Expr::Column.new(:name),

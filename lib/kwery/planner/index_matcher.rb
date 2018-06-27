@@ -38,7 +38,7 @@ module Kwery
       def match
         candidates = []
 
-        index_exprs = @schema.indexes_for(@query.from)
+        index_exprs = @schema.indexes_for(@query.table_name)
           .map { |k, idx| [k, idx.indexed_exprs] }
 
         index_exprs.each do |index_name, indexed_exprs|
@@ -173,6 +173,16 @@ module Kwery
         query_exprs = eq_exprs.keys.to_set + neq_exprs.keys.to_set
         remaining_exprs = query_exprs - indexed_exprs.map(&:expr)
         remaining_exprs.size > 0
+      end
+
+      class Query
+        attr_accessor :table_name, :where, :order_by
+
+        def initialize(table_name:, where: [], order_by: [])
+          @table_name = table_name
+          @where = where
+          @order_by = order_by
+        end
       end
 
       class Candidate

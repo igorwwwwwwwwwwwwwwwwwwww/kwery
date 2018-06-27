@@ -19,6 +19,15 @@ module Kwery
       token :ASC_DESC, /\b(ASC|DESC)\b/i
       token :LIMIT, /\bLIMIT\b/i
 
+      token :INSERT, /\bINSERT\b/i
+      token :INTO, /\bINTO\b/i
+      token :VALUES, /\bVALUES\b/i
+
+      token :UPDATE, /\bUPDATE\b/i
+      token :SET, /\bSET\b/i
+
+      token :DELETE, /\bDELETE\b/i
+
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
         t
@@ -34,7 +43,8 @@ module Kwery
         t
       end
 
-      token :COMPARE, /(<=|>=|<>|!=|=|<|>)/
+      token :COMPARE, /(<=|>=|<>|!=|<|>)/
+      token :EQ, /(=)/
 
       token :ID, /(\b[a-zA-Z_][a-zA-Z0-9_]*\b|\*)/ do |t|
         t.value = t.value.to_sym

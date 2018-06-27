@@ -15,7 +15,7 @@ module Kwery
       raise "no table of name #{@tables[table_name]}" unless @tables[table_name]
 
       table = @tables[table_name]
-      table.lazy
+      table.lazy.reject { |tup| tup.nil? }
     end
 
     def fetch(table_name, tid)
@@ -36,11 +36,55 @@ module Kwery
     end
 
     def bulk_insert(table_name, tups)
+      count = 0
+      indexes = indexes_for(table_name)
+
       tups.each do |tup|
         table = @tables[table_name]
         table << tup
         tid = table.size - 1
+
+        tup[:_tid] = tid
+
+        indexes.each do |k, idx|
+          idx.insert_tup(tid, tup)
+        end
+
+        count += 1
       end
+
+      count
+    end
+
+    # TODO: batchify?
+    def update(table_name, tup, update)
+      indexes = indexes_for(table_name)
+
+      tid = tup[:_tid]
+
+      indexes.each do |k, idx|
+        idx.delete_tup(tid, tup)
+      end
+
+      update.call(tup)
+
+      indexes.each do |k, idx|
+        idx.insert_tup(tid, tup)
+      end
+    end
+
+    # TODO: batchify?
+    def delete(table_name, tup)
+      indexes = indexes_for(table_name)
+
+      tid = tup[:_tid]
+
+      indexes.each do |k, idx|
+        idx.delete_tup(tid, tup)
+      end
+
+      table = @tables[table_name]
+      table[tid] = nil
     end
 
     def create_index(table_name, index_name, indexed_exprs)

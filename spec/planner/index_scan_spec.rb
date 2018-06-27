@@ -8,7 +8,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -33,7 +33,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -59,7 +59,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::FnCall.new(:upper, [Kwery::Expr::Column.new(:name)]), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -86,7 +86,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -114,7 +114,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -134,33 +134,6 @@ RSpec.describe Kwery::Planner do
     )
   end
 
-  xit "matches an index prefix" do
-    schema = Kwery::Schema.new
-    schema.create_table(:users)
-    schema.create_index(:users, :users_idx_name_active, [
-      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-      Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:active), :asc),
-    ])
-
-    query = Kwery::Query.new(
-      select: {
-        id: Kwery::Expr::Column.new(:id)
-      },
-      from: :users,
-      where: [
-        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:name), Kwery::Expr::Literal.new('Cara')),
-      ],
-    )
-
-    plan = query.plan(schema)
-
-    expect(plan.explain).to eq(
-      [Kwery::Executor::Project,
-        [Kwery::Executor::IndexScan, :users_idx_name_active,
-          {eq: ['Cara']}]]
-    )
-  end
-
   it "matches a > constraint" do
     schema = Kwery::Schema.new
     schema.create_table(:users)
@@ -168,7 +141,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -195,7 +168,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -222,7 +195,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -249,7 +222,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -276,7 +249,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -302,7 +275,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -330,7 +303,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -360,7 +333,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -387,7 +360,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },
@@ -416,7 +389,7 @@ RSpec.describe Kwery::Planner do
       Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
     ])
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },

@@ -5,7 +5,7 @@ RSpec.describe Kwery::Planner do
     schema = Kwery::Schema.new
     schema.create_table(:users)
 
-    query = Kwery::Query.new(
+    query = Kwery::Query::Select.new(
       select: {
         id: Kwery::Expr::Column.new(:id)
       },

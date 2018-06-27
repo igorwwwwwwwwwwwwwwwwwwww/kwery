@@ -21,10 +21,17 @@ module Kwery
       exprs
     end
 
-    rule 'query : select_query
-                | EXPLAIN select_query' do |st, e1, e2|
+    rule 'query : explainable_query
+                | EXPLAIN explainable_query' do |st, e1, e2|
       st.value = (e2 || e1).value
       st.value.options[:explain] = true if e2
+    end
+
+    rule 'explainable_query : select_query
+                            | insert_query
+                            | update_query
+                            | delete_query' do |st, e1|
+      st.value = e1.value
     end
 
     rule 'select_query : select_clause from_clause where_clause group_by_clause order_by_clause limit_clause
@@ -40,7 +47,7 @@ module Kwery
       args = args.compact.to_h
       args[:options] = @options
 
-      st.value = Kwery::Query.new(**args)
+      st.value = Kwery::Query::Select.new(**args)
     end
 
     rule 'select_clause : SELECT select_exprs' do |st, _, e1|
@@ -136,6 +143,63 @@ module Kwery
       st.value = [:limit, e1.value] if e1
     end
 
+    rule 'insert_query : INSERT INTO ID "(" ids ")" VALUES insert_exprs' do |st, _, _, e1, _, e2, _, _, e3|
+      args = {}
+      args[:into]   = e1.value
+      args[:keys]   = e2.value
+      args[:values] = e3.value
+
+      st.value = Kwery::Query::Insert.new(**args)
+    end
+
+    rule 'insert_exprs : insert_expr
+                       | insert_expr "," insert_exprs' do |st, e1, _, e2|
+      st.value = []
+      st.value << e1.value
+      st.value += e2.value if e2
+    end
+
+    rule 'insert_expr : "(" exprs ")"' do |st, _, e1|
+      st.value = e1.value
+    end
+
+    rule 'update_query : UPDATE ID SET update_exprs
+                       | UPDATE ID SET update_exprs WHERE where_exprs' do |st, _, e1, _, e2, _, e3|
+      args = {}
+      args[:table]  = e1.value
+      args[:update] = e2.value
+      args[:where]  = e3.value if e3
+
+      st.value = Kwery::Query::Update.new(**args)
+    end
+
+    rule 'update_exprs : update_expr
+                       | update_expr "," update_exprs' do |st, e1, _, e2|
+      st.value = []
+      st.value << e1.value
+      st.value += e2.value if e2
+    end
+
+    rule 'update_expr : ID EQ expr' do |st, e1, _, e2|
+      st.value = [e1.value, e2.value]
+    end
+
+    rule 'delete_query : DELETE FROM ID
+                       | DELETE FROM ID WHERE where_exprs' do |st, _, _, e1, _, e2|
+      args = {}
+      args[:from]  = e1.value
+      args[:where] = e2.value if e2
+
+      st.value = Kwery::Query::Delete.new(**args)
+    end
+
+    rule 'ids : ID
+              | ID "," ids' do |st, e1, _, e2|
+      st.value = []
+      st.value << e1.value
+      st.value += e2.value if e2
+    end
+
     rule 'exprs : expr
                 | expr "," exprs' do |st, e1, _, e2|
       st.value = []
@@ -145,8 +209,9 @@ module Kwery
 
     rule 'expr : value
                | expr COMPARE expr
+               | expr EQ expr
                | ID "(" exprs ")"' do |st, e1, e2, e3|
-      if e2&.type == :COMPARE
+      if e2&.type == :COMPARE || e2&.type == :EQ
         case e2.value
         when '='
           st.value = Kwery::Expr::Eq.new(e1.value, e3.value)

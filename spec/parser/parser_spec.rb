@@ -5,7 +5,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT 1'
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new(1) })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new(1) })
     )
   end
 
@@ -13,7 +13,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'select 1'
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new(1) })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new(1) })
     )
   end
 
@@ -21,7 +21,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT 64'
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new(64) })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new(64) })
     )
   end
 
@@ -29,7 +29,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT 'foo'"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new('foo') })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new('foo') })
     )
   end
 
@@ -37,7 +37,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT ''"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new('') })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new('') })
     )
   end
 
@@ -45,7 +45,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT '\\''"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new("'") })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new("'") })
     )
   end
 
@@ -53,7 +53,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT true'
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new(true) })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new(true) })
     )
   end
 
@@ -61,7 +61,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = 'SELECT t'
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(select: { _0: Kwery::Expr::Literal.new(true) })
+      Kwery::Query::Select.new(select: { _0: Kwery::Expr::Literal.new(true) })
     )
   end
 
@@ -69,7 +69,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT name FROM users"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: { name: Kwery::Expr::Column.new(:name) },
         from: :users,
       )
@@ -80,7 +80,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT id, name FROM users"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: {
           id: Kwery::Expr::Column.new(:id),
           name: Kwery::Expr::Column.new(:name),
@@ -94,7 +94,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT id, name, tags FROM users"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: {
           id: Kwery::Expr::Column.new(:id),
           name: Kwery::Expr::Column.new(:name),
@@ -109,7 +109,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT name FROM users WHERE id = 1"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: { name: Kwery::Expr::Column.new(:name) },
         from: :users,
         where: [
@@ -123,7 +123,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "EXPLAIN SELECT name FROM users WHERE id = 1"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: { name: Kwery::Expr::Column.new(:name) },
         from: :users,
         where: [
@@ -138,7 +138,7 @@ RSpec.describe Kwery::Parser::Lexer do
     sql = "SELECT * FROM users"
     parser = Kwery::Parser.new
     expect(parser.parse(sql)).to eq(
-      Kwery::Query.new(
+      Kwery::Query::Select.new(
         select: { :* => Kwery::Expr::Column.new(:*) },
         from: :users,
       )
