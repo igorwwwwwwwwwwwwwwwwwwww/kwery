@@ -6,21 +6,19 @@ require 'json'
 
 schema = Kwery::Schema.new
 
-schema.import_csv(:users, 'data/users.csv', { id: :integer, active: :boolean })
+schema.create_table(:users)
 schema.create_index(:users, :users_idx_id, [
   Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
 ])
 
-schema.import_json(:clickhouse_users, 'data/clickhouse_users.json')
-schema.create_index(:clickhouse_users, :clickhouse_users_idx_id, [
-  Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
-])
-schema.create_index(:clickhouse_users, :clickhouse_users_idx_guid, [
-  Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:guid), :asc),
-])
-schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
-  Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
-])
+post '/insert/:table' do
+  table = params[:table].to_sym
+  data = JSON.parse(request.body.read, symbolize_names: true)
+
+  count = schema.bulk_insert(table, data)
+
+  JSON.pretty_generate({ count: count }) + "\n"
+end
 
 post '/query' do
   sql = request.body.read
@@ -35,7 +33,7 @@ post '/query' do
   tups = plan.call(context).to_a
 
   JSON.pretty_generate({
-    tups: tups,
+    data: tups,
     stats: context.stats,
   }) + "\n"
 end

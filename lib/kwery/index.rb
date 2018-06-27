@@ -12,13 +12,13 @@ module Kwery
       @bst = BinarySearchTree.new(comparator: comparator)
     end
 
+    def scan(sargs = {}, scan_order = :asc, context)
+      @bst.scan_leaf(@bst.root, sargs, scan_order, context)
+    end
+
     def insert_tup(tid, tup)
-        key = @indexed_exprs
-          .map(&:expr)
-          .map { |expr| expr.call(tup) }
-        if key.all? { |k| k.nil? }
-          raise "invalid index key #{key} for tup #{tup}"
-        end
+        key = tup_key(tup)
+        return if key.all? { |k| k.nil? }
 
         vals = @bst.find(key)&.value
         unless vals
@@ -29,19 +29,17 @@ module Kwery
     end
 
     def delete_tup(tid, tup)
-      key = @indexed_exprs
-        .map(&:expr)
-        .map { |expr| expr.call(tup) }
-      if key.all? { |k| k.nil? }
-        raise "invalid index key #{key} for tup #{tup}"
-      end
+      key = tup_key(tup)
+      return if key.all? { |k| k.nil? }
 
       vals = @bst.find(key)&.value
       vals.delete(tid) if vals
     end
 
-    def scan(sargs = {}, scan_order = :asc, context)
-      @bst.scan_leaf(@bst.root, sargs, scan_order, context)
+    def tup_key(tup)
+      @indexed_exprs
+        .map(&:expr)
+        .map { |expr| expr.call(tup) }
     end
   end
 end

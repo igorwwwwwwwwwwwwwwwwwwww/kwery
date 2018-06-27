@@ -21,16 +21,15 @@ $ bin/kwery 'explain select name from users where id = 1'
 ### Curl
 
 ```
-$ curl -s 'http://localhost:9292/query' -d 'select id, name, active from users limit 2' | jq '.tups[]'
+$ curl -s 'http://localhost:9292/insert/users' -d '[{"id":1,"name":"Kathleen","active":false},{"id":2,"name":"Xantha","active":true},{"id":3,"name":"Hope","active":true}]'
 {
-  "id": 1,
-  "name": "Kathleen",
-  "active": false
+  "count": 3
 }
+
+$ curl -s 'http://localhost:9292/query' -d 'select id, name from users where active = true limit 1' | jq '.data[]'
 {
   "id": 2,
-  "name": "Xantha",
-  "active": true
+  "name": "Xantha"
 }
 ```
 
