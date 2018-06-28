@@ -140,6 +140,8 @@ module Kwery
         idx.delete_tup(tid, tup)
       end
 
+      # TODO: reclaim deleted tuple slots
+
       table = @tables[table_name]
       table[tid] = nil
 
