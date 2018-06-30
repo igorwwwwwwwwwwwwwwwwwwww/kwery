@@ -4,8 +4,8 @@
 module Kwery
   module Replication
     class Server
-      def initialize(log_file:, port: 9200, listen_backlog: 10)
-        @log_file = log_file
+      def initialize(journal_file:, port: 9200, listen_backlog: 10)
+        @journal_file = journal_file
         @port = port
         @listen_backlog = listen_backlog
       end
@@ -26,7 +26,7 @@ module Kwery
 
       def handle_client(client)
         offset = client.gets&.to_i
-        File.open(@log_file, 'r') do |f|
+        File.open(@journal_file, 'r') do |f|
           f.pos = offset
           until f.eof?
             client << f.read(1024)

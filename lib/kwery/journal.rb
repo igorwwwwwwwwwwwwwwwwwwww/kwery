@@ -5,9 +5,9 @@ require 'thread'
 
 # write-ahead ("redo") and replication log
 module Kwery
-  class Log
-    def initialize(log_file: nil, noop: false)
-      @log_file = log_file
+  class Journal
+    def initialize(journal_file: nil, noop: false)
+      @journal_file = journal_file
       @noop = noop
       @m = Mutex.new
     end
@@ -27,7 +27,7 @@ module Kwery
     end
 
     def file
-      @file ||= File.open(@log_file, 'a+')
+      @file ||= File.open(@journal_file, 'a+')
     end
 
     def start_flush_thread(sleep_interval: 2)

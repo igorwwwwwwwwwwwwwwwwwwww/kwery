@@ -6,15 +6,15 @@ require 'socket'
 #       maybe move replication to replication/client
 
 module Kwery
-  class Log
+  class Journal
     module Recovery
       class File
-        def initialize(log_file:)
-          @log_file = log_file
+        def initialize(journal_file:)
+          @journal_file = journal_file
         end
 
         def recover
-          file = ::File.open(@log_file, 'a+')
+          file = ::File.open(@journal_file, 'a+')
           file.each_line.map do |line|
             JSON.parse(line, symbolize_names: true)
           end

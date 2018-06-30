@@ -3,11 +3,11 @@
 
 module Kwery
   class Schema
-    def initialize(log: nil, recovery: nil)
+    def initialize(journal: nil, recovery: nil)
       @tables = {}
       @indexes = {}
       @recovery = recovery
-      @log = log || Kwery::Log.new(noop: true)
+      @journal = journal || Kwery::Journal.new(noop: true)
     end
 
     def recover
@@ -108,7 +108,7 @@ module Kwery
           idx.insert_tup(tid, tup)
         end
 
-        @log.append(:insert, [table_name, tid, tup])
+        @journal.append(:insert, [table_name, tid, tup])
 
         count += 1
       end
@@ -130,7 +130,7 @@ module Kwery
         idx.insert_tup(tid, tup2)
       end
 
-      @log.append(:update, [table_name, tid, tup1, tup2])
+      @journal.append(:update, [table_name, tid, tup1, tup2])
     end
 
     # TODO: batchify?
@@ -148,7 +148,7 @@ module Kwery
       table = @tables[table_name]
       table[tid] = nil
 
-      @log.append(:delete, [table_name, tid, tup])
+      @journal.append(:delete, [table_name, tid, tup])
     end
 
     def create_index(table_name, index_name, indexed_exprs)
