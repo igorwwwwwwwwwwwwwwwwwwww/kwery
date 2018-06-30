@@ -1,14 +1,17 @@
+# TODO: this is a "god" object, things should be moved out
+#       perhaps separate "storage" and "tx" modules
+
 module Kwery
   class Schema
-    def initialize(log: nil)
-      # "buffer pool"
+    def initialize(log: nil, recovery: nil)
       @tables = {}
       @indexes = {}
-      @log = log || Kwery::Log.new
+      @recovery = recovery
+      @log = log || Kwery::Log.new(noop: true)
     end
 
     def recover
-      @log.recover.each do |tx|
+      @recovery.recover.each do |tx|
         apply_tx(tx)
       end
     end

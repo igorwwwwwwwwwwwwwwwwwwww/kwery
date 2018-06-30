@@ -34,7 +34,7 @@ unless sql
   exit 1
 end
 
-log = Kwery::Log.new('data/wal')
+log = Kwery::Log.new(Kwery::Log.file('data/journal'))
 # log.start_flush_thread
 
 schema = Kwery::Schema.new(log: log)

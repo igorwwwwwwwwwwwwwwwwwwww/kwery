@@ -3,20 +3,52 @@ $: << 'lib'
 require 'sinatra'
 require 'kwery'
 require 'json'
+require 'socket'
 
-log = Kwery::Log.new('data/wal')
-log.start_flush_thread
+log_file = ENV['JOURNAL_FILE'] || 'data/journal'
 
-schema = Kwery::Schema.new(log: log)
+# wait for primary to boot (useful when restarting via entr)
+sleep ENV['BOOT_SLEEP']&.to_i if ENV['BOOT_SLEEP']
+
+if ENV['REPLICA'] == 'true'
+  recovery = Kwery::Log::Recovery::Replication.new(primary: ENV['PRIMARY'])
+
+  log = Kwery::Log.new(noop: true)
+else
+  recovery = Kwery::Log::Recovery::File.new(log_file: log_file)
+
+  log = Kwery::Log.new(log_file: log_file)
+  log.start_flush_thread
+end
+
+schema = Kwery::Schema.new(recovery: recovery, log: log)
 
 schema.create_table(:users)
 schema.create_index(:users, :users_idx_id, [
   Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:id), :asc),
 ])
 
-schema.recover
+if ENV['REPLICA'] == 'true'
+  Thread.new {
+    schema.recover
+  }
+else
+  schema.recover
+end
+
+unless ENV['REPLICA'] == 'true'
+  server = Kwery::Replication::Server.new(log_file: log_file)
+  server.listen
+end
 
 post '/insert/:table' do
+  if ENV['REPLICA'] == 'true'
+    status 500
+    return JSON.pretty_generate({
+      error: 'no writes allowed against replica',
+    }) + "\n"
+  end
+
   table = params[:table].to_sym
   data = JSON.parse(request.body.read, symbolize_names: true)
 
@@ -31,6 +63,15 @@ post '/query' do
 
   parser = Kwery::Parser.new(options)
   query = parser.parse(sql)
+
+  if ENV['REPLICA'] == 'true'
+    unless Kwery::Query::Select === query
+      status 500
+      return JSON.pretty_generate({
+        error: 'no writes allowed against replica',
+      }) + "\n"
+    end
+  end
 
   plan = query.plan(schema)
 
