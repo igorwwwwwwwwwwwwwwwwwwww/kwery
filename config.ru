@@ -10,18 +10,13 @@ journal_file = ENV['JOURNAL_FILE'] || 'data/journal'
 # wait for primary to boot (useful when restarting via entr)
 sleep ENV['BOOT_SLEEP']&.to_i if ENV['BOOT_SLEEP']
 
-if ENV['REPLICA'] == 'true'
-  recovery = Kwery::Journal::Recovery::Replication.new(primary: ENV['PRIMARY'])
-
-  journal = Kwery::Journal.new(noop: true)
-else
-  recovery = Kwery::Journal::Recovery::File.new(journal_file: journal_file)
-
-  journal = Kwery::Journal.new(journal_file: journal_file)
+journal = nil
+unless ENV['REPLICA'] == 'true'
+  journal = Kwery::Journal::Writer.new(journal_file: journal_file)
   journal.start_flush_thread
 end
 
-schema = Kwery::Schema.new(recovery: recovery, journal: journal)
+schema = Kwery::Schema.new(journal: journal)
 
 schema.create_table(:users)
 schema.create_index(:users, :users_idx_id, [
@@ -30,10 +25,12 @@ schema.create_index(:users, :users_idx_id, [
 
 if ENV['REPLICA'] == 'true'
   Thread.new {
-    schema.recover
+    recovery = Kwery::Replication::Client.new(primary: ENV['PRIMARY'])
+    schema.recover(recovery)
   }
 else
-  schema.recover
+  recovery = Kwery::Journal::Recovery.new(journal_file: journal_file)
+  schema.recover(recovery)
 end
 
 unless ENV['REPLICA'] == 'true'

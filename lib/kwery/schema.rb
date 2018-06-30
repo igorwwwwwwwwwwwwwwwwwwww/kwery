@@ -6,12 +6,11 @@ module Kwery
     def initialize(journal: nil, recovery: nil)
       @tables = {}
       @indexes = {}
-      @recovery = recovery
-      @journal = journal || Kwery::Journal.new(noop: true)
+      @journal = journal || Kwery::Journal::NoopWriter.new
     end
 
-    def recover
-      @recovery.recover.each do |tx|
+    def recover(recovery)
+      recovery.recover.each do |tx|
         apply_tx(tx)
       end
     end
