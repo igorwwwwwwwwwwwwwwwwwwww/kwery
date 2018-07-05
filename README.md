@@ -42,7 +42,7 @@ $ curl -sS 'http://localhost:9292/query' -d 'select id, name from users where ac
 rm data/shard_*
 supervisord
 
-curl -sS 'http://localhost:7000/insert/users' -d '[{"id":1,"name":"Kathleen","active":false},{"id":2,"name":"Xantha","active":true},{"id":3,"name":"Hope","active":true},{"id":4,"name":"Hedley","active":false}]' | jq '.data[]'
+curl -sS 'http://localhost:7000/insert/users' -d '[{"id":1,"name":"Kathleen","active":false},{"id":2,"name":"Xantha","active":true},{"id":3,"name":"Hope","active":true},{"id":4,"name":"Hedley","active":false},{"id":8,"name":"Quincy","active":true}]' | jq '.data[]'
 
 curl -sS 'http://localhost:7000/query' -d 'explain select id, name from users where id = 1' | jq '.data[]'
 curl -sS 'http://localhost:7000/query' -d 'explain select id, name from users where id = 4' | jq '.data[]'

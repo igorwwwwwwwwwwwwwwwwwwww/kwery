@@ -1,17 +1,20 @@
 require 'sinatra'
 require 'kwery'
 require 'json'
-require 'socket'
+
+backends = ENV['BACKENDS']
+  .split(';')
+  .map { |rs| rs.split(',') }
 
 schema = Kwery::Schema.new
 schema.define_shard(:users,
   key:      Kwery::Expr::Column.new(:id),
   shards:   16,
-  backends: ENV['BACKENDS'].split(','),
+  backends: backends,
 )
 
 get '/' do
-  { name: ENV['SERVER_NAME'], proxy: true, config: SHARD_CONFIG }.to_json + "\n"
+  { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
 post '/insert/:table' do
@@ -23,7 +26,7 @@ post '/insert/:table' do
   end
 
   backends = data.group_by do |tup|
-    schema.backend_for_shard(table, tup[:_shard])
+    schema.primary_for_shard(table, tup[:_shard])
   end
 
   plans = backends.map do |backend, tups|
@@ -61,11 +64,10 @@ post '/query' do
     stats: context.stats,
   }) + "\n"
 
-  # TODO: select replica for read queries?
   # TODO: service discovery?
   # TODO: separate table per shard?
   # TODO: aggregation ... push down? merge intermediate values?
   # TODO: support IN query
-  # TODO: handle writes properly (especially updates, if sharding key changes)
+  # TODO: handle writes properly (select primary, disallow updates to shard key)
   # TODO: resharding / shard moving and reassignment
 end

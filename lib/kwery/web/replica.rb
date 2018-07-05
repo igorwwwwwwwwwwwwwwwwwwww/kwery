@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'kwery'
 require 'json'
-require 'socket'
 
 # wait for primary to boot (useful when restarting via entr)
 sleep ENV['BOOT_SLEEP']&.to_i if ENV['BOOT_SLEEP']

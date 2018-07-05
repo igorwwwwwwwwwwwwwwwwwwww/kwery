@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'kwery'
 require 'json'
-require 'socket'
 
 journal_file = ENV['JOURNAL_FILE'] || 'data/journal'
 

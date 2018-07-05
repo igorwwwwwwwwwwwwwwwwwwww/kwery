@@ -87,6 +87,15 @@ module Kwery
       tup
     end
 
+    # each line is a "replica set"
+    # the first backend is the primary,
+    # the others are replicas.
+    #
+    # backends: [
+    #   [http://localhost:8000, http://localhost:9000]
+    # [http://localhost:8001, http://localhost:9001]
+    # [http://localhost:8002, http://localhost:9002]
+    # ]
     def define_shard(table_name, key:, shards:, backends:)
       @shards[table_name] = {
         key:      key,
@@ -111,11 +120,19 @@ module Kwery
       shard_for_value(table_name, val)
     end
 
+    def primary_for_shard(table_name, shard)
+      config = @shards[table_name]
+
+      i = shard % config[:backends].size
+      config[:backends][i].first
+    end
+
+    # pick random backend from replica set
     def backend_for_shard(table_name, shard)
       config = @shards[table_name]
 
       i = shard % config[:backends].size
-      config[:backends][i]
+      config[:backends][i].sample
     end
 
     def backends_for_shards(table_name, shards)
@@ -125,7 +142,7 @@ module Kwery
 
     def backends_all(table_name)
       config = @shards[table_name]
-      config[:backends]
+      config[:backends].map(&:sample)
     end
 
     def create_table(table_name)
