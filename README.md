@@ -36,6 +36,9 @@ $ curl -sS 'http://localhost:9292/query' -d 'select id, name from users where ac
 ### Distributed
 
 ```
+# auto-restart during dev
+# ag -l --ignore 'supervisord.pid' --ignore data | entr -r supervisord
+
 rm data/shard_*
 supervisord
 

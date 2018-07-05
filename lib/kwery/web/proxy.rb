@@ -62,6 +62,7 @@ post '/query' do
   }) + "\n"
 
   # TODO: select replica for read queries?
+  # TODO: service discovery?
   # TODO: separate table per shard?
   # TODO: aggregation ... push down? merge intermediate values?
   # TODO: support IN query
