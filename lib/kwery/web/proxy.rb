@@ -61,9 +61,10 @@ post '/query' do
     stats: context.stats,
   }) + "\n"
 
-  # TODO: scatter/gather, distributed query plan?
   # TODO: select replica for read queries?
   # TODO: separate table per shard?
   # TODO: aggregation ... push down? merge intermediate values?
   # TODO: support IN query
+  # TODO: handle writes properly (especially updates, if sharding key changes)
+  # TODO: resharding / shard moving and reassignment
 end
