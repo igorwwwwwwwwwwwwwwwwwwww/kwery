@@ -14,7 +14,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project, Kwery::Executor::TableScan]
     )
   end

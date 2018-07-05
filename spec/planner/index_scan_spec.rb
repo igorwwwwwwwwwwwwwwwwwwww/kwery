@@ -20,7 +20,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id, {}]]
     )
@@ -45,7 +46,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id,
           {eq: [10]}]]
@@ -71,7 +73,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_upper_name,
           {eq: ['CARA']}]]
@@ -99,7 +102,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_active,
           {eq: ['Cara', true]}]]
@@ -127,7 +131,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_active_name,
           {eq: [true, 'Cara']}]]
@@ -153,7 +158,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id,
           {gt: [10]}]]
@@ -181,7 +187,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_active_id,
           {eq: [true], gt: [true, 10]}]]
@@ -207,7 +214,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id,
           {gte: [10]}]]
@@ -235,7 +243,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_active_id,
           {eq: [true], gte: [true, 10]}]]
@@ -261,7 +270,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id,
           {lt: [10]}]]
@@ -288,7 +298,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_id,
           {gt: [10], lt: [15]}]]
@@ -318,7 +329,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_id,
           {eq: ['Cara']}]]
@@ -346,7 +358,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::IndexScan, :users_idx_name_id,
           {eq: ['Cara'], gt: ['Cara', 10]}]]
@@ -375,7 +388,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::Sort,
           [Kwery::Executor::IndexScan, :users_idx_id, {eq: [10]}]]]
@@ -404,7 +418,8 @@ RSpec.describe Kwery::Planner do
 
     plan = query.plan(schema)
 
-    expect(plan.explain).to eq(
+    context = Kwery::Executor::Context.new(schema)
+    expect(plan.explain(context)).to eq(
       [Kwery::Executor::Project,
         [Kwery::Executor::Filter,
           [Kwery::Executor::IndexScan, :users_idx_id, {}]]]
