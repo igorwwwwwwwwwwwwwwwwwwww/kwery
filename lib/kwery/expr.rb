@@ -16,11 +16,19 @@ module Kwery
       def call(tup)
         tup[name]
       end
+
+      def to_s
+        name.to_s
+      end
     end
 
     class Literal < Struct.new(:value)
       def call(tup)
         value
+      end
+
+      def to_s
+        value.to_s
       end
     end
 
@@ -28,11 +36,19 @@ module Kwery
       def call(tup)
         left.call(tup) && right.call(tup)
       end
+
+      def to_s
+        "#{left.to_s} && #{right.to_s}"
+      end
     end
 
     class Or < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) || right.call(tup)
+      end
+
+      def to_s
+        "#{left.to_s} || #{right.to_s}"
       end
     end
 
@@ -40,11 +56,19 @@ module Kwery
       def call(tup)
         vals.map { |val| val.call(tup) }.include?(expr.call(tup))
       end
+
+      def to_s
+        "#{expr.to_s} IN (#{vals.map(&:to_s).join(', ')})"
+      end
     end
 
     class Eq < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) == right.call(tup)
+      end
+
+      def to_s
+        "#{left.to_s} = #{right.to_s}"
       end
     end
 
@@ -56,6 +80,10 @@ module Kwery
       def self.sarg_key
         :gt
       end
+
+      def to_s
+        "#{left.to_s} > #{right.to_s}"
+      end
     end
 
     class Gte < Struct.new(:left, :right)
@@ -65,6 +93,10 @@ module Kwery
 
       def self.sarg_key
         :gte
+      end
+
+      def to_s
+        "#{left.to_s} >= #{right.to_s}"
       end
     end
 
@@ -76,6 +108,10 @@ module Kwery
       def self.sarg_key
         :lt
       end
+
+      def to_s
+        "#{left.to_s} < #{right.to_s}"
+      end
     end
 
     class Lte < Struct.new(:left, :right)
@@ -86,11 +122,19 @@ module Kwery
       def self.sarg_key
         :lte
       end
+
+      def to_s
+        "#{left.to_s} <= #{right.to_s}"
+      end
     end
 
     class Neq < Struct.new(:left, :right)
       def call(tup)
         left.call(tup) != right.call(tup)
+      end
+
+      def to_s
+        "#{left.to_s} <> #{right.to_s}"
       end
     end
 
@@ -101,6 +145,10 @@ module Kwery
         args = exprs.map { |expr| expr.call(tup) }
         fn = FN_TABLE[fn_name]
         fn.call(*args)
+      end
+
+      def to_s
+        "#{fn_name.to_s}(#{exprs.map(&:to_s).join(', ')})"
       end
     end
 

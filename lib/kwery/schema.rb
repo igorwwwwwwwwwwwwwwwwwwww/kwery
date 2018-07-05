@@ -1,3 +1,5 @@
+require 'zlib'
+
 # TODO: this is a "god" object, things should be moved out
 #       perhaps separate "storage" and "tx" modules
 
@@ -6,6 +8,7 @@ module Kwery
     def initialize(journal: nil, recovery: nil)
       @tables = {}
       @indexes = {}
+      @shards = {}
       @journal = journal || Kwery::Journal::NoopWriter.new
     end
 
@@ -82,6 +85,49 @@ module Kwery
 
       tup = table[tid]
       tup
+    end
+
+    def define_shard(table_name, key:, shards:, backends:)
+      @shards[table_name] = {
+        key:      key,
+        shards:   shards,
+        backends: backends,
+      }
+    end
+
+    def shard(table_name)
+      @shards[table_name]
+    end
+
+    def shard_for_value(table_name, val)
+      config = @shards[table_name]
+      Zlib::crc32(val.to_s) % config[:shards]
+    end
+
+    def shard_for_tup(table_name, tup)
+      config = @shards[table_name]
+
+      val = config[:key].call(tup)
+      shard_for_value(table_name, val)
+    end
+
+    def backend_for_shard(table_name, shard)
+      config = @shards[table_name]
+
+      puts shard.inspect
+
+      i = shard % config[:backends].size
+      config[:backends][i]
+    end
+
+    def backends_for_shards(table_name, shards)
+      shards
+        .group_by { |shard| backend_for_shard(table_name, shard) }
+    end
+
+    def backends_all(table_name)
+      config = @shards[table_name]
+      config[:backends]
     end
 
     def create_table(table_name)

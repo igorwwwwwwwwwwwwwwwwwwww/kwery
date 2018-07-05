@@ -9,11 +9,16 @@ module Kwery
       def initialize(schema, stats = {})
         @schema = schema
         @stats = stats
+        @clients = {}
       end
 
       def increment(key, count = 1)
         stats[key] ||= 0
         stats[key] += count
+      end
+
+      def client(backend)
+        @clients[backend] ||= Kwery::Client.new(backend)
       end
     end
 
@@ -33,7 +38,7 @@ module Kwery
           }
       end
 
-      def explain
+      def explain(context)
         [self.class, @index_name, @sargs]
       end
     end
@@ -60,7 +65,7 @@ module Kwery
           }
       end
 
-      def explain
+      def explain(context)
         [self.class, @index_name, @sargs]
       end
     end
@@ -83,7 +88,7 @@ module Kwery
         }
       end
 
-      def explain
+      def explain(context)
         self.class
       end
     end
@@ -93,7 +98,7 @@ module Kwery
         [{}]
       end
 
-      def explain
+      def explain(context)
         self.class
       end
     end
@@ -108,8 +113,8 @@ module Kwery
         @plan.call(context).select(&@pred)
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -123,8 +128,8 @@ module Kwery
         @plan.call(context).take(@limit)
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -138,8 +143,8 @@ module Kwery
         @plan.call(context).sort(&@comp)
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -153,8 +158,8 @@ module Kwery
         @plan.call(context).map(&@proj)
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -169,8 +174,8 @@ module Kwery
         end
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -190,8 +195,8 @@ module Kwery
         [{ @k => val }]
       end
 
-      def explain
-        [self.class, @agg.class, @plan.explain]
+      def explain(context)
+        [self.class, @agg.class, @plan.explain(context)]
       end
     end
 
@@ -218,8 +223,8 @@ module Kwery
         end
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -290,6 +295,68 @@ module Kwery
       end
     end
 
+    class Append
+      def initialize(plans)
+        @plans = plans
+      end
+
+      def call(context)
+        # TODO: parallel version?
+
+        Enumerator.new do |y|
+          @plans.each do |plan|
+            plan.call(context).each do |tup|
+              y << tup
+            end
+          end
+        end
+      end
+
+      def explain(context)
+        [self.class, @plans.map { |p| p.explain(context) }]
+      end
+    end
+
+    class Remote
+      def initialize(shards, backend, sql)
+        @shards = shards
+        @backend = backend
+        @sql = sql
+      end
+
+      def call(context)
+        client = context.client(@backend)
+        result = client.query(@sql)
+        result[:data]
+      end
+
+      def explain(context)
+        client = context.client(@backend)
+        result = client.query(@sql)
+        remote_explain = result[:data].first[:explain]
+
+        [self.class, @shards, @backend, @sql, remote_explain]
+      end
+    end
+
+    class RemoteInsert
+      def initialize(backend, table_name, tups)
+        @backend = backend
+        @table_name = table_name
+        @tups = tups
+      end
+
+      def call(context)
+        client = context.client(@backend)
+        result = client.insert(@table_name, @tups)
+        result[:data]
+      end
+
+      def explain(context)
+        [self.class, @shards, @backend, @table_name]
+      end
+    end
+
     class Insert
       def initialize(table_name, tups)
         @table_name = table_name
@@ -297,8 +364,6 @@ module Kwery
       end
 
       def call(context)
-        # TODO: auto-increment and return last_id?
-
         count = context.schema.bulk_insert(@table_name, @tups)
 
         [{
@@ -306,7 +371,7 @@ module Kwery
         }]
       end
 
-      def explain
+      def explain(context)
         [self.class]
       end
     end
@@ -334,7 +399,7 @@ module Kwery
         }]
       end
 
-      def explain
+      def explain(context)
         [self.class, @plan]
       end
     end
@@ -357,7 +422,7 @@ module Kwery
         }]
       end
 
-      def explain
+      def explain(context)
         [self.class, @plan]
       end
     end
@@ -370,12 +435,12 @@ module Kwery
       def call(context)
         [{
           _pretty: true,
-          explain: @plan.explain,
+          explain: @plan.explain(context),
         }]
       end
 
-      def explain
-        [self.class, @plan.explain]
+      def explain(context)
+        [self.class, @plan.explain(context)]
       end
     end
   end

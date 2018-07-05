@@ -1,1 +1,2 @@
-data/journal*
+data/shard_*
+supervisord.pid

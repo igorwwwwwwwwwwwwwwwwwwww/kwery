@@ -10,12 +10,17 @@ module Kwery
     end
 
     def call
-      plan = select_query || insert_query || update_query || delete_query
+      plan = remote_query || select_query || insert_query || update_query || delete_query
       plan = explain(plan) if @query.options[:explain]
       plan
     end
 
     private
+
+    def remote_query
+      @remote_planner ||= Kwery::Planner::Remote.new(@schema, @query)
+      @remote_planner.call
+    end
 
     def select_query
       @select_planner ||= Kwery::Planner::Select.new(@schema, @query)
