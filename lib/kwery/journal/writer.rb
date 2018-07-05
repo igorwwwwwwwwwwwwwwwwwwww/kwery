@@ -1,7 +1,9 @@
 require 'json'
 require 'thread'
 
-# TODO separate write-ahead from replication?
+# TODO further separate write-ahead from replication?
+# TODO handle disconnected clients
+# TODO check tx offset (lsn) during register_client handoff
 
 # write-ahead ("redo") and replication log
 module Kwery
@@ -9,12 +11,24 @@ module Kwery
     class Writer
       def initialize(journal_file: nil)
         @journal_file = journal_file
+        @clients = []
         @m = Mutex.new
+      end
+
+      def register_client(client)
+        @m.synchronize {
+          @clients << client
+        }
       end
 
       def append(op, payload)
         @m.synchronize {
-          file << JSON.dump([op, payload]) + "\n"
+          tx = JSON.dump([op, payload]) + "\n"
+          file << tx
+          @clients.each do |client|
+            client << tx
+            client.flush
+          end
         }
       end
 

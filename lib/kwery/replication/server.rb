@@ -1,10 +1,10 @@
-# TODO: switch data sources when replica has caught up?
 # TODO: use async i/o to handle this stuff better?
 
 module Kwery
   module Replication
     class Server
-      def initialize(journal_file:, port: 9200, listen_backlog: 10)
+      def initialize(journal:, journal_file:, port: 9200, listen_backlog: 10)
+        @journal = journal
         @journal_file = journal_file
         @port = port
         @listen_backlog = listen_backlog
@@ -31,12 +31,10 @@ module Kwery
           until f.eof?
             client << f.read(1024)
           end
-          while true do
-            select([f])
-            client << f.read(1024)
-          end
           client.flush
         end
+        # replay complete, handoff to log writer
+        @journal.register_client(client)
       end
     end
   end

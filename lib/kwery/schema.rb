@@ -114,8 +114,6 @@ module Kwery
     def backend_for_shard(table_name, shard)
       config = @shards[table_name]
 
-      puts shard.inspect
-
       i = shard % config[:backends].size
       config[:backends][i]
     end

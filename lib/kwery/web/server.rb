@@ -20,6 +20,7 @@ schema.recover(recovery)
 
 server = Kwery::Replication::Server.new(
   journal_file: journal_file,
+  journal: journal,
   port: ENV['REPLICATION_PORT'],
 )
 server.listen
