@@ -9,6 +9,7 @@ module Kwery
     AGG_FN_TABLE = {
       count: lambda { |x| Kwery::Executor::AggregateCount.new(x) },
       sum:   lambda { |x| Kwery::Executor::AggregateSum.new(x) },
+      max:   lambda { |x| Kwery::Executor::AggregateMax.new(x) },
       avg:   lambda { |x| Kwery::Executor::AggregateAvg.new(x) },
     }
 

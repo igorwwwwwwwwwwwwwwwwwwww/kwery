@@ -56,6 +56,26 @@ module Kwery
       end
     end
 
+    class AggregateMax < Struct.new(:exprs)
+      def init
+        0
+      end
+
+      def reduce(state, tup)
+        val = exprs[0].call(tup)
+        raise "max: invalid expr #{exprs[0]} on called on tup #{tup}" unless val
+        [state, val].max
+      end
+
+      def combine(states)
+        states.max
+      end
+
+      def render(state)
+        state
+      end
+    end
+
     class AggregateAvg < Struct.new(:exprs)
       def init
         {count: 0, sum: 0}
