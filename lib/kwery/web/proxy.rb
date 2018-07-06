@@ -72,4 +72,5 @@ post '/query' do
   # TODO: resharding / shard moving and reassignment
   # TODO: combine stats from remote calls
   # TODO: support hash aggregate / group by
+  # TODO: distributed tracing (opencensus?)
 end
