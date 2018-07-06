@@ -64,10 +64,11 @@ post '/query' do
     stats: context.stats,
   }) + "\n"
 
+  # TODO: do not re-apply limit / sorting for single backend
   # TODO: service discovery?
   # TODO: separate table per shard?
   # TODO: support IN query
   # TODO: handle writes properly (select primary, disallow updates to shard key)
   # TODO: resharding / shard moving and reassignment
   # TODO: combine stats from remote calls
-end
+  # TODO: support hash aggregate / group by
