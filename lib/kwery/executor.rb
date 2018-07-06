@@ -256,7 +256,7 @@ module Kwery
       end
 
       def call(context)
-        states = @plan.call(context).map { |tup| puts tup; tup[@k] }
+        states = @plan.call(context).map { |tup| tup[@k] }
         state = @agg.combine(states)
         val = @agg.render(state)
         [{ @k => val }]
