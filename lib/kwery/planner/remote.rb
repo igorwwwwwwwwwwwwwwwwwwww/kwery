@@ -30,23 +30,24 @@ module Kwery
         end
 
         plan = Kwery::Executor::Append.new(plans)
+        plan = combine_aggregates(plan)
         plan = sort(plan)
         plan = limit(plan)
 
         plan
       end
 
-      def match_shards
-        shard_config = @schema.shard(@query.from)
-        shard_key = shard_config[:key]
+      def combine_aggregates(plan)
+        return plan unless select_agg.size > 0
+        return plan unless @query.from
 
-        @query.where
-          .select { |expr| Kwery::Expr::Eq === expr }
-          .select { |expr| expr.left == shard_key }
-          .select { |expr| Kwery::Expr::Literal === expr.right }
-          .map { |expr| expr.right.value }
-          .map { |val| @schema.shard_for_value(@query.from, val) }
-          .uniq
+        k, agg = select_agg.first
+
+        Kwery::Executor::CombineAggregates.new(
+          k,
+          agg,
+          plan
+        )
       end
 
       def limit(plan)
@@ -80,6 +81,28 @@ module Kwery
           },
           plan
         )
+      end
+
+      def match_shards
+        shard_config = @schema.shard(@query.from)
+        shard_key = shard_config[:key]
+
+        @query.where
+          .select { |expr| Kwery::Expr::Eq === expr }
+          .select { |expr| expr.left == shard_key }
+          .select { |expr| Kwery::Expr::Literal === expr.right }
+          .map { |expr| expr.right.value }
+          .map { |val| @schema.shard_for_value(@query.from, val) }
+          .uniq
+      end
+
+      def select_agg
+        @select_agg ||= @query.select
+          .select { |k,v|
+            Kwery::Expr::FnCall === v && Kwery::Expr::AGG_FN_TABLE[v.fn_name]
+          }
+          .map { |k,v| [k, Kwery::Expr::AGG_FN_TABLE[v.fn_name].call(v.exprs)] }
+          .to_h
       end
     end
   end

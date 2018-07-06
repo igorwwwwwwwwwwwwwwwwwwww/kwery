@@ -12,12 +12,14 @@ module Kwery
     end
 
     def query(sql)
-      response = @conn.post('/query', sql)
+      headers = { 'Partial' => 'true' }
+      response = @conn.post('/query', sql, headers)
       JSON.parse(response.body, symbolize_names: true)
     end
 
     def insert(table, data)
-      response = @conn.post("/insert/#{table}", data.to_json)
+      headers = { 'Partial' => 'true' }
+      response = @conn.post("/insert/#{table}", data.to_json, headers)
       JSON.parse(response.body, symbolize_names: true)
     end
   end

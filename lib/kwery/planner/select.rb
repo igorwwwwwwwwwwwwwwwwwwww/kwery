@@ -44,11 +44,19 @@ module Kwery
           @query.options,
         )
 
-        plan = Kwery::Executor::Aggregate.new(
-          k,
-          Kwery::Executor::AggregateIndexOnlyScanCount.new,
-          plan
-        )
+        if @query.options[:partial]
+          plan = Kwery::Executor::Aggregate.new(
+            k,
+            Kwery::Executor::AggregateIndexOnlyScanCount.new,
+            plan
+          )
+        else
+          plan = Kwery::Executor::PartialAggregate.new(
+            k,
+            Kwery::Executor::AggregateIndexOnlyScanCount.new,
+            plan
+          )
+        end
 
         plan
       end
@@ -236,11 +244,22 @@ module Kwery
       def aggregate(plan)
         # TODO: support more than one aggregation
         k, agg = select_agg.first
-        Kwery::Executor::Aggregate.new(
-          k,
-          agg,
-          plan
-        )
+
+        if @query.options[:partial]
+          plan = Kwery::Executor::PartialAggregate.new(
+            k,
+            agg,
+            plan
+          )
+        else
+          plan = Kwery::Executor::Aggregate.new(
+            k,
+            agg,
+            plan
+          )
+        end
+
+        plan
       end
 
       def select_agg

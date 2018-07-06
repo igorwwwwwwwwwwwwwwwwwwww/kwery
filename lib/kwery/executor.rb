@@ -181,7 +181,6 @@ module Kwery
 
     # TODO: support multiple aggregations side-by-side
     #   e.g. select count(*), avg(experience) from pokemon
-
     class Aggregate
       def initialize(k, agg, plan)
         @k = k
@@ -228,81 +227,49 @@ module Kwery
       end
     end
 
-    class AggregateIndexOnlyScanCount
-      def init
-        0
+    class PartialAggregate
+      def initialize(k, agg, plan)
+        @k = k
+        @agg = agg
+        @plan = plan
       end
 
-      def reduce(state, tup)
-        state + tup[:_count]
+      def call(context)
+        state = @plan.call(context).reduce(@agg.init, &@agg.method(:reduce))
+        [{ @k => state }]
       end
 
-      def render(state)
-        state
-      end
-    end
-
-    class AggregateCount < Struct.new(:exprs)
-      def init
-        0
-      end
-
-      def reduce(state, tup)
-        state + 1
-      end
-
-      def render(state)
-        state
+      def explain(context)
+        [self.class, @agg.class, @plan.explain(context)]
       end
     end
 
-    class AggregateSum < Struct.new(:exprs)
-      def init
-        0
+    class CombineAggregates
+      def initialize(k, agg, plan)
+        @k = k
+        @agg = agg
+        @plan = plan
       end
 
-      def reduce(state, tup)
-        val = exprs[0].call(tup)
-        raise "sum: invalid expr #{exprs[0]} on called on tup #{tup}" unless val
-        state + val
+      def call(context)
+        states = @plan.call(context).map { |tup| puts tup; tup[@k] }
+        state = @agg.combine(states)
+        val = @agg.render(state)
+        [{ @k => val }]
       end
 
-      def render(state)
-        state
-      end
-    end
-
-    class AggregateAvg < Struct.new(:exprs)
-      def init
-        {count: 0, sum: 0}
-      end
-
-      def reduce(state, tup)
-        val = exprs[0].call(tup)
-        raise "avg: invalid expr #{exprs[0]} on called on tup #{tup}" unless val
-        {
-          count: state[:count] + 1,
-          sum:   state[:sum] + val,
-        }
-      end
-
-      def render(state)
-        if state[:count] > 0
-          state[:sum] / state[:count]
-        else
-          0
-        end
+      def explain(context)
+        [self.class, @agg.class, @plan.explain(context)]
       end
     end
 
+    # TODO: parallel version? (interleave?)
     class Append
       def initialize(plans)
         @plans = plans
       end
 
       def call(context)
-        # TODO: parallel version?
-
         Enumerator.new do |y|
           @plans.each do |plan|
             plan.call(context).each do |tup|
