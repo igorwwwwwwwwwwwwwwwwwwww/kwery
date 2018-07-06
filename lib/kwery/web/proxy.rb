@@ -69,4 +69,5 @@ post '/query' do
   # TODO: support IN query
   # TODO: handle writes properly (select primary, disallow updates to shard key)
   # TODO: resharding / shard moving and reassignment
+  # TODO: combine stats from remote calls
 end

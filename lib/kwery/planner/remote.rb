@@ -21,15 +21,11 @@ module Kwery
         backends = @schema.backends_for_shards(@query.from, shards)
         backends = @schema.backends_all(@query.from) if backends.size == 0
 
-        plans = backends.map do |backend, shards|
-          Kwery::Executor::Remote.new(
-            shards,
-            backend,
-            @query.options[:sql],
-          )
-        end
+        plan = Kwery::Executor::RemoteBatch.new(
+          backends,
+          @query.options[:sql],
+        )
 
-        plan = Kwery::Executor::Append.new(plans)
         plan = combine_aggregates(plan)
         plan = sort(plan)
         plan = limit(plan)

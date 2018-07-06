@@ -138,6 +138,7 @@ module Kwery
     def backends_for_shards(table_name, shards)
       shards
         .group_by { |shard| backend_for_shard(table_name, shard) }
+        .keys
     end
 
     def backends_all(table_name)

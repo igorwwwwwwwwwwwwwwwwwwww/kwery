@@ -20,6 +20,10 @@ module Kwery
       def client(backend)
         @clients[backend] ||= Kwery::Client.new(backend)
       end
+
+      def batch_client(backends)
+        Kwery::Client::Batch.new(backends)
+      end
     end
 
     class IndexOnlyScan
@@ -263,7 +267,6 @@ module Kwery
       end
     end
 
-    # TODO: parallel version? (interleave?)
     class Append
       def initialize(plans)
         @plans = plans
@@ -284,9 +287,37 @@ module Kwery
       end
     end
 
+    class RemoteBatch
+      def initialize(backends, sql)
+        @backends = backends
+        @sql = sql
+      end
+
+      def call(context)
+        client = context.batch_client(@backends)
+        results = client.query(@sql)
+        Enumerator.new do |y|
+          results.each do |result|
+            result[:data].each do |tup|
+              y << tup
+            end
+          end
+        end
+      end
+
+      def explain(context)
+        client = context.batch_client(@backends)
+        results = client.query(@sql)
+        remote_explain = results.map do |result|
+          result[:data].first[:explain]
+        end
+
+        [self.class, @backend, @sql, remote_explain]
+      end
+    end
+
     class Remote
-      def initialize(shards, backend, sql)
-        @shards = shards
+      def initialize(backend, sql)
         @backend = backend
         @sql = sql
       end
@@ -302,7 +333,7 @@ module Kwery
         result = client.query(@sql)
         remote_explain = result[:data].first[:explain]
 
-        [self.class, @shards, @backend, @sql, remote_explain]
+        [self.class, @backend, @sql, remote_explain]
       end
     end
 
