@@ -17,15 +17,15 @@ module Kwery
     end
 
     def insert_tup(tid, tup)
-        key = tup_key(tup)
-        return if key.all? { |k| k.nil? }
+      key = tup_key(tup)
+      return if key.all? { |k| k.nil? }
 
-        vals = @bst.find(key)&.value
-        unless vals
-          vals = Set.new
-          @bst.insert(key, vals)
-        end
-        vals << tid
+      vals = @bst.find(key)&.value
+      unless vals
+        vals = Set.new
+        @bst.insert(key, vals)
+      end
+      vals << tid
     end
 
     def delete_tup(tid, tup)
