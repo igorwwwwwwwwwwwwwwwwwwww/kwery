@@ -312,7 +312,7 @@ module Kwery
           result[:data].first[:explain]
         end
 
-        [self.class, @backend, @sql, remote_explain]
+        [self.class, @backends, @sql, remote_explain]
       end
     end
 
