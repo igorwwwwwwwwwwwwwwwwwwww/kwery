@@ -31,6 +31,7 @@ end
 post '/query' do
   sql = request.body.read
   options = {}
+  options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
 
   parser = Kwery::Parser.new(options)
   query = parser.parse(sql)
