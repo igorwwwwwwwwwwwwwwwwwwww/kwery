@@ -66,7 +66,6 @@ post '/query' do
 
   # TODO: service discovery?
   # TODO: separate table per shard?
-  # TODO: aggregation ... push down? merge intermediate values?
   # TODO: support IN query
   # TODO: handle writes properly (select primary, disallow updates to shard key)
   # TODO: resharding / shard moving and reassignment
