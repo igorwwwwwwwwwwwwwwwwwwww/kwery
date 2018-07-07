@@ -17,7 +17,7 @@ module Kwery
           Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
         end
 
-        plan = Kwery::Executor::Insert.new(@query.into, tups)
+        Kwery::Executor::Insert.new(@query.into, tups)
       end
     end
 
@@ -61,7 +61,7 @@ module Kwery
           tup
         }
 
-        plan = Kwery::Executor::Update.new(
+        Kwery::Executor::Update.new(
           @query.table,
           update,
           plan
@@ -115,7 +115,7 @@ module Kwery
           plan = where(plan)
         end
 
-        plan = Kwery::Executor::Delete.new(@query.from, plan)
+        Kwery::Executor::Delete.new(@query.from, plan)
       end
 
       private

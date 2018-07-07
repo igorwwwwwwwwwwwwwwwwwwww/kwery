@@ -268,6 +268,23 @@ module Kwery
       end
     end
 
+    class MergeCounts
+      def initialize(plan)
+        @plan = plan
+      end
+
+      def call(context)
+        count = @plan.call(context).reduce(0) do |sum, tup|
+          sum + tup[:count]
+        end
+        [{ count: count }]
+      end
+
+      def explain(context)
+        [self.class, @plan.explain(context)]
+      end
+    end
+
     class Append
       def initialize(plans)
         @plans = plans
@@ -297,7 +314,7 @@ module Kwery
 
       def call(context)
         client = context.batch_client(@backends)
-        results = client.query(@sql, @client_opts)
+        results = client.query(@sql, @client_opts, context)
         Enumerator.new do |y|
           results.each do |result|
             result[:data].each do |tup|
@@ -309,7 +326,7 @@ module Kwery
 
       def explain(context)
         client = context.batch_client(@backends)
-        results = client.query(@sql)
+        results = client.query(@sql, {}, context)
         remote_explain = results.map do |result|
           result[:data].first[:explain]
         end
@@ -327,13 +344,13 @@ module Kwery
 
       def call(context)
         client = context.client(@backend)
-        result = client.query(@sql, @client_opts)
+        result = client.query(@sql, @client_opts, context)
         result[:data]
       end
 
       def explain(context)
         client = context.client(@backend)
-        result = client.query(@sql)
+        result = client.query(@sql, {}, context)
         remote_explain = result[:data].first[:explain]
 
         [self.class, @backend, @sql, @client_opts, remote_explain]
@@ -349,7 +366,7 @@ module Kwery
 
       def call(context)
         client = context.client(@backend)
-        result = client.insert(@table_name, @tups)
+        result = client.insert(@table_name, @tups, context)
         result[:data]
       end
 

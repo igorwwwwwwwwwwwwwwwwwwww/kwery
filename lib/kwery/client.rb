@@ -12,16 +12,19 @@ module Kwery
       end
     end
 
-    def query(sql, client_opts = {})
+    def query(sql, client_opts = {}, context = nil)
       headers = {}
       headers['Partial'] = 'true' if client_opts[:partial]
 
-      response = @conn.post('/query', sql, headers)
+      context.increment(:backend_requests) if context
 
+      response = @conn.post('/query', sql, headers)
       JSON.parse(response.body, symbolize_names: true)
     end
 
-    def insert(table, data)
+    def insert(table, data, context = nil)
+      context.increment(:backend_requests) if context
+
       response = @conn.post("/insert/#{table}", data.to_json)
       JSON.parse(response.body, symbolize_names: true)
     end
@@ -31,7 +34,7 @@ module Kwery
         @backends = backends
       end
 
-      def query(sql, client_opts = {})
+      def query(sql, client_opts = {}, context = nil)
         hydra = Typhoeus::Hydra.new
 
         headers = {}
@@ -46,7 +49,10 @@ module Kwery
           )
         end
 
-        reqs.each { |req| hydra.queue(req) }
+        reqs.each do |req|
+          context.increment(:backend_requests) if context
+          hydra.queue(req)
+        end
         hydra.run
 
         reqs.map do |req|

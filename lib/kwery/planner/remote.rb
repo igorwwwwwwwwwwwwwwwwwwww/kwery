@@ -18,7 +18,7 @@ module Kwery
       def single_backend_select_query
         return unless Kwery::Query::Select === @query
 
-        shards = match_shards
+        shards = match_shards(@query.from, @query.where)
 
         backends = @schema.backends_for_shards(@query.from, shards)
         backends = @schema.backends_all(@query.from) if backends.size == 0
@@ -40,7 +40,7 @@ module Kwery
       def select_query
         return unless Kwery::Query::Select === @query
 
-        shards = match_shards
+        shards = match_shards(@query.from, @query.where)
 
         backends = @schema.backends_for_shards(@query.from, shards)
         backends = @schema.backends_all(@query.from) if backends.size == 0
@@ -60,6 +60,34 @@ module Kwery
 
       def insert_query
         return unless Kwery::Query::Insert === @query
+
+        # TODO: delay evaluation of expressions until runtime
+
+        tups = @query.values.map do |row|
+          Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
+        end
+
+        backends = tups.group_by do |tup|
+          shard = @schema.shard_for_tup(@query.into, tup)
+          @schema.primary_for_shard(@query.into, shard)
+        end
+
+        # TODO: replace RemoteInsert with RemoteBatch
+        #       this requires producing a filtered insert sql
+        #       for each backend.
+
+        plans = backends.map do |backend, tups|
+          Kwery::Executor::RemoteInsert.new(
+            backend,
+            @query.into,
+            tups,
+          )
+        end
+
+        plan = Kwery::Executor::Append.new(plans)
+        plan = Kwery::Executor::MergeCounts.new(plan)
+
+        plan
       end
 
       def update_query
@@ -122,26 +150,26 @@ module Kwery
         )
       end
 
-      def match_shards
-        shard_config = @schema.shard(@query.from)
+      def match_shards(from, where)
+        shard_config = @schema.shard(from)
         shard_key = shard_config[:key]
 
         vals = []
 
-        vals.concat @query.where
+        vals.concat where
           .select { |expr| Kwery::Expr::Eq === expr }
           .select { |expr| expr.left == shard_key }
           .select { |expr| Kwery::Expr::Literal === expr.right }
           .map { |expr| expr.right.value }
 
-        vals.concat @query.where
+        vals.concat where
           .select { |expr| Kwery::Expr::In === expr }
           .select { |expr| expr.expr == shard_key }
           .select { |expr| expr.vals.all? { |val| Kwery::Expr::Literal === val } }
           .flat_map { |expr| expr.vals.map(&:value) }
 
         vals
-          .map { |val| @schema.shard_for_value(@query.from, val) }
+          .map { |val| @schema.shard_for_value(from, val) }
           .uniq
       end
 

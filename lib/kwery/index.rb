@@ -12,7 +12,7 @@ module Kwery
       @bst = BinarySearchTree.new(comparator: comparator)
     end
 
-    def scan(sargs = {}, scan_order = :asc, context)
+    def scan(sargs = {}, scan_order = :asc, context = nil)
       @bst.scan_leaf(@bst.root, sargs, scan_order, context)
     end
 
