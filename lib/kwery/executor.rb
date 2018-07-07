@@ -26,6 +26,7 @@ module Kwery
       end
     end
 
+    # TODO: attempt to reconstruct tuples from the index key
     class IndexOnlyScan
       def initialize(index_name, sargs = {}, scan_order = :asc, options = {})
         @index_name = index_name
