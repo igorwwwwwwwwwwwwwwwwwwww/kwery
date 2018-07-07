@@ -20,10 +20,6 @@ module Kwery
       def client(backend)
         @clients[backend] ||= Kwery::Client.new(backend)
       end
-
-      def batch_client(backends)
-        Kwery::Client::Batch.new(backends)
-      end
     end
 
     # TODO: attempt to reconstruct tuples from the index key
@@ -305,16 +301,18 @@ module Kwery
       end
     end
 
+    # queries is a map from backend to sql
+    # e.g.
+    #   { "http://localhost:8000": "select * from users" }
     class RemoteBatch
-      def initialize(backends, sql, client_opts = {})
-        @backends = backends
-        @sql = sql
+      def initialize(queries, client_opts = {})
+        @queries = queries
         @client_opts = client_opts
       end
 
       def call(context)
-        client = context.batch_client(@backends)
-        results = client.query(@sql, @client_opts, context)
+        client = Kwery::Client::Batch.new
+        results = client.query(@queries, @client_opts, context)
         Enumerator.new do |y|
           results.each do |result|
             result[:data].each do |tup|
@@ -324,14 +322,16 @@ module Kwery
         end
       end
 
+      # TODO: verbose mode that includes generated queries?
       def explain(context)
-        client = context.batch_client(@backends)
-        results = client.query(@sql, {}, context)
+        client = Kwery::Client::Batch.new
+        results = client.query(@queries, {}, context)
         remote_explain = results.map do |result|
           result[:data].first[:explain]
         end
+        remote_explain_map = @queries.keys.zip(remote_explain).to_h
 
-        [self.class, @backends, @sql, @client_opts, remote_explain]
+        [self.class, @client_opts, remote_explain_map]
       end
     end
 

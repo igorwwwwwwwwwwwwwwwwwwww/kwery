@@ -30,17 +30,13 @@ module Kwery
     end
 
     class Batch
-      def initialize(backends)
-        @backends = backends
-      end
-
-      def query(sql, client_opts = {}, context = nil)
+      def query(queries, client_opts = {}, context = nil)
         hydra = Typhoeus::Hydra.new
 
         headers = {}
         headers['Partial'] = 'true' if client_opts[:partial]
 
-        reqs = @backends.map do |backend|
+        reqs = queries.map do |backend, sql|
           Typhoeus::Request.new(
             "#{backend}/query",
             method: :post,

@@ -29,9 +29,12 @@ module Kwery
         # no re-sorting, no re-limiting needed
         # essentially a pass-through / forward to backend
 
+        queries = backends
+          .map { |backend| [backend, @query.options[:sql]] }
+          .to_h
+
         plan = Kwery::Executor::RemoteBatch.new(
-          backends,
-          @query.options[:sql],
+          queries
         )
 
         plan
@@ -45,9 +48,12 @@ module Kwery
         backends = @schema.backends_for_shards(@query.from, shards)
         backends = @schema.backends_all(@query.from) if backends.size == 0
 
+        queries = backends
+          .map { |backend| [backend, @query.options[:sql]] }
+          .to_h
+
         plan = Kwery::Executor::RemoteBatch.new(
-          backends,
-          @query.options[:sql],
+          queries,
           partial: true,
         )
 
@@ -70,19 +76,18 @@ module Kwery
           @schema.primary_for_shard(@query.into, shard)
         end
 
-        # TODO: use RemoteBatch (implement sql per backend)
-
-        plans = backends.map do |backend, row|
+        queries = backends.map do |backend, row|
           query = @query.dup
           query.values = row
 
-          Kwery::Executor::Remote.new(
-            backend,
-            query.to_sql,
-          )
+          [backend, query.to_sql]
         end
 
-        plan = Kwery::Executor::Append.new(plans)
+        plan = Kwery::Executor::RemoteBatch.new(
+          queries.to_h,
+          partial: true,
+        )
+
         plan = Kwery::Executor::MergeCounts.new(plan)
 
         plan
