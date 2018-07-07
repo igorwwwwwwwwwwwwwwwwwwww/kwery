@@ -13,6 +13,8 @@ schema.define_shard(:users,
   backends: backends,
 )
 
+parser = Kwery::Parser.new
+
 get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
@@ -49,10 +51,10 @@ end
 
 post '/query' do
   sql = request.body.read
-  options = { remote: true, sql: sql }
 
-  parser = Kwery::Parser.new(options)
   query = parser.parse(sql)
+  query.options[:remote] = true
+  query.options[:sql]    = sql
 
   plan = query.plan(schema)
 
@@ -66,7 +68,7 @@ post '/query' do
 
   # TODO: do not re-apply limit / sorting for single backend
   # TODO: service discovery?
-  # TODO: separate table per shard?
+  # TODO: separate table per shard? (replicate only specific shard)
   # TODO: support IN query
   # TODO: handle writes properly (select primary, disallow updates to shard key)
   # TODO: resharding / shard moving and reassignment

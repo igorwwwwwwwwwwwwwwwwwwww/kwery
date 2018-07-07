@@ -2,10 +2,13 @@ require 'rly'
 
 module Kwery
   class Parser < Rly::Yacc
-    def initialize(options = {})
+    def initialize
       super(Kwery::Parser::Lexer.new)
-      @options = options
+    end
+
+    def parse(*args)
       @anon_fields = 0
+      super
     end
 
     def normalize_where(node)
@@ -45,7 +48,7 @@ module Kwery
       args << e6.value if e6
 
       args = args.compact.to_h
-      args[:options] = @options
+      args[:options] = {}
 
       st.value = Kwery::Query::Select.new(**args)
     end

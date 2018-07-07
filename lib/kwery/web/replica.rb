@@ -17,6 +17,8 @@ Thread.new {
   schema.recover(recovery)
 }
 
+parser = Kwery::Parser.new
+
 get '/' do
   { name: ENV['SERVER_NAME'], replica: true, primary: ENV['PRIMARY'] }.to_json + "\n"
 end
@@ -30,11 +32,9 @@ end
 
 post '/query' do
   sql = request.body.read
-  options = {}
-  options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
 
-  parser = Kwery::Parser.new(options)
   query = parser.parse(sql)
+  query.options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
 
   unless Kwery::Query::Select === query
     status 400
