@@ -53,7 +53,6 @@ post '/insert/:table' do
   }) + "\n"
 end
 
-# TODO: handle writes properly (select primary, disallow updates to shard key)
 # TODO: service discovery?
 # TODO: separate table per shard? (replicate only specific shard)
 # TODO: resharding / shard moving and reassignment

@@ -48,6 +48,8 @@ post '/insert/:table' do
   }) + "\n"
 end
 
+# TODO: mutex around parser and schema
+
 post '/query' do
   sql = request.body.read
 

@@ -88,7 +88,7 @@ module Kwery
           partial: true,
         )
 
-        plan = Kwery::Executor::MergeCounts.new(plan)
+        plan = Kwery::Executor::MergeCounts.new(plan) unless backends.size == 1
 
         plan
       end
@@ -120,13 +120,31 @@ module Kwery
           partial: true,
         )
 
-        plan = Kwery::Executor::MergeCounts.new(plan)
+        plan = Kwery::Executor::MergeCounts.new(plan) unless backends.size == 1
 
         plan
       end
 
       def delete_query
         return unless Kwery::Query::Delete === @query
+
+        shards = match_shards(@query.from, @query.where)
+
+        backends = @schema.primaries_for_shards(@query.from, shards)
+        backends = @schema.primaries_all(@query.from) if backends.size == 0
+
+        queries = backends
+          .map { |backend| [backend, @query.options[:sql]] }
+          .to_h
+
+        plan = Kwery::Executor::RemoteBatch.new(
+          queries.to_h,
+          partial: true,
+        )
+
+        plan = Kwery::Executor::MergeCounts.new(plan) unless backends.size == 1
+
+        plan
       end
 
       def unsupported_query
