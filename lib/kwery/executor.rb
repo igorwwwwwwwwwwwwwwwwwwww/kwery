@@ -314,7 +314,7 @@ module Kwery
           result[:data].first[:explain]
         end
 
-        [self.class, @backends, @sql, remote_explain]
+        [self.class, @backends, @sql, @client_opts, remote_explain]
       end
     end
 
@@ -336,7 +336,7 @@ module Kwery
         result = client.query(@sql)
         remote_explain = result[:data].first[:explain]
 
-        [self.class, @backend, @sql, remote_explain]
+        [self.class, @backend, @sql, @client_opts, remote_explain]
       end
     end
 

@@ -104,11 +104,21 @@ module Kwery
         shard_config = @schema.shard(@query.from)
         shard_key = shard_config[:key]
 
-        @query.where
+        vals = []
+
+        vals.concat @query.where
           .select { |expr| Kwery::Expr::Eq === expr }
           .select { |expr| expr.left == shard_key }
           .select { |expr| Kwery::Expr::Literal === expr.right }
           .map { |expr| expr.right.value }
+
+        vals.concat @query.where
+          .select { |expr| Kwery::Expr::In === expr }
+          .select { |expr| expr.expr == shard_key }
+          .select { |expr| expr.vals.all? { |val| Kwery::Expr::Literal === val } }
+          .flat_map { |expr| expr.vals.map(&:value) }
+
+        vals
           .map { |val| @schema.shard_for_value(@query.from, val) }
           .uniq
       end
