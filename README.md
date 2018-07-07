@@ -1,5 +1,7 @@
 # Kwery
 
+Distributed. In-memory. [NewSQL](http://howfuckedismydatabase.com/nosql/).
+
 ## Usage
 
 ### Select
