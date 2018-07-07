@@ -39,7 +39,7 @@ post '/query' do
   query = parser.parse(sql)
   query.options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
 
-  unless Kwery::Query::Select === query
+  unless Kwery::Query::Select === query || query.options[:explain]
     status 400
     return JSON.pretty_generate({
       error: 'no writes allowed against replica',
@@ -60,7 +60,8 @@ end
 error do |e|
   status 500
   JSON.pretty_generate({
-    error: e,
+    error:       e,
+    error_class: e.class,
     stack_first: e.backtrace.first,
     # stack: e.backtrace,
   }) + "\n"
@@ -69,6 +70,7 @@ end
 error Kwery::Planner::UnsupportedQueryError do |e|
   status 400
   JSON.pretty_generate({
-    error: e,
+    error:       e,
+    error_class: e.class,
   }) + "\n"
 end

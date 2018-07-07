@@ -68,7 +68,8 @@ end
 error do |e|
   status 500
   JSON.pretty_generate({
-    error: e,
+    error:       e,
+    error_class: e.class,
     stack_first: e.backtrace.first,
     # stack: e.backtrace,
   }) + "\n"
@@ -77,6 +78,7 @@ end
 error Kwery::Planner::UnsupportedQueryError do |e|
   status 400
   JSON.pretty_generate({
-    error: e,
+    error:       e,
+    error_class: e.class,
   }) + "\n"
 end

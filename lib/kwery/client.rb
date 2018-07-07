@@ -53,7 +53,15 @@ module Kwery
 
         reqs.map do |req|
           unless req.response.success?
-            raise "unsuccessful response for request #{req.url} status=#{req.response.code} timeout=#{req.response.timed_out?}"
+            if req.response.body
+              begin
+                result = JSON.parse(req.response.body, symbolize_names:true)
+                error = result[:error]
+              rescue
+                error = nil
+              end
+            end
+            raise "error response for request #{req.url} status=#{req.response.code} timeout=#{req.response.timed_out?} body=\"#{req.options[:body]}\" error=\"#{error}\""
           end
           JSON.parse(req.response.body, symbolize_names: true)
         end

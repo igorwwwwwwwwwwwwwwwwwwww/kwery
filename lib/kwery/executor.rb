@@ -418,7 +418,7 @@ module Kwery
       end
 
       def explain(context)
-        [self.class, @plan]
+        [self.class, @plan.explain(context)]
       end
     end
 
@@ -441,7 +441,7 @@ module Kwery
       end
 
       def explain(context)
-        [self.class, @plan]
+        [self.class, @plan.explain(context)]
       end
     end
 

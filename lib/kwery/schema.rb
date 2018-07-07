@@ -133,6 +133,17 @@ module Kwery
       rs_for_shard(table_name, shard).first
     end
 
+    def primaries_for_shards(table_name, shards)
+      shards
+        .group_by { |shard| rs_for_shard(table_name, shard) }
+        .map { |rs, shards| rs.first }
+    end
+
+    def primaries_all(table_name)
+      config = @shards[table_name]
+      config[:backends].map(&:first)
+    end
+
     # pick random backend from replica set
     def backend_for_shard(table_name, shard)
       rs_for_shard(table_name, shard).sample

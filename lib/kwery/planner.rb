@@ -7,6 +7,9 @@ module Kwery
     class UnsupportedQueryError < StandardError
     end
 
+    class ShardKeyUpdateError < StandardError
+    end
+
     def initialize(schema, query)
       @schema = schema
       @query = query

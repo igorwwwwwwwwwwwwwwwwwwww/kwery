@@ -95,6 +95,34 @@ module Kwery
 
       def update_query
         return unless Kwery::Query::Update === @query
+
+        shard_config = @schema.shard(@query.table)
+        shard_key = shard_config[:key]
+        @query.update.each do |k, v|
+          if shard_key == Kwery::Expr::Column.new(k)
+            raise ShardKeyUpdateError.new(
+              "you may not update the shard key #{shard_key} on #{@query.table}"
+            )
+          end
+        end
+
+        shards = match_shards(@query.table, @query.where)
+
+        backends = @schema.primaries_for_shards(@query.table, shards)
+        backends = @schema.primaries_all(@query.table) if backends.size == 0
+
+        queries = backends
+          .map { |backend| [backend, @query.options[:sql]] }
+          .to_h
+
+        plan = Kwery::Executor::RemoteBatch.new(
+          queries.to_h,
+          partial: true,
+        )
+
+        plan = Kwery::Executor::MergeCounts.new(plan)
+
+        plan
       end
 
       def delete_query
