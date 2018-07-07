@@ -49,6 +49,7 @@ post '/insert/:table' do
 end
 
 # TODO: mutex around parser and schema
+# TODO: streaming output as newline-delimited json?
 
 post '/query' do
   sql = request.body.read

@@ -9,16 +9,11 @@ module Kwery
       def initialize(schema, stats = {})
         @schema = schema
         @stats = stats
-        @clients = {}
       end
 
       def increment(key, count = 1)
         stats[key] ||= 0
         stats[key] += count
-      end
-
-      def client(backend)
-        @clients[backend] ||= Kwery::Client.new(backend)
       end
     end
 
@@ -354,24 +349,6 @@ module Kwery
         remote_explain = result[:data].first[:explain]
 
         [self.class, @backend, @sql, @client_opts, remote_explain]
-      end
-    end
-
-    class RemoteInsert
-      def initialize(backend, table_name, tups)
-        @backend = backend
-        @table_name = table_name
-        @tups = tups
-      end
-
-      def call(context)
-        client = context.client(@backend)
-        result = client.insert(@table_name, @tups, context)
-        result[:data]
-      end
-
-      def explain(context)
-        [self.class, @shards, @backend, @table_name]
       end
     end
 

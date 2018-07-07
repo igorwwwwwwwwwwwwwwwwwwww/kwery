@@ -22,43 +22,12 @@ get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
-post '/insert/:table' do
-  table = params[:table].to_sym
-  data = JSON.parse(request.body.read, symbolize_names: true)
-
-  data.each do |tup|
-    tup[:_shard] = schema.shard_for_tup(table, tup)
-  end
-
-  backends = data.group_by do |tup|
-    schema.primary_for_shard(table, tup[:_shard])
-  end
-
-  # TODO: deprecate RemoteInsert in favour of query rewriting
-  plans = backends.map do |backend, tups|
-    Kwery::Executor::RemoteInsert.new(
-      backend,
-      table,
-      tups,
-    )
-  end
-
-  plan = Kwery::Executor::Append.new(plans)
-
-  context = Kwery::Executor::Context.new(schema)
-  tups = plan.call(context).to_a
-
-  JSON.pretty_generate({
-    data: tups,
-  }) + "\n"
-end
-
+# TODO: support hash aggregate / group by
+# TODO: distributed tracing (opencensus?)
 # TODO: service discovery?
 # TODO: separate table per shard? (replicate only specific shard)
 # TODO: resharding / shard moving and reassignment
 # TODO: combine stats from remote calls
-# TODO: support hash aggregate / group by
-# TODO: distributed tracing (opencensus?)
 
 post '/query' do
   sql = request.body.read
