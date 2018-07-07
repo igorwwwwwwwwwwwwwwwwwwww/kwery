@@ -34,6 +34,7 @@ post '/insert/:table' do
     schema.primary_for_shard(table, tup[:_shard])
   end
 
+  # TODO: deprecate RemoteInsert in favour of query rewriting
   plans = backends.map do |backend, tups|
     Kwery::Executor::RemoteInsert.new(
       backend,

@@ -29,6 +29,11 @@ module Kwery
       end
 
       def to_s
+        # TODO: escape quotes in value
+        if String === value
+          return "'#{value}'"
+        end
+
         value.to_s
       end
     end

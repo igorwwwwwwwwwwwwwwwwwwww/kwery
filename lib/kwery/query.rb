@@ -26,6 +26,18 @@ module Kwery
       def parts
         [select, from, where, order_by, group_by, limit, options]
       end
+
+      def to_sql
+        parts = []
+        parts << "EXPLAIN" if options[:explain]
+        parts << "SELECT #{select.join(', ')}"
+        parts << "FROM #{from}"                 if from
+        parts << "WHERE #{where}"               if where.size > 0
+        parts << "ORDER BY #{order_by}"         if order_by.size > 0
+        parts << "GROUP BY #{group_by}"         if group_by.size > 0
+        parts << "LIMIT #{limit}"               if limit
+        parts.join(' ')
+      end
     end
 
     class Insert
@@ -48,6 +60,20 @@ module Kwery
 
       def parts
         [into, keys, values, options]
+      end
+
+      def to_sql
+        values_parts = values.map do |row|
+          '(' + row.join(', ') + ')'
+        end
+        values_sql = values_parts.join(', ')
+
+        parts = []
+        parts << "EXPLAIN" if options[:explain]
+        parts << "INSERT INTO #{into}"
+        parts << "(#{keys.join(', ')})"
+        parts << "VALUES #{values_sql}"
+        parts.join(' ')
       end
     end
 
@@ -72,6 +98,20 @@ module Kwery
       def parts
         [table, update, where, options]
       end
+
+      def to_sql
+        update_parts = update.map do |k, v|
+          "#{k} = #{v}"
+        end
+        update_sql = update_parts.join(', ')
+
+        parts = []
+        parts << "EXPLAIN"                    if options[:explain]
+        parts << "UPDATE #{table}"
+        parts << "SET #{update_sql}"
+        parts << "WHERE #{where.join(', ')}"  if where.size > 0
+        parts.join(' ')
+      end
     end
 
     class Delete
@@ -93,6 +133,14 @@ module Kwery
 
       def parts
         [from, where, options]
+      end
+
+      def to_sql
+        parts = []
+        parts << "EXPLAIN"                    if options[:explain]
+        parts << "DELETE FROM #{from}"
+        parts << "WHERE #{where.join(', ')}"  if where.size > 0
+        parts.join(' ')
       end
     end
   end

@@ -63,24 +63,22 @@ module Kwery
 
         # TODO: delay evaluation of expressions until runtime
 
-        tups = @query.values.map do |row|
-          Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
-        end
+        backends = @query.values.group_by do |row|
+          tup = Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
 
-        backends = tups.group_by do |tup|
           shard = @schema.shard_for_tup(@query.into, tup)
           @schema.primary_for_shard(@query.into, shard)
         end
 
-        # TODO: replace RemoteInsert with RemoteBatch
-        #       this requires producing a filtered insert sql
-        #       for each backend.
+        # TODO: use RemoteBatch (implement sql per backend)
 
-        plans = backends.map do |backend, tups|
-          Kwery::Executor::RemoteInsert.new(
+        plans = backends.map do |backend, row|
+          query = @query.dup
+          query.values = row
+
+          Kwery::Executor::Remote.new(
             backend,
-            @query.into,
-            tups,
+            query.to_sql,
           )
         end
 
@@ -100,7 +98,7 @@ module Kwery
 
       def unsupported_query
         raise Kwery::Planner::UnsupportedQueryError.new(
-          'query is not supported by proxy'
+          "#{@query.class} query is not supported by proxy"
         )
       end
 
