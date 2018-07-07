@@ -1,5 +1,7 @@
 require 'set'
 
+# TODO: shared planner object?
+
 module Kwery
   module Query
     class Select
@@ -63,6 +65,7 @@ module Kwery
       end
 
       def to_sql
+        # TODO: string quotes and escaping
         values_parts = values.map do |row|
           '(' + row.join(', ') + ')'
         end
@@ -140,6 +143,37 @@ module Kwery
         parts << "EXPLAIN"                    if options[:explain]
         parts << "DELETE FROM #{from}"
         parts << "WHERE #{where.join(', ')}"  if where.size > 0
+        parts.join(' ')
+      end
+    end
+
+    class Copy
+      attr_accessor :table, :from, :options
+
+      def initialize(table:, from:, options: {})
+        @table = table
+        @from = from
+        @options = options
+      end
+
+      def plan(schema)
+        Planner.new(schema, self).call
+      end
+
+       def ==(other)
+         other.respond_to?(:parts) && self.parts == other.parts
+       end
+
+      def parts
+        [table, from, options]
+      end
+
+      def to_sql
+        # TODO: string quotes and escaping
+        parts = []
+        parts << "EXPLAIN"                    if options[:explain]
+        parts << "COPY #{table}"
+        parts << "FROM #{from}"
         parts.join(' ')
       end
     end

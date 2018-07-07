@@ -52,8 +52,9 @@ schema.create_index(:clickhouse_users, :clickhouse_users_idx_name, [
   Kwery::Expr::IndexedExpr.new(Kwery::Expr::Column.new(:name), :asc),
 ])
 
-parser = Kwery::Parser.new(options)
+parser = Kwery::Parser.new
 query = parser.parse(sql, ENV['DEBUG_PARSER'] == 'true')
+query.options.merge!(options)
 
 if ENV['DEBUG_QUERY'] == 'true'
   warn "query: #{query.inspect}"

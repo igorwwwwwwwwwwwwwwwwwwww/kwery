@@ -10,7 +10,7 @@ module Kwery
 
       def call
         return unless @query.options[:remote]
-        single_backend_select_query || select_query || insert_query || update_query || delete_query || unsupported_query
+        single_backend_select_query || select_query || insert_query || update_query || delete_query || copy_query || unsupported_query
       end
 
       private
@@ -66,8 +66,6 @@ module Kwery
 
       def insert_query
         return unless Kwery::Query::Insert === @query
-
-        # TODO: delay evaluation of expressions until runtime
 
         backends = @query.values.group_by do |row|
           tup = Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
@@ -145,6 +143,21 @@ module Kwery
         plan = Kwery::Executor::MergeCounts.new(plan) unless backends.size == 1
 
         plan
+      end
+
+      def copy_query
+        return unless Kwery::Query::Copy === @query
+
+        # TODO: implement remote copy, we probably need some query interface
+        #       to insert tuples directly, since we need to format-parse the
+        #       tuples at the proxy in order to pick the shard.
+        #
+        #       hm, unless. if the input format is splittable (e.g. by newline)
+        #       then we could keep a mapping from source lines to shards,
+        #       created sharded copies of the source file (one per backend),
+        #       and then send the data to the backends in the source format.
+        #
+        #       not sure if that is worth it though.
       end
 
       def unsupported_query

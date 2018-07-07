@@ -28,6 +28,8 @@ module Kwery
 
       token :DELETE, /\bDELETE\b/i
 
+      token :COPY, /\bCOPY\b/i
+
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
         t

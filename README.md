@@ -21,7 +21,7 @@ $ bin/kwery 'explain select name from users where id = 1'
 ### Curl
 
 ```
-$ curl -sS 'http://localhost:9292/insert/users' -d '[{"id":1,"name":"Kathleen","active":false},{"id":2,"name":"Xantha","active":true},{"id":3,"name":"Hope","active":true}]' | jq '.data[]'
+$ curl -sS 'http://localhost:9292/query' -d 'insert into users (id, name, active) values (1, 'Kathleen', false), (2, 'Xantha', true), (3, 'Hope', true)' | jq '.data[]'
 {
   "count": 3
 }
@@ -31,6 +31,8 @@ $ curl -sS 'http://localhost:9292/query' -d 'select id, name from users where ac
   "id": 2,
   "name": "Xantha"
 }
+
+$ curl -sS 'http://localhost:9292/query' -F query="copy users from stdin" -F data=@data/users.csv
 ```
 
 ### Distributed
@@ -42,7 +44,7 @@ $ curl -sS 'http://localhost:9292/query' -d 'select id, name from users where ac
 rm data/shard_*
 supervisord
 
-curl -sS 'http://localhost:7000/insert/users' -d '[{"id":1,"name":"Kathleen","active":false},{"id":2,"name":"Xantha","active":true},{"id":3,"name":"Hope","active":true},{"id":4,"name":"Hedley","active":false},{"id":8,"name":"Quincy","active":true}]' | jq '.data[]'
+curl -sS 'http://localhost:7000/query' -d 'insert into users (id, name, active) values (1, 'Kathleen', false), (2, 'Xantha', true), (3, 'Hope', true), (4, 'Hedley', false), (8, 'Quincy', true)' | jq '.data[]'
 
 curl -sS 'http://localhost:7000/query' -d 'explain select id, name from users where id = 1' | jq '.data[]'
 curl -sS 'http://localhost:7000/query' -d 'explain select id, name from users where id = 4' | jq '.data[]'

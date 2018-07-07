@@ -52,14 +52,20 @@ end
 # TODO: streaming output as newline-delimited json?
 
 post '/query' do
-  sql = request.body.read
+  if env['CONTENT_TYPE'].start_with?('multipart/form-data;')
+    sql   = params[:query]
+    stdin = params[:data][:tempfile]
+  else
+    sql   = request.body.read
+    stdin = nil
+  end
 
   query = parser.parse(sql)
   query.options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
 
   plan = query.plan(schema)
 
-  context = Kwery::Executor::Context.new(schema)
+  context = Kwery::Executor::Context.new(schema, stdin)
   tups = plan.call(context).to_a
 
   JSON.pretty_generate({

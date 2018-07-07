@@ -11,13 +11,14 @@ module Kwery
       def call
         return unless Kwery::Query::Insert === @query
 
-        # TODO: delay evaluation of expressions until runtime
-
-        tups = @query.values.map do |row|
+        tups = @query.values.lazy.map do |row|
           Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
         end
 
-        Kwery::Executor::Insert.new(@query.into, tups)
+        plan = Kwery::Executor::UserQueryTups.new(tups)
+        plan = Kwery::Executor::Insert.new(@query.into, plan)
+
+        plan
       end
     end
 
@@ -129,6 +130,29 @@ module Kwery
           },
           plan
         )
+      end
+    end
+
+    class Copy
+      def initialize(schema, query)
+        @schema = schema
+        @query = query
+      end
+
+      def call
+        return unless Kwery::Query::Copy === @query
+
+        format = Kwery::Format::Csv.new
+
+        if @query.from == :stdin
+          plan = Kwery::Executor::UserQueryStdin.new(format)
+        else
+          file = File.open(@query.from)
+          plan = Kwery::Executor::UserQueryFile.new(file, format)
+        end
+
+        plan = Kwery::Executor::Insert.new(@query.table, plan)
+        plan
       end
     end
   end

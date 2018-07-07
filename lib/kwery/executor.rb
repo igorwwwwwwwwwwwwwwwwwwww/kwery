@@ -4,10 +4,11 @@ module Kwery
     end
 
     class Context
-      attr_accessor :schema, :stats
+      attr_accessor :schema, :stdin, :stats
 
-      def initialize(schema, stats = {})
+      def initialize(schema, stdin = nil, stats = {})
         @schema = schema
+        @stdin = stdin
         @stats = stats
       end
 
@@ -92,6 +93,49 @@ module Kwery
     class EmptyScan
       def call(context)
         [{}]
+      end
+
+      def explain(context)
+        self.class
+      end
+    end
+
+    class UserQueryTups
+      def initialize(tups)
+        @tups = tups
+      end
+
+      def call(context)
+        @tups.lazy
+      end
+
+      def explain(context)
+        self.class
+      end
+    end
+
+    class UserQueryFile
+      def initialize(file, format)
+        @file = file
+        @format = format
+      end
+
+      def call(context)
+        @format.load(file, {}, context)
+      end
+
+      def explain(context)
+        self.class
+      end
+    end
+
+    class UserQueryStdin
+      def initialize(format)
+        @format = format
+      end
+
+      def call(context)
+        @format.load(context.stdin, {}, context)
       end
 
       def explain(context)
@@ -330,36 +374,16 @@ module Kwery
       end
     end
 
-    class Remote
-      def initialize(backend, sql, client_opts = {})
-        @backend = backend
-        @sql = sql
-        @client_opts = client_opts
-      end
-
-      def call(context)
-        client = context.client(@backend)
-        result = client.query(@sql, @client_opts, context)
-        result[:data]
-      end
-
-      def explain(context)
-        client = context.client(@backend)
-        result = client.query(@sql, {}, context)
-        remote_explain = result[:data].first[:explain]
-
-        [self.class, @backend, @sql, @client_opts, remote_explain]
-      end
-    end
-
     class Insert
-      def initialize(table_name, tups)
+      def initialize(table_name, plan)
         @table_name = table_name
-        @tups = tups
+        @plan = plan
       end
 
       def call(context)
-        count = context.schema.bulk_insert(@table_name, @tups)
+        tups = @plan.call(context)
+        puts tups.inspect
+        count = context.schema.bulk_insert(@table_name, tups)
 
         [{
           count: count,
@@ -367,7 +391,7 @@ module Kwery
       end
 
       def explain(context)
-        [self.class]
+        [self.class, @plan.explain(context)]
       end
     end
 

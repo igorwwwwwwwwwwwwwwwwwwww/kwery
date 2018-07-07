@@ -30,7 +30,13 @@ end
 # TODO: combine stats from remote calls
 
 post '/query' do
-  sql = request.body.read
+  if env['CONTENT_TYPE'].start_with?('multipart/form-data;')
+    sql   = params[:query]
+    stdin = params[:data][:tempfile]
+  else
+    sql   = request.body.read
+    stdin = nil
+  end
 
   query = parser.parse(sql)
   query.options[:remote] = true
@@ -38,7 +44,7 @@ post '/query' do
 
   plan = query.plan(schema)
 
-  context = Kwery::Executor::Context.new(schema)
+  context = Kwery::Executor::Context.new(schema, stdin)
   tups = plan.call(context).to_a
 
   JSON.pretty_generate({

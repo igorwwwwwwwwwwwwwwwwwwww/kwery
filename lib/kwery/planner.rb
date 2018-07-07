@@ -16,7 +16,7 @@ module Kwery
     end
 
     def call
-      plan = remote_query || select_query || insert_query || update_query || delete_query
+      plan = remote_query || select_query || insert_query || update_query || delete_query || copy_query || unsupported_query
       plan = explain(plan) if @query.options[:explain]
       plan
     end
@@ -46,6 +46,17 @@ module Kwery
     def delete_query
       @delete_planner ||= Kwery::Planner::Delete.new(@schema, @query)
       @delete_planner.call
+    end
+
+    def copy_query
+      @copy_planner ||= Kwery::Planner::Copy.new(@schema, @query)
+      @copy_planner.call
+    end
+
+    def unsupported_query
+      raise Kwery::Planner::UnsupportedQueryError.new(
+        "#{@query.class} query is not supported by server"
+      )
     end
 
     def explain(plan)

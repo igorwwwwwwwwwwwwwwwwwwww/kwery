@@ -33,7 +33,8 @@ module Kwery
     rule 'explainable_query : select_query
                             | insert_query
                             | update_query
-                            | delete_query' do |st, e1|
+                            | delete_query
+                            | copy_query' do |st, e1|
       st.value = e1.value
     end
 
@@ -194,6 +195,15 @@ module Kwery
       args[:where] = e2.value if e2
 
       st.value = Kwery::Query::Delete.new(**args)
+    end
+
+    rule 'copy_query : COPY ID FROM ID
+                     | COPY ID FROM STRING' do |st, _, e1, _, e2|
+      args = {}
+      args[:table] = e1.value
+      args[:from]  = e2.value
+
+      st.value = Kwery::Query::Copy.new(**args)
     end
 
     rule 'ids : ID
