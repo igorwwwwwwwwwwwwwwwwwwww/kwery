@@ -127,18 +127,24 @@ module Kwery
       config[:backends][i].first
     end
 
-    # pick random backend from replica set
-    def backend_for_shard(table_name, shard)
+    # replica set is a list of backends
+    # the first backend is the primary, the rest are read-replicas
+    def rs_for_shard(table_name, shard)
       config = @shards[table_name]
 
       i = shard % config[:backends].size
-      config[:backends][i].sample
+      config[:backends][i]
+    end
+
+    # pick random backend from replica set
+    def backend_for_shard(table_name, shard)
+      rs_for_shard(table_name, shard).sample
     end
 
     def backends_for_shards(table_name, shards)
       shards
-        .group_by { |shard| backend_for_shard(table_name, shard) }
-        .keys
+        .group_by { |shard| rs_for_shard(table_name, shard) }
+        .map { |rs, shards| rs.sample }
     end
 
     def backends_all(table_name)
