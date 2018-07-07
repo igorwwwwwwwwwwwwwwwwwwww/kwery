@@ -4,6 +4,9 @@ require 'set'
 
 module Kwery
   class Planner
+    class UnsupportedQueryError < StandardError
+    end
+
     def initialize(schema, query)
       @schema = schema
       @query = query

@@ -86,3 +86,10 @@ error do |e|
     # stack: e.backtrace,
   }) + "\n"
 end
+
+error Kwery::Planner::UnsupportedQueryError do |e|
+  status 400
+  JSON.pretty_generate({
+    error: e,
+  }) + "\n"
+end

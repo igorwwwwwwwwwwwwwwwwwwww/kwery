@@ -10,12 +10,14 @@ module Kwery
 
       def call
         return unless @query.options[:remote]
-        single_backend_select_query || select_query
+        single_backend_select_query || select_query || insert_query || update_query || delete_query || unsupported_query
       end
 
       private
 
       def single_backend_select_query
+        return unless Kwery::Query::Select === @query
+
         shards = match_shards
 
         backends = @schema.backends_for_shards(@query.from, shards)
@@ -36,6 +38,8 @@ module Kwery
       end
 
       def select_query
+        return unless Kwery::Query::Select === @query
+
         shards = match_shards
 
         backends = @schema.backends_for_shards(@query.from, shards)
@@ -52,6 +56,24 @@ module Kwery
         plan = limit(plan)
 
         plan
+      end
+
+      def insert_query
+        return unless Kwery::Query::Insert === @query
+      end
+
+      def update_query
+        return unless Kwery::Query::Update === @query
+      end
+
+      def delete_query
+        return unless Kwery::Query::Delete === @query
+      end
+
+      def unsupported_query
+        raise Kwery::Planner::UnsupportedQueryError.new(
+          'query is not supported by proxy'
+        )
       end
 
       def combine_aggregates(plan)
