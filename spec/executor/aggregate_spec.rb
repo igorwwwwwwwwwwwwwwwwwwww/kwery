@@ -18,7 +18,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   ])
 
   it "counts all records" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
 
     plan = Kwery::Executor::TableScan.new(:users)
     plan = Kwery::Executor::Aggregate.new(:_0, agg, plan)
@@ -36,7 +36,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by active" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
     group_by = lambda { |tup| [tup[:active]] }
 
     plan = Kwery::Executor::TableScan.new(:users)
@@ -56,7 +56,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by without projection" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
     group_by = lambda { |tup| [tup[:active]] }
 
     plan = Kwery::Executor::TableScan.new(:users)
@@ -76,7 +76,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by team" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
     group_by = lambda { |tup| [tup[:team]] }
 
     plan = Kwery::Executor::TableScan.new(:users)
@@ -98,7 +98,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped by team, active" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
     group_by = lambda { |tup| [tup[:team], tup[:active]] }
 
     plan = Kwery::Executor::TableScan.new(:users)
@@ -122,7 +122,7 @@ RSpec.describe Kwery::Executor::Aggregate do
   end
 
   it "counts records grouped with single projection" do
-    agg = Kwery::Executor::AggregateCount.new
+    agg = Kwery::Executor::Aggregate::Count.new
     group_by = lambda { |tup| [tup[:team], tup[:active]] }
 
     plan = Kwery::Executor::TableScan.new(:users)

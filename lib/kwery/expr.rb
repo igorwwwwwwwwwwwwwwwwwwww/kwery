@@ -7,10 +7,10 @@ module Kwery
     }
 
     AGG_FN_TABLE = {
-      count: lambda { |x| Kwery::Executor::AggregateCount.new(x) },
-      sum:   lambda { |x| Kwery::Executor::AggregateSum.new(x) },
-      max:   lambda { |x| Kwery::Executor::AggregateMax.new(x) },
-      avg:   lambda { |x| Kwery::Executor::AggregateAvg.new(x) },
+      count: lambda { |x| Kwery::Executor::Aggregate::Count.new(x) },
+      sum:   lambda { |x| Kwery::Executor::Aggregate::Sum.new(x) },
+      max:   lambda { |x| Kwery::Executor::Aggregate::Max.new(x) },
+      avg:   lambda { |x| Kwery::Executor::Aggregate::Avg.new(x) },
     }
 
     class Column < Struct.new(:name)

@@ -47,13 +47,13 @@ module Kwery
         if @query.options[:partial]
           plan = Kwery::Executor::Aggregate.new(
             k,
-            Kwery::Executor::AggregateIndexOnlyScanCount.new,
+            Kwery::Executor::Aggregate::IndexOnlyScanCount.new,
             plan
           )
         else
           plan = Kwery::Executor::PartialAggregate.new(
             k,
-            Kwery::Executor::AggregateIndexOnlyScanCount.new,
+            Kwery::Executor::Aggregate::IndexOnlyScanCount.new,
             plan
           )
         end
