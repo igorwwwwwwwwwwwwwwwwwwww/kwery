@@ -16,6 +16,7 @@ schema.define_shard(:users,
 parser = Kwery::Parser.new
 
 set :protection, false
+set :show_exceptions, false
 
 get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
@@ -51,6 +52,14 @@ post '/insert/:table' do
   }) + "\n"
 end
 
+# TODO: service discovery?
+# TODO: separate table per shard? (replicate only specific shard)
+# TODO: handle writes properly (select primary, disallow updates to shard key)
+# TODO: resharding / shard moving and reassignment
+# TODO: combine stats from remote calls
+# TODO: support hash aggregate / group by
+# TODO: distributed tracing (opencensus?)
+
 post '/query' do
   sql = request.body.read
 
@@ -67,12 +76,13 @@ post '/query' do
     data: tups,
     stats: context.stats,
   }) + "\n"
+end
 
-  # TODO: service discovery?
-  # TODO: separate table per shard? (replicate only specific shard)
-  # TODO: handle writes properly (select primary, disallow updates to shard key)
-  # TODO: resharding / shard moving and reassignment
-  # TODO: combine stats from remote calls
-  # TODO: support hash aggregate / group by
-  # TODO: distributed tracing (opencensus?)
+error do |e|
+  status 500
+  JSON.pretty_generate({
+    error: e,
+    stack_first: e.backtrace.first,
+    # stack: e.backtrace,
+  }) + "\n"
 end

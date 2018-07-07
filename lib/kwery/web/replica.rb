@@ -20,6 +20,7 @@ Thread.new {
 parser = Kwery::Parser.new
 
 set :protection, false
+set :show_exceptions, false
 
 get '/' do
   { name: ENV['SERVER_NAME'], replica: true, primary: ENV['PRIMARY'] }.to_json + "\n"
@@ -53,5 +54,14 @@ post '/query' do
   JSON.pretty_generate({
     data: tups,
     stats: context.stats,
+  }) + "\n"
+end
+
+error do |e|
+  status 500
+  JSON.pretty_generate({
+    error: e,
+    stack_first: e.backtrace.first,
+    # stack: e.backtrace,
   }) + "\n"
 end
