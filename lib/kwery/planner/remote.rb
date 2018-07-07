@@ -10,10 +10,30 @@ module Kwery
 
       def call
         return unless @query.options[:remote]
-        select_query
+        single_backend_select_query || select_query
       end
 
       private
+
+      def single_backend_select_query
+        shards = match_shards
+
+        backends = @schema.backends_for_shards(@query.from, shards)
+        backends = @schema.backends_all(@query.from) if backends.size == 0
+
+        return unless backends.size == 1
+
+        # no partial aggregation, no combine_aggregates
+        # no re-sorting, no re-limiting needed
+        # essentially a pass-through / forward to backend
+
+        plan = Kwery::Executor::RemoteBatch.new(
+          backends,
+          @query.options[:sql],
+        )
+
+        plan
+      end
 
       def select_query
         shards = match_shards
@@ -24,6 +44,7 @@ module Kwery
         plan = Kwery::Executor::RemoteBatch.new(
           backends,
           @query.options[:sql],
+          partial: true,
         )
 
         plan = combine_aggregates(plan)

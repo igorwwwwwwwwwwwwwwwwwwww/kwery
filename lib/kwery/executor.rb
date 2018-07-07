@@ -289,14 +289,15 @@ module Kwery
     end
 
     class RemoteBatch
-      def initialize(backends, sql)
+      def initialize(backends, sql, client_opts = {})
         @backends = backends
         @sql = sql
+        @client_opts = client_opts
       end
 
       def call(context)
         client = context.batch_client(@backends)
-        results = client.query(@sql)
+        results = client.query(@sql, @client_opts)
         Enumerator.new do |y|
           results.each do |result|
             result[:data].each do |tup|
@@ -318,14 +319,15 @@ module Kwery
     end
 
     class Remote
-      def initialize(backend, sql)
+      def initialize(backend, sql, client_opts = {})
         @backend = backend
         @sql = sql
+        @client_opts = client_opts
       end
 
       def call(context)
         client = context.client(@backend)
-        result = client.query(@sql)
+        result = client.query(@sql, @client_opts)
         result[:data]
       end
 

@@ -12,15 +12,17 @@ module Kwery
       end
     end
 
-    def query(sql)
-      headers = { 'Partial' => 'true' }
+    def query(sql, client_opts = {})
+      headers = {}
+      headers['Partial'] = 'true' if client_opts[:partial]
+
       response = @conn.post('/query', sql, headers)
+
       JSON.parse(response.body, symbolize_names: true)
     end
 
     def insert(table, data)
-      headers = { 'Partial' => 'true' }
-      response = @conn.post("/insert/#{table}", data.to_json, headers)
+      response = @conn.post("/insert/#{table}", data.to_json)
       JSON.parse(response.body, symbolize_names: true)
     end
 
@@ -29,15 +31,18 @@ module Kwery
         @backends = backends
       end
 
-      def query(sql)
+      def query(sql, client_opts = {})
         hydra = Typhoeus::Hydra.new
+
+        headers = {}
+        headers['Partial'] = 'true' if client_opts[:partial]
 
         reqs = @backends.map do |backend|
           Typhoeus::Request.new(
             "#{backend}/query",
             method: :post,
             body: sql,
-            headers: { 'Partial' => 'true' },
+            headers: headers,
           )
         end
 

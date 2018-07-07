@@ -66,7 +66,6 @@ post '/query' do
     stats: context.stats,
   }) + "\n"
 
-  # TODO: do not re-apply limit / sorting for single backend
   # TODO: service discovery?
   # TODO: separate table per shard? (replicate only specific shard)
   # TODO: support IN query
