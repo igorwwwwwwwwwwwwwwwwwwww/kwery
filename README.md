@@ -53,6 +53,14 @@ curl -sS 'http://localhost:7000/query' -d 'explain select id, name from users' |
 curl -sS 'http://localhost:7000/query' -d 'select id, name from users where id = 1' | jq '.data[]'
 ```
 
+### Snippets
+
+convert csv to json:
+
+```
+ruby -rcsv -rjson -e 'puts CSV.table("data/users.csv").map(&:to_h).map(&:to_json)'
+```
+
 ## Options
 
 * `--format=default|json|pretty` output format
