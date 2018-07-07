@@ -120,13 +120,6 @@ module Kwery
       shard_for_value(table_name, val)
     end
 
-    def primary_for_shard(table_name, shard)
-      config = @shards[table_name]
-
-      i = shard % config[:backends].size
-      config[:backends][i].first
-    end
-
     # replica set is a list of backends
     # the first backend is the primary, the rest are read-replicas
     def rs_for_shard(table_name, shard)
@@ -134,6 +127,10 @@ module Kwery
 
       i = shard % config[:backends].size
       config[:backends][i]
+    end
+
+    def primary_for_shard(table_name, shard)
+      rs_for_shard(table_name, shard).first
     end
 
     # pick random backend from replica set
