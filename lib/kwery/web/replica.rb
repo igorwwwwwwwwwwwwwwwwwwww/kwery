@@ -19,6 +19,8 @@ Thread.new {
 
 parser = Kwery::Parser.new
 
+set :protection, false
+
 get '/' do
   { name: ENV['SERVER_NAME'], replica: true, primary: ENV['PRIMARY'] }.to_json + "\n"
 end

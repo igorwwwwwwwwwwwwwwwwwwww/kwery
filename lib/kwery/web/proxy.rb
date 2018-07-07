@@ -15,6 +15,8 @@ schema.define_shard(:users,
 
 parser = Kwery::Parser.new
 
+set :protection, false
+
 get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end

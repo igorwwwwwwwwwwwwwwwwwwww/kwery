@@ -26,6 +26,8 @@ server.listen
 
 parser = Kwery::Parser.new
 
+set :protection, false
+
 get '/' do
   { name: ENV['SERVER_NAME'] }.to_json + "\n"
 end
