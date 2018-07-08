@@ -22,11 +22,11 @@ get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
+# TODO: resharding / shard moving and reassignment (lock shard as read-only)
 # TODO: support hash aggregate / group by
 # TODO: distributed tracing (opencensus?)
 # TODO: service discovery?
 # TODO: separate table per shard? (replicate only specific shard)
-# TODO: resharding / shard moving and reassignment
 # TODO: combine stats from remote calls
 
 post '/query' do
