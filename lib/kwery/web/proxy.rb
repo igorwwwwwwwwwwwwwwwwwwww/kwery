@@ -33,14 +33,26 @@ end
 
 # state machine (source)
 # * default
-# * reshard-copying-from (disable writes, copy to target)
-# * reshard-cutover-from (disable reads, delete data)
+# v   RESHARD MOVE <shard> TO <target-backend> (from user)
+# * reshard-copying-from
+# v   disable writes
+# v   copy to target (send RESHARD COPY)
+# v   consensus await shard owner (barrier)
+# * reshard-cutover-from
+# v   disable reads
+# v   delete data
 # * default              (resharding complete)
 
 # state machine (target)
 # * default
-# * reshard-copying-to   (disable reads)
-# * reshard-cutover-to   (enable  reads, enable  writes)
+# v   RESHARD COPY <shard> (from source)
+# * reshard-copying-to
+# v   disable reads
+# v   receive data
+# v   consensus write shard owner (barrier)
+# * reshard-cutover-to
+# v   enable reads
+# v   enable writes
 # * default              (resharding complete)
 
 # TODO: resharding / shard moving and reassignment
