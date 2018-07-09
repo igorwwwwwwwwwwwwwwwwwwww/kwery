@@ -22,7 +22,17 @@ get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
-# TODO: resharding / shard moving and reassignment (lock shard as read-only)
+# resharding
+# * source: disable writes
+# * target: disable reads (consensus)
+# * source: copy to target
+# * source: disable reads (consensus, atomic)
+# * target: enable  reads (consensus, atomic)
+# * target: enable  writes
+# * source: delete data
+
+# TODO: resharding / shard moving and reassignment
+# TODO: reject writes destined for other shard
 # TODO: support hash aggregate / group by
 # TODO: distributed tracing (opencensus?)
 # TODO: service discovery?
