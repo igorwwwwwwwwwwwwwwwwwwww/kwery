@@ -9,9 +9,12 @@
 # complexity to the query engine, since it will need to perform
 # more fan-out (parallel append, similar to batch client but
 # in-process).
-
-# TODO: break into sub-steps to support sequential execution
-#       blocking tasks include copy to target, consensus.
+#
+# this would also allow for one thread per partition, allowing
+# for horizontal scaling across cores. however, scalability could
+# also be accomplished by running multiple backends on a single
+# machine (listening on different ports), which given ruby's lack
+# of true multi-threading might be the better option.
 
 # order of actions
 # * source: reject writes
