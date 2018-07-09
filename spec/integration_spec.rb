@@ -18,7 +18,7 @@ RSpec.describe Kwery do
       from: :users,
       where: [
         Kwery::Expr::Gt.new(Kwery::Expr::Column.new(:id), Kwery::Expr::Literal.new(10)),
-        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new(true)),
+        Kwery::Expr::Eq.new(Kwery::Expr::Column.new(:active), Kwery::Expr::Literal.new('TRUE')),
       ],
       limit: 10,
     )
