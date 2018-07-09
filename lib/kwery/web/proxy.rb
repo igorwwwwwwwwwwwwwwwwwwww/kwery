@@ -32,15 +32,16 @@ end
 # * source: delete data
 
 # state machine (source)
-# * disable writes
-# * copy to target
-# * disable reads
-# * delete data
+# * default
+# * reshard-copying-from (disable writes, copy to target)
+# * reshard-cutover-from (disable reads, delete data)
+# * default              (resharding complete)
 
 # state machine (target)
-# * disable reads
-# * enable  reads
-# * enable  writes
+# * default
+# * reshard-copying-to   (disable reads)
+# * reshard-cutover-to   (enable  reads, enable  writes)
+# * default              (resharding complete)
 
 # TODO: resharding / shard moving and reassignment
 # TODO: reject writes destined for other shard
