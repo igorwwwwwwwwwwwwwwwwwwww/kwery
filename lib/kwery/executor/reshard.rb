@@ -29,14 +29,18 @@
 # state machine (source)
 # * default
 # v   RESHARD <table> MOVE <shard> TO <target-backend> (from user)
-# * reshard-copying-from
+# * reshard-copying-init
 # v   reject writes
+# * reshard-copying-wait
 # v   background: copy to target (send RESHARD RECEIVE)
-# * reshard-cutover-from
+# * reshard-cutover-init
 # v   reject reads
+# * reshard-cutover-wait
 # v   background: consensus await shard owner (barrier)
+# * reshard-cutover-commit
 # v   accept reads
 # v   filter reads
+# * reshard-cleanup
 # v   background: delete data
 # v   unfilter reads
 # * default              (resharding complete)
@@ -44,12 +48,15 @@
 # state machine (target)
 # * default
 # v   RESHARD <table> RECEIVE <shard> (from source)
-# * reshard-copying-to
+# * reshard-copying-init
 # v   filter reads
+# * reshard-copying-wait
 # v   background: receive data
-# * reshard-cutover-to
+# * reshard-cutover-init
 # v   reject reads
+# * reshard-cutover-wait
 # v   background: consensus write shard owner (barrier)
+# * reshard-cutover-commit
 # v   accept reads
 # v   unfilter reads
 # v   accept writes
