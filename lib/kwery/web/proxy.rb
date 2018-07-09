@@ -31,6 +31,17 @@ end
 # * target: enable  writes
 # * source: delete data
 
+# state machine (source)
+# * disable writes
+# * copy to target
+# * disable reads
+# * delete data
+
+# state machine (target)
+# * disable reads
+# * enable  reads
+# * enable  writes
+
 # TODO: resharding / shard moving and reassignment
 # TODO: reject writes destined for other shard
 # TODO: support hash aggregate / group by
