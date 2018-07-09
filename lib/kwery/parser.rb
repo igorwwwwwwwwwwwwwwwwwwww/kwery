@@ -34,7 +34,8 @@ module Kwery
                             | insert_query
                             | update_query
                             | delete_query
-                            | copy_query' do |st, e1|
+                            | copy_query
+                            | reshard_query' do |st, e1|
       st.value = e1.value
     end
 
@@ -204,6 +205,28 @@ module Kwery
       args[:from]  = e2.value
 
       st.value = Kwery::Query::Copy.new(**args)
+    end
+
+    rule 'reshard_query : reshard_move_query
+                        | reshard_receive_query' do |st, e1|
+      st.value = e1.value
+    end
+
+    rule 'reshard_move_query : RESHARD ID MOVE NUMBER TO STRING' do |st, _, e1, _, e2, _, e3|
+      args = {}
+      args[:table]  = e1.value
+      args[:shard]  = e2.value
+      args[:target] = e3.value
+
+      st.value = Kwery::Query::ReshardMove.new(**args)
+    end
+
+    rule 'reshard_receive_query : RESHARD ID RECEIVE NUMBER' do |st, _, e1, _, e2|
+      args = {}
+      args[:table] = e1.value
+      args[:shard] = e2.value
+
+      st.value = Kwery::Query::ReshardReceive.new(**args)
     end
 
     rule 'ids : ID

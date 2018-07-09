@@ -22,39 +22,6 @@ get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
-# resharding
-# * source: disable writes
-# * target: disable reads (consensus)
-# * source: copy to target
-# * source: disable reads (consensus, atomic)
-# * target: enable  reads (consensus, atomic)
-# * target: enable  writes
-# * source: delete data
-
-# state machine (source)
-# * default
-# v   RESHARD MOVE <shard> TO <target-backend> (from user)
-# * reshard-copying-from
-# v   disable writes
-# v   copy to target (send RESHARD COPY)
-# v   consensus await shard owner (barrier)
-# * reshard-cutover-from
-# v   disable reads
-# v   delete data
-# * default              (resharding complete)
-
-# state machine (target)
-# * default
-# v   RESHARD COPY <shard> (from source)
-# * reshard-copying-to
-# v   disable reads
-# v   receive data
-# v   consensus write shard owner (barrier)
-# * reshard-cutover-to
-# v   enable reads
-# v   enable writes
-# * default              (resharding complete)
-
 # TODO: resharding / shard moving and reassignment
 # TODO: reject writes destined for other shard
 # TODO: support hash aggregate / group by

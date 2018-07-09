@@ -30,6 +30,11 @@ module Kwery
 
       token :COPY, /\bCOPY\b/i
 
+      token :RESHARD, /\bRESHARD\b/i
+      token :MOVE, /\bMOVE\b/i
+      token :TO, /\bTO\b/i
+      token :RECEIVE, /\bRECEIVE\b/i
+
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i
         t

@@ -16,7 +16,7 @@ module Kwery
     end
 
     def call
-      plan = remote_query || select_query || insert_query || update_query || delete_query || copy_query || unsupported_query
+      plan = remote_query || select_query || insert_query || update_query || delete_query || copy_query || reshard_query || unsupported_query
       plan = explain(plan) if @query.options[:explain]
       plan
     end
@@ -51,6 +51,11 @@ module Kwery
     def copy_query
       @copy_planner ||= Kwery::Planner::Copy.new(@schema, @query)
       @copy_planner.call
+    end
+
+    def reshard_query
+      @reshard_planner ||= Kwery::Planner::Reshard.new(@schema, @query)
+      @reshard_planner.call
     end
 
     def unsupported_query

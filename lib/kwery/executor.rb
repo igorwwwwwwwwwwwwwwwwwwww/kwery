@@ -382,7 +382,6 @@ module Kwery
 
       def call(context)
         tups = @plan.call(context)
-        puts tups.inspect
         count = context.schema.bulk_insert(@table_name, tups)
 
         [{
