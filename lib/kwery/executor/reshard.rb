@@ -28,11 +28,13 @@
 # v   RESHARD <table> MOVE <shard> TO <target-backend> (from user)
 # * reshard-copying-from
 # v   reject writes
-# v   copy to target (send RESHARD RECEIVE)
-# v   consensus await shard owner (barrier)
+# v   background: copy to target (send RESHARD RECEIVE)
 # * reshard-cutover-from
+# v   reject reads
+# v   background: consensus await shard owner (barrier)
+# v   accept reads
 # v   filter reads
-# v   delete data
+# v   background: delete data
 # v   unfilter reads
 # * default              (resharding complete)
 
@@ -41,9 +43,11 @@
 # v   RESHARD <table> RECEIVE <shard> (from source)
 # * reshard-copying-to
 # v   filter reads
-# v   receive data
-# v   consensus write shard owner (barrier)
+# v   background: receive data
 # * reshard-cutover-to
+# v   reject reads
+# v   background: consensus write shard owner (barrier)
+# v   accept reads
 # v   unfilter reads
 # v   accept writes
 # * default              (resharding complete)
