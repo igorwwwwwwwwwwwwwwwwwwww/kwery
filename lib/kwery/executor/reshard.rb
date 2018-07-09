@@ -64,6 +64,33 @@
 
 module Kwery
   module Executor
+    TRANSITIONS = {
+      default:                 [:reshard_copying_init],
+      reshard_copying_init:    [:reshard_copying_wait],
+      reshard_copying_wait:    [:reshard_cutover_init],
+      reshard_cutover_init:    [:reshard_cutover_commit],
+      reshard_cutover_commit:  [:reshard_cutover_cleanup],
+      reshard_cutover_cleanup: [:default],
+    }
+
+    class InvalidTransition < StandardError
+    end
+
+    class StateMachine
+      attr_accessor :state
+
+      def initialize(state, transitions)
+        @state = state
+        @transitions = transitions
+      end
+
+      def step(new_state)
+        raise InvalidTransition.new unless @transitions[@state]&.include?(new_state)
+
+        @state = new_state
+      end
+    end
+
     class ReshardMove
       def initialize(table, shard, target)
         @table  = table
