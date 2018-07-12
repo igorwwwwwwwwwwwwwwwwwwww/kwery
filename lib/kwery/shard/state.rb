@@ -57,7 +57,8 @@ module Kwery
       end
 
       def rs_for_shard(table, shard)
-        @states[table].assignments_inverse[shard]
+        rs = @states[table].assignments_inverse[shard]
+        @backends[rs]
       end
 
       def primary_for_shard(table, shard)
