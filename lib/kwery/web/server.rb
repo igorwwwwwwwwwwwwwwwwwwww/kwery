@@ -33,21 +33,6 @@ get '/' do
   { name: ENV['SERVER_NAME'] }.to_json + "\n"
 end
 
-# TODO: deprecate in favour of query?
-post '/insert/:table' do
-  table = params[:table].to_sym
-  data = JSON.parse(request.body.read, symbolize_names: true)
-
-  plan = Kwery::Executor::Insert.new(table, data)
-
-  context = Kwery::Executor::Context.new(schema)
-  tups = plan.call(context).to_a
-
-  JSON.pretty_generate({
-    data: tups,
-  }) + "\n"
-end
-
 # TODO: mutex around parser and schema
 # TODO: streaming output as newline-delimited json?
 
@@ -55,6 +40,9 @@ post '/query' do
   if env['CONTENT_TYPE'].start_with?('multipart/form-data;')
     sql   = params[:query]
     stdin = params[:data][:tempfile]
+  elsif params[:query] && params[:data]
+    sql   = params[:query]
+    stdin = StringIO.new(params[:data])
   else
     sql   = request.body.read
     stdin = nil

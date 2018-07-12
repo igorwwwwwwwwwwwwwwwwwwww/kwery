@@ -29,11 +29,14 @@ module Kwery
       token :DELETE, /\bDELETE\b/i
 
       token :COPY, /\bCOPY\b/i
+      token :STDIN, /\bSTDIN\b/i do |t|
+        t.value = t.value.downcase.to_sym
+        t
+      end
 
       token :RESHARD, /\bRESHARD\b/i
       token :MOVE, /\bMOVE\b/i
       token :TO, /\bTO\b/i
-      token :RECEIVE, /\bRECEIVE\b/i
 
       token :NUMBER, /\d+/ do |t|
         t.value = t.value.to_i

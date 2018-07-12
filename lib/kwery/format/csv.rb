@@ -1,12 +1,17 @@
 require 'csv'
 
 # TODO: consider using fastercsv
-# TODO: find good solution for type conversion
+# TODO: find good solution for type conversion (type map is unused)
+# TODO: consider deprecating in favour of json
 
 module Kwery
-  class Format
+  module Format
     class Csv
-      def load(file, type_map = {}, context = nil)
+      def initialize(type_map = {})
+        @type_map = type_map
+      end
+
+      def load(file, context = nil)
         CSV.table(file).map(&:to_h)
       end
     end

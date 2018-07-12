@@ -3,7 +3,8 @@ require 'set'
 module Kwery
   module Expr
     FN_TABLE = {
-      upper: lambda { |x| x.upcase }
+      upper:   lambda { |x| x.upcase },
+      hashmod: lambda { |val, n| Kwery::Shard.hashmod(val, n) },
     }
 
     AGG_FN_TABLE = {

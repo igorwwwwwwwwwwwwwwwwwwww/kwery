@@ -142,7 +142,7 @@ module Kwery
       def call
         return unless Kwery::Query::Copy === @query
 
-        format = Kwery::Format::Csv.new
+        format = Kwery::Format::Json.new
 
         if @query.from == :stdin
           plan = Kwery::Executor::UserQueryStdin.new(format)

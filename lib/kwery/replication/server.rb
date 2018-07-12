@@ -1,4 +1,6 @@
 # TODO: use async i/o to handle this stuff better?
+# TODO: replicate via raft? (consensus)
+# TODO: still support oplog-style change stream?
 
 module Kwery
   module Replication

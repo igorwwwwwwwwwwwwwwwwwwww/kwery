@@ -26,15 +26,17 @@ get '/' do
   { name: ENV['SERVER_NAME'], replica: true, primary: ENV['PRIMARY'] }.to_json + "\n"
 end
 
-post '/insert/:table' do
-  status 400
-  return JSON.pretty_generate({
-    error: 'no writes allowed against replica',
-  }) + "\n"
-end
-
 post '/query' do
-  sql = request.body.read
+  if env['CONTENT_TYPE'].start_with?('multipart/form-data;')
+    sql   = params[:query]
+    stdin = params[:data][:tempfile]
+  elsif params[:query] && params[:data]
+    sql   = params[:query]
+    stdin = StringIO.new(params[:data])
+  else
+    sql   = request.body.read
+    stdin = nil
+  end
 
   query = parser.parse(sql)
   query.options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
@@ -48,7 +50,7 @@ post '/query' do
 
   plan = query.plan(schema)
 
-  context = Kwery::Executor::Context.new(schema)
+  context = Kwery::Executor::Context.new(schema, stdin)
   tups = plan.call(context).to_a
 
   JSON.pretty_generate({

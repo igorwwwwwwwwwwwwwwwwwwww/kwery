@@ -34,7 +34,7 @@ $ curl -sS 'http://localhost:9292/query' -d 'select id, name from users where ac
   "name": "Xantha"
 }
 
-$ curl -sS 'http://localhost:9292/query' -F query="copy users from stdin" -F data=@data/users.csv
+$ curl -sS 'http://localhost:9292/query' -F query="copy users from stdin" -F data=@data/users.json
 ```
 
 ### Distributed

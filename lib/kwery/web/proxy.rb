@@ -2,17 +2,17 @@ require 'sinatra'
 require 'kwery'
 require 'json'
 
-backends = ENV['BACKENDS']
-  .split(';')
-  .map { |rs| rs.split(',') }
+backends    = ENV['BACKENDS'].split(';').map { |rs| rs.split(',') }
+assignments = ENV['ASSIGNMENTS'].split(';').map { |rs| rs.split(',').map(&:to_i) }
 
-schema = Kwery::Schema.new
-schema.define_shard(:users,
-  key:      Kwery::Expr::Column.new(:id),
-  shards:   16,
-  backends: backends,
+shards = Kwery::Shard::StateMap.new(backends)
+shards.define_shard(:users,
+  key:         Kwery::Expr::Column.new(:id),
+  count:       16,
+  assignments: assignments,
 )
 
+schema = Kwery::Schema.new(shards: shards)
 parser = Kwery::Parser.new
 
 set :protection, false
@@ -26,14 +26,19 @@ end
 # TODO: reject writes destined for other shard
 # TODO: support hash aggregate / group by
 # TODO: distributed tracing (opencensus?)
+# TODO: replication (and leader election) via raft
 # TODO: service discovery?
 # TODO: separate table per shard? (replicate only specific shard)
 # TODO: combine stats from remote calls
+# TODO: remote copy (split input into shards, just like remote insert)
 
 post '/query' do
   if env['CONTENT_TYPE'].start_with?('multipart/form-data;')
     sql   = params[:query]
     stdin = params[:data][:tempfile]
+  elsif params[:query] && params[:data]
+    sql   = params[:query]
+    stdin = StringIO.new(params[:data])
   else
     sql   = request.body.read
     stdin = nil
@@ -45,7 +50,7 @@ post '/query' do
 
   plan = query.plan(schema)
 
-  context = Kwery::Executor::Context.new(schema, stdin)
+  context = Kwery::Executor::Context.new(schema, stdin, shards)
   tups = plan.call(context).to_a
 
   JSON.pretty_generate({

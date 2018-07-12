@@ -10,7 +10,7 @@ module Kwery
 
       def call
         return unless @query.options[:remote]
-        single_backend_select_query || select_query || insert_query || update_query || delete_query || copy_query || unsupported_query
+        single_backend_select_query || select_query || insert_query || update_query || delete_query || copy_query || reshard_query || unsupported_query
       end
 
       private
@@ -20,8 +20,8 @@ module Kwery
 
         shards = match_shards(@query.from, @query.where)
 
-        backends = @schema.backends_for_shards(@query.from, shards)
-        backends = @schema.backends_all(@query.from) if backends.size == 0
+        backends = @schema.shards.backends_for_shards(@query.from, shards)
+        backends = @schema.shards.backends_all(@query.from) if backends.size == 0
 
         return unless backends.size == 1
 
@@ -45,8 +45,8 @@ module Kwery
 
         shards = match_shards(@query.from, @query.where)
 
-        backends = @schema.backends_for_shards(@query.from, shards)
-        backends = @schema.backends_all(@query.from) if backends.size == 0
+        backends = @schema.shards.backends_for_shards(@query.from, shards)
+        backends = @schema.shards.backends_all(@query.from) if backends.size == 0
 
         queries = backends
           .map { |backend| [backend, @query.options[:sql]] }
@@ -70,8 +70,8 @@ module Kwery
         backends = @query.values.group_by do |row|
           tup = Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
 
-          shard = @schema.shard_for_tup(@query.into, tup)
-          @schema.primary_for_shard(@query.into, shard)
+          shard = @schema.shards.shard_for_tup(@query.into, tup)
+          @schema.shards.primary_for_shard(@query.into, shard)
         end
 
         queries = backends.map do |backend, row|
@@ -94,8 +94,7 @@ module Kwery
       def update_query
         return unless Kwery::Query::Update === @query
 
-        shard_config = @schema.shard(@query.table)
-        shard_key = shard_config[:key]
+        shard_key = @schema.shards.key(@query.table)
         @query.update.each do |k, v|
           if shard_key == Kwery::Expr::Column.new(k)
             raise ShardKeyUpdateError.new(
@@ -106,8 +105,8 @@ module Kwery
 
         shards = match_shards(@query.table, @query.where)
 
-        backends = @schema.primaries_for_shards(@query.table, shards)
-        backends = @schema.primaries_all(@query.table) if backends.size == 0
+        backends = @schema.shards.primaries_for_shards(@query.table, shards)
+        backends = @schema.shards.primaries_all(@query.table) if backends.size == 0
 
         queries = backends
           .map { |backend| [backend, @query.options[:sql]] }
@@ -128,8 +127,8 @@ module Kwery
 
         shards = match_shards(@query.from, @query.where)
 
-        backends = @schema.primaries_for_shards(@query.from, shards)
-        backends = @schema.primaries_all(@query.from) if backends.size == 0
+        backends = @schema.shards.primaries_for_shards(@query.from, shards)
+        backends = @schema.shards.primaries_all(@query.from) if backends.size == 0
 
         queries = backends
           .map { |backend| [backend, @query.options[:sql]] }
@@ -148,16 +147,12 @@ module Kwery
       def copy_query
         return unless Kwery::Query::Copy === @query
 
-        # TODO: implement remote copy, we probably need some query interface
-        #       to insert tuples directly, since we need to format-parse the
-        #       tuples at the proxy in order to pick the shard.
-        #
-        #       hm, unless. if the input format is splittable (e.g. by newline)
-        #       then we could keep a mapping from source lines to shards,
-        #       created sharded copies of the source file (one per backend),
-        #       and then send the data to the backends in the source format.
-        #
-        #       not sure if that is worth it though.
+        # TODO: implement remote copy
+      end
+
+      def reshard_query
+        @reshard_planner ||= Kwery::Planner::Reshard.new(@schema, @query)
+        @reshard_planner.call
       end
 
       def unsupported_query
@@ -213,8 +208,7 @@ module Kwery
       end
 
       def match_shards(from, where)
-        shard_config = @schema.shard(from)
-        shard_key = shard_config[:key]
+        shard_key = @schema.shards.key(from)
 
         vals = []
 
@@ -231,7 +225,7 @@ module Kwery
           .flat_map { |expr| expr.vals.map(&:value) }
 
         vals
-          .map { |val| @schema.shard_for_value(from, val) }
+          .map { |val| @schema.shards.shard_for_value(from, val) }
           .uniq
       end
 

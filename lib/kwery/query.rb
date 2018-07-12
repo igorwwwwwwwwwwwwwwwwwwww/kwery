@@ -171,7 +171,7 @@ module Kwery
       def to_sql
         # TODO: string quotes and escaping
         parts = []
-        parts << "EXPLAIN"       if options[:explain]
+        parts << "EXPLAIN"        if options[:explain]
         parts << "COPY #{table}"
         parts << "FROM #{from}"
         parts.join(' ')
@@ -201,42 +201,11 @@ module Kwery
       end
 
       def to_sql
-        # TODO: string quotes and escaping
         parts = []
         parts << "EXPLAIN"           if options[:explain]
         parts << "RESHARD #{table}"
         parts << "MOVE #{shard}"
-        parts << "TO '#{target}'"
-        parts.join(' ')
-      end
-    end
-
-    class ReshardReceive
-      attr_accessor :table, :shard, :options
-
-      def initialize(table:, shard:, options: {})
-        @table = table
-        @shard = shard
-        @options = options
-      end
-
-      def plan(schema)
-        Planner.new(schema, self).call
-      end
-
-       def ==(other)
-         other.respond_to?(:parts) && self.parts == other.parts
-       end
-
-      def parts
-        [table, shard, options]
-      end
-
-      def to_sql
-        parts = []
-        parts << "EXPLAIN"           if options[:explain]
-        parts << "RESHARD #{table}"
-        parts << "RECEIVE #{shard}"
+        parts << "TO #{target}"
         parts.join(' ')
       end
     end

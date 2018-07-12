@@ -198,35 +198,30 @@ module Kwery
       st.value = Kwery::Query::Delete.new(**args)
     end
 
-    rule 'copy_query : COPY ID FROM ID
-                     | COPY ID FROM STRING' do |st, _, e1, _, e2|
+    rule 'copy_query : COPY ID FROM copy_source' do |st, _, e1, _, e2|
       args = {}
-      args[:table] = e1.value
-      args[:from]  = e2.value
+      args[:table]       = e1.value
+      args[:from]        = e2.value
 
       st.value = Kwery::Query::Copy.new(**args)
     end
 
-    rule 'reshard_query : reshard_move_query
-                        | reshard_receive_query' do |st, e1|
+    rule 'copy_source : STDIN
+                      | STRING' do |st, e1|
       st.value = e1.value
     end
 
-    rule 'reshard_move_query : RESHARD ID MOVE NUMBER TO STRING' do |st, _, e1, _, e2, _, e3|
+    rule 'reshard_query : reshard_move_query' do |st, e1|
+      st.value = e1.value
+    end
+
+    rule 'reshard_move_query : RESHARD ID MOVE NUMBER TO NUMBER' do |st, _, e1, _, e2, _, e3|
       args = {}
       args[:table]  = e1.value
       args[:shard]  = e2.value
       args[:target] = e3.value
 
       st.value = Kwery::Query::ReshardMove.new(**args)
-    end
-
-    rule 'reshard_receive_query : RESHARD ID RECEIVE NUMBER' do |st, _, e1, _, e2|
-      args = {}
-      args[:table] = e1.value
-      args[:shard] = e2.value
-
-      st.value = Kwery::Query::ReshardReceive.new(**args)
     end
 
     rule 'ids : ID

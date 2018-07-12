@@ -53,11 +53,6 @@ module Kwery
       @copy_planner.call
     end
 
-    def reshard_query
-      @reshard_planner ||= Kwery::Planner::Reshard.new(@schema, @query)
-      @reshard_planner.call
-    end
-
     def unsupported_query
       raise Kwery::Planner::UnsupportedQueryError.new(
         "#{@query.class} query is not supported by server"

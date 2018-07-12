@@ -4,12 +4,13 @@ module Kwery
     end
 
     class Context
-      attr_accessor :schema, :stdin, :stats
+      attr_accessor :schema, :stdin, :shards, :stats
 
-      def initialize(schema, stdin = nil, stats = {})
+      def initialize(schema, stdin = nil, shards = nil, stats = {})
         @schema = schema
-        @stdin = stdin
-        @stats = stats
+        @stdin  = stdin
+        @shards = shards
+        @stats  = stats
       end
 
       def increment(key, count = 1)
@@ -121,7 +122,7 @@ module Kwery
       end
 
       def call(context)
-        @format.load(file, {}, context)
+        @format.load(file, context)
       end
 
       def explain(context)
@@ -135,7 +136,7 @@ module Kwery
       end
 
       def call(context)
-        @format.load(context.stdin, {}, context)
+        @format.load(context.stdin, context)
       end
 
       def explain(context)

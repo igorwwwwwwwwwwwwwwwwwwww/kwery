@@ -5,11 +5,13 @@ require 'zlib'
 
 module Kwery
   class Schema
-    def initialize(journal: nil, recovery: nil)
-      @tables = {}
+    attr_accessor :shards
+
+    def initialize(journal: nil, recovery: nil, shards: nil)
+      @tables  = {}
       @indexes = {}
-      @shards = {}
       @journal = journal || Kwery::Journal::NoopWriter.new
+      @shards  = shards
     end
 
     def recover(recovery)
@@ -85,79 +87,6 @@ module Kwery
 
       tup = table[tid]
       tup
-    end
-
-    # each line is a "replica set"
-    # the first backend is the primary,
-    # the others are replicas.
-    #
-    # backends: [
-    #   [http://localhost:8000, http://localhost:9000]
-    # [http://localhost:8001, http://localhost:9001]
-    # [http://localhost:8002, http://localhost:9002]
-    # ]
-    def define_shard(table_name, key:, shards:, backends:)
-      @shards[table_name] = {
-        key:      key,
-        shards:   shards,
-        backends: backends,
-      }
-    end
-
-    def shard(table_name)
-      @shards[table_name]
-    end
-
-    def shard_for_value(table_name, val)
-      config = @shards[table_name]
-      Zlib::crc32(val.to_s) % config[:shards]
-    end
-
-    def shard_for_tup(table_name, tup)
-      config = @shards[table_name]
-
-      val = config[:key].call(tup)
-      shard_for_value(table_name, val)
-    end
-
-    # replica set is a list of backends
-    # the first backend is the primary, the rest are read-replicas
-    def rs_for_shard(table_name, shard)
-      config = @shards[table_name]
-
-      i = shard % config[:backends].size
-      config[:backends][i]
-    end
-
-    def primary_for_shard(table_name, shard)
-      rs_for_shard(table_name, shard).first
-    end
-
-    def primaries_for_shards(table_name, shards)
-      shards
-        .group_by { |shard| rs_for_shard(table_name, shard) }
-        .map { |rs, shards| rs.first }
-    end
-
-    def primaries_all(table_name)
-      config = @shards[table_name]
-      config[:backends].map(&:first)
-    end
-
-    # pick random backend from replica set
-    def backend_for_shard(table_name, shard)
-      rs_for_shard(table_name, shard).sample
-    end
-
-    def backends_for_shards(table_name, shards)
-      shards
-        .group_by { |shard| rs_for_shard(table_name, shard) }
-        .map { |rs, shards| rs.sample }
-    end
-
-    def backends_all(table_name)
-      config = @shards[table_name]
-      config[:backends].map(&:sample)
     end
 
     def create_table(table_name)
