@@ -22,8 +22,6 @@ get '/' do
   { name: ENV['SERVER_NAME'], proxy: true, backends: backends }.to_json + "\n"
 end
 
-# TODO: resharding / shard moving and reassignment
-# TODO: reject writes destined for other shard
 # TODO: support hash aggregate / group by
 # TODO: distributed tracing (opencensus?)
 # TODO: replication (and leader election) via raft

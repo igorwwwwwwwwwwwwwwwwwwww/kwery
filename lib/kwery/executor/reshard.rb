@@ -1,5 +1,12 @@
 # resharding
-
+#
+# turns out this is a pretty tricky problem the comes down to implementing
+# distributed transactions. it is possible to use 2pl (and consensus) to
+# perform a transaction across shards, but it would still require blocking
+# reads while there a transaction is "in-doubt", that is, waiting for the
+# confirmation to commit the transaction. that waiting is basically a form
+# of distributed lock. :)
+#
 # order of actions (simplified edition)
 # * source: lock shard (reject reads and writes)
 # * target: lock shard
@@ -13,6 +20,7 @@
 # TODO: online resharding without excessive locking
 # TODO: incremental data copy
 # TODO: log shard reassignment to journal?
+# TODO: lock through a lease, or make unlock more available
 
 module Kwery
   module Executor
@@ -25,7 +33,6 @@ module Kwery
       end
 
       def call(context)
-        # TODO: check locks when executing other queries
         context.shards.lock(@table, @shard)
 
         sharding_key = context.shards.key(@table)

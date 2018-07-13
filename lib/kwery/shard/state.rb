@@ -91,6 +91,16 @@ module Kwery
         @backends.map(&:sample)
       end
 
+      def shards_locked?(table, shards)
+        return true if shards.empty? && any_locked?(table)
+        return true if shards.any? { |shard| locked?(table, shard) }
+        false
+      end
+
+      def any_locked?(table)
+        @states[table].any_locked?
+      end
+
       def locked?(table, shard)
         @states[table].locked?(shard)
       end
@@ -132,6 +142,10 @@ module Kwery
             shards.map { |shard| [shard, i] }
           }
           .to_h
+      end
+
+      def any_locked?
+        !@locked.empty?
       end
 
       def locked?(shard)

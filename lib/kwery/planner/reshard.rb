@@ -17,6 +17,10 @@ module Kwery
       def reshard_move_query
         return unless Kwery::Query::ReshardMove === @query
 
+        if @schema.shards.locked?(@query.table, @query.shard)
+          raise Kwery::Shard::ShardLockedError.new
+        end
+
         plan = Kwery::Executor::ReshardMove.new(
           @query.table,
           @query.shard,

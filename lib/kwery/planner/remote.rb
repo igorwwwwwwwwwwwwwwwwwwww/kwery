@@ -20,6 +20,10 @@ module Kwery
 
         shards = match_shards(@query.from, @query.where)
 
+        if @schema.shards.shards_locked?(@query.from, shards)
+          raise Kwery::Shard::ShardLockedError.new
+        end
+
         backends = @schema.shards.backends_for_shards(@query.from, shards)
         backends = @schema.shards.backends_all(@query.from) if backends.size == 0
 
@@ -44,6 +48,10 @@ module Kwery
         return unless Kwery::Query::Select === @query
 
         shards = match_shards(@query.from, @query.where)
+
+        if @schema.shards.shards_locked?(@query.from, shards)
+          raise Kwery::Shard::ShardLockedError.new
+        end
 
         backends = @schema.shards.backends_for_shards(@query.from, shards)
         backends = @schema.shards.backends_all(@query.from) if backends.size == 0
@@ -71,6 +79,11 @@ module Kwery
           tup = Hash[@query.keys.zip(row.map { |expr| expr.call({}) })]
 
           shard = @schema.shards.shard_for_tup(@query.into, tup)
+
+          if @schema.shards.locked?(@query.into, shard)
+            raise Kwery::Shard::ShardLockedError.new
+          end
+
           @schema.shards.primary_for_shard(@query.into, shard)
         end
 
@@ -105,6 +118,10 @@ module Kwery
 
         shards = match_shards(@query.table, @query.where)
 
+        if @schema.shards.shards_locked?(@query.table, shards)
+          raise Kwery::Shard::ShardLockedError.new
+        end
+
         backends = @schema.shards.primaries_for_shards(@query.table, shards)
         backends = @schema.shards.primaries_all(@query.table) if backends.size == 0
 
@@ -126,6 +143,10 @@ module Kwery
         return unless Kwery::Query::Delete === @query
 
         shards = match_shards(@query.from, @query.where)
+
+        if @schema.shards.shards_locked?(@query.from, shards)
+          raise Kwery::Shard::ShardLockedError.new
+        end
 
         backends = @schema.shards.primaries_for_shards(@query.from, shards)
         backends = @schema.shards.primaries_all(@query.from) if backends.size == 0
