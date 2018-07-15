@@ -24,6 +24,8 @@ module Kwery
         #       do we need to perform some sort of snapshotting/checkpointing?
         #       or can we maybe disable compaction for now?
         def load
+          return unless File.exist?(@filename)
+
           read_json = File.read(@filename)
           read_hash = JSON.parse(read_json, symbolize_names: true)
 

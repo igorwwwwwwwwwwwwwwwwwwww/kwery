@@ -170,6 +170,11 @@ post '/query' do
   context = Kwery::Executor::Context.new(schema, stdin)
   tups = plan.call(context).to_a
 
+  # it was a write request, let's fsync
+  unless read_only
+    raft_persistence.flush
+  end
+
   JSON.pretty_generate({
     data: tups,
     stats: context.stats,
