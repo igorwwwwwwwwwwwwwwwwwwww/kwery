@@ -104,13 +104,6 @@ module Kwery
 
       tups.each do |tup|
         tid = table.size
-        tup[:_tid] = tid
-
-        table << tup
-
-        indexes.each do |k, idx|
-          idx.insert_tup(tid, tup)
-        end
 
         @journal.append(:insert, [table_name, tid, tup])
 
@@ -128,12 +121,6 @@ module Kwery
       update.call(tup)
       tup2 = tup.dup
 
-      indexes = indexes_for(table_name)
-      indexes.each do |k, idx|
-        idx.delete_tup(tid, tup1)
-        idx.insert_tup(tid, tup2)
-      end
-
       @journal.append(:update, [table_name, tid, tup1, tup2])
     end
 
@@ -143,18 +130,10 @@ module Kwery
 
       tid = tup[:_tid]
 
-      indexes.each do |k, idx|
-        idx.delete_tup(tid, tup)
-      end
-
-      # TODO: reclaim deleted tuple slots
-
-      table = @tables[table_name]
-      table[tid] = nil
-
       @journal.append(:delete, [table_name, tid, tup])
     end
 
+    # TODO: run this through the journal
     def create_index(table_name, index_name, indexed_exprs)
       raise "no table of name #{@tables[table_name]}" unless @tables[table_name]
 

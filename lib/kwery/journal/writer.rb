@@ -55,7 +55,35 @@ module Kwery
     end
 
     class NoopWriter
+      def register_client(client)
+      end
+
       def append(op, payload)
+      end
+
+      def flush
+      end
+
+      def start_flush_thread(**kwargs)
+      end
+    end
+
+    class RaftWriter
+      def initialize(node)
+        @node = node
+      end
+
+      def register_client(client)
+      end
+
+      def append(op, payload)
+        tx = [op, payload]
+        request = Raft::CommandRequest.new(tx)
+        response = @node.handle_command(request)
+
+        unless response.success
+          raise "unable to replicate command through raft"
+        end
       end
 
       def flush

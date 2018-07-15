@@ -24,11 +24,12 @@ end
 
 # TODO: support hash aggregate / group by
 # TODO: distributed tracing (opencensus?)
-# TODO: replication (and leader election) via raft
 # TODO: service discovery?
 # TODO: separate table per shard? (replicate only specific shard)
 # TODO: combine stats from remote calls
 # TODO: remote copy (split input into shards, just like remote insert)
+# TODO: implement mysql (tmtm/ruby-mysql) or postgres (kivikakk/vhskit) protocol
+# TODO: decide if proxy should be stateful, and if yes, it may need its own journal
 
 post '/query' do
   if env['CONTENT_TYPE'].start_with?('multipart/form-data;')

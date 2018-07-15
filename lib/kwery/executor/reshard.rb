@@ -19,8 +19,12 @@
 # TODO: use consensus to establish shard assignments across proxies
 # TODO: online resharding without excessive locking
 # TODO: incremental data copy
-# TODO: log shard reassignment to journal?
+# TODO: log shard reassignment to journal? (implies journal for proxy)
 # TODO: lock through a lease, or make unlock more available
+# TODO: move "locked" state from proxy to server nodes (closer to 2pc)
+#       this would also require exceptions around the locking, or have
+#       the lock bound to a 2pc transaction.
+# TODO: find consistent language around shard / replica / replica set
 
 module Kwery
   module Executor
