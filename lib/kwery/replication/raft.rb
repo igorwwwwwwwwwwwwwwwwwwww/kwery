@@ -5,6 +5,52 @@ require 'json'
 module Kwery
   module Replication
     module Raft
+      def self.start_update_thread(node)
+        Thread.new {
+          while true
+            node.update
+            sleep node.config.update_interval
+          end
+        }
+      end
+
+      class Persistence
+        def initialize(node, filename)
+          @node = node
+          @filename = filename
+        end
+
+        # TODO: figure out if there is an issue with log compaction/truncate here
+        #       do we need to perform some sort of snapshotting/checkpointing?
+        #       or can we maybe disable compaction for now?
+        def load
+          read_json = File.read(@filename)
+          read_hash = JSON.parse(read_json, symbolize_names: true)
+
+          persistent_state = @node.persistent_state
+          persistent_state.current_term = read_hash[:current_term]
+          persistent_state.voted_for    = read_hash[:voted_for]
+
+          entries = read_hash[:log].map do |h|
+            ::Raft::LogEntry.new(h[:term], h[:index], h[:command])
+          end
+          persistent_state.log = ::Raft::Log.new(entries)
+        end
+
+        # TODO: optimize for append only log writing
+        #       maybe keep two separate files and update the state (non-log)
+        #       one only when values change which should be infrequent enough
+        #       if we have a stable leader.
+        def flush
+          sent_hash = HashMarshalling.object_to_hash(@node.persistent_state, %w(current_term voted_for))
+          sent_hash['log'] = @node.persistent_state.log.map { |entry|
+            HashMarshalling.object_to_hash(entry, %w(term index command))
+          }
+          sent_json = JSON.dump(sent_hash)
+          File.write(@filename, sent_json)
+        end
+      end
+
       module HashMarshalling
         def self.hash_to_object(hash, klass)
           object = klass.new

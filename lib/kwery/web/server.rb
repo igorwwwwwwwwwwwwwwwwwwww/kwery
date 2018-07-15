@@ -5,7 +5,7 @@ require 'raft'
 
 # TODO: break circular dependency between schema and raft journal
 # TODO: move all of this raft code elsewhere
-# TODO: figure out some form of on disk logging / journal
+# TODO: figure out some form of on disk logging / journal for raft
 # TODO: get rid of all of the old replication code?
 # TODO: does raft work properly with a single node? if so, we can make it required
 # TODO: make goliath dep optional in raft gem
@@ -33,12 +33,11 @@ raft_node = Raft::Node.new(ENV['RAFT_NODE'], raft_config, raft_cluster) do |comm
   schema.apply_tx(command)
 end
 
-Thread.new do
-  while true
-    raft_node.update
-    sleep raft_node.config.update_interval
-  end
-end
+raft_persistence = Kwery::Replication::Raft::Persistence.new(
+  raft_node,
+  ENV['RAFT_JOURNAL_FILE'],
+)
+raft_persistence.load # recovery
 
 journal = Kwery::Journal::RaftWriter.new(raft_node)
 schema = Kwery::Schema.new(journal: journal)
@@ -49,6 +48,8 @@ schema.create_index(:users, :users_idx_id, [
 ])
 
 parser = Kwery::Parser.new
+
+Kwery::Replication::Raft.start_update_thread(raft_node)
 
 set :protection, false
 set :show_exceptions, false
@@ -69,36 +70,41 @@ get '/raft/leader' do
 end
 
 post '/raft/request_votes' do
-  params = JSON.parse(request.body.read)
+  params = JSON.parse(request.body.read, symbolize_names: true)
 
   if ENV['RAFT_DEBUG'] == 'true'
-    STDOUT.write("\nnode #{raft_node.id} received request_vote from #{params['candidate_id']}, term #{params['term']}\n")
+    STDOUT.write("\nnode #{raft_node.id} received request_vote from #{params[:candidate_id]}, term #{params[:term]}\n")
   end
 
   request = Raft::RequestVoteRequest.new(
-      params['term'],
-      params['candidate_id'],
-      params['last_log_index'],
-      params['last_log_term'])
+    params[:term],
+    params[:candidate_id],
+    params[:last_log_index],
+    params[:last_log_term],
+  )
   response = raft_node.handle_request_vote(request)
+
+  raft_persistence.flush
+
   [200, {}, { 'term' => response.term, 'vote_granted' => response.vote_granted }.to_json]
 end
 
 post '/raft/append_entries' do
-  params = JSON.parse(request.body.read)
+  params = JSON.parse(request.body.read, symbolize_names: true)
 
   if ENV['RAFT_DEBUG'] == 'true'
     STDOUT.write("\nnode #{raft_node.id} received append_entries from #{params['leader_id']}, term #{params['term']}\n")
   end
 
-  entries = params['entries'].map {|entry| Raft::LogEntry.new(entry['term'], entry['index'], entry['command'])}
+  entries = params[:entries].map {|entry| Raft::LogEntry.new(entry[:term], entry[:index], entry[:command])}
   request = Raft::AppendEntriesRequest.new(
-      params['term'],
-      params['leader_id'],
-      params['prev_log_index'],
-      params['prev_log_term'],
-      entries,
-      params['commit_index'])
+    params[:term],
+    params[:leader_id],
+    params[:prev_log_index],
+    params[:prev_log_term],
+    entries,
+    params[:commit_index],
+  )
 
   if ENV['RAFT_DEBUG'] == 'true'
     STDOUT.write("\nnode #{raft_node.id} received entries: #{request.entries}\n")
@@ -110,13 +116,18 @@ post '/raft/append_entries' do
     STDOUT.write("\nnode #{raft_node.id} completed append_entries from #{params['leader_id']}, term #{params['term']} (#{response})\n")
   end
 
+  raft_persistence.flush
+
   [200, {}, { 'term' => response.term, 'success' => response.success }.to_json]
 end
 
 post '/raft/command' do
-  params = JSON.parse(request.body.read)
-  request = Raft::CommandRequest.new(params['command'])
+  params = JSON.parse(request.body.read, symbolize_names: true)
+  request = Raft::CommandRequest.new(params[:command])
   response = raft_node.handle_command(request)
+
+  raft_persistence.flush
+
   [response.success ? 200 : 409, {}, { 'success' => response.success }.to_json]
 end
 

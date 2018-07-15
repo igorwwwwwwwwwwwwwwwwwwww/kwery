@@ -54,11 +54,17 @@ module Kwery
       end
     end
 
+    # TODO: break circular dependency between schema and ApplyTxWriter
     class NoopWriter
+      def initialize(schema)
+        @schema = schema
+      end
+
       def register_client(client)
       end
 
       def append(op, payload)
+        @schema.apply_tx([op, payload])
       end
 
       def flush

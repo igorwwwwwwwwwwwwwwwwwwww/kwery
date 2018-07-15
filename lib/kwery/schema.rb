@@ -3,12 +3,12 @@
 
 module Kwery
   class Schema
-    attr_accessor :shards
+    attr_accessor :journal, :shards
 
     def initialize(journal: nil, recovery: nil, shards: nil)
       @tables  = {}
       @indexes = {}
-      @journal = journal || Kwery::Journal::NoopWriter.new
+      @journal = journal || Kwery::Journal::NoopWriter.new(self)
       @shards  = shards
     end
 
