@@ -128,7 +128,7 @@ module Kwery
       end
 
       class AsyncProvider < ::Raft::AsyncProvider
-        def initialize(update_interval)
+        def initialize(await_interval)
           @await_interval = await_interval
         end
 
