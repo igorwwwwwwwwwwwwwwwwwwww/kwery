@@ -4,13 +4,15 @@ require 'json'
 
 backends    = ENV['BACKENDS'].split(';').map { |rs| rs.split(',') }
 assignments = ENV['ASSIGNMENTS'].split(';').map { |rs| rs.split(',').map(&:to_i) }
+num_shards  = ENV['NUM_SHARDS'].to_i
 
 shards = Kwery::Shard::StateMap.new(backends)
 shards.define_shard(:users,
   key:         Kwery::Expr::Column.new(:id),
-  count:       16,
+  count:       num_shards,
   assignments: assignments,
 )
+shards.start_config_update_thread
 
 schema = Kwery::Schema.new(shards: shards)
 parser = Kwery::Parser.new

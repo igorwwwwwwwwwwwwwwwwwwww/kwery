@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'kwery'
 require 'json'
+require 'raft'
 
 # TODO: break circular dependency between schema and raft journal
 # TODO: move all of this raft code elsewhere
@@ -9,33 +10,33 @@ require 'json'
 # TODO: does raft work properly with a single node? if so, we can make it required
 # TODO: make goliath dep optional in raft gem
 # TODO: consider fully evented server to play more nicely with all of the raft stuff
+# TODO: seeing a lot of weird edge cases with raft, especially if no leader can be elected
+# TODO: the raft stuff could probably use some mutexes or other form of serialization
+# TODO: log on raft leader change
 
 schema = nil
-if ENV['RAFT_NODE'] && ENV['RAFT_NODES']
-  require 'raft'
 
-  raft_nodes   = ENV['RAFT_NODES'].split(',') - [ENV['RAFT_NODE']]
-  raft_cluster = Raft::Cluster.new(*raft_nodes)
-  raft_config  = Raft::Config.new(
-    Kwery::Replication::Raft::RpcProvider.new,
-    Kwery::Replication::Raft::AsyncProvider.new(
-      ENV['RAFT_AWAIT_INTERVAL']&.to_f || 0.1
-    ),
-    ENV['RAFT_ELECTION_TIMEOUT']&.to_i || 15,
-    ENV['RAFT_ELECTION_SPLAY']&.to_i || 15,
-    ENV['RAFT_UPDATE_INTERVAL']&.to_i || 1,
-    ENV['RAFT_HEARTBEAT_INTERVAL']&.to_i || 1,
-  )
+raft_nodes   = ENV['RAFT_NODES'].split(',') - [ENV['RAFT_NODE']]
+raft_cluster = Raft::Cluster.new(*raft_nodes)
+raft_config  = Raft::Config.new(
+  Kwery::Replication::Raft::RpcProvider.new,
+  Kwery::Replication::Raft::AsyncProvider.new(
+    ENV['RAFT_AWAIT_INTERVAL']&.to_f || 0.1
+  ),
+  ENV['RAFT_ELECTION_TIMEOUT']&.to_f   || 5.0,
+  ENV['RAFT_ELECTION_SPLAY']&.to_f     || 1.0,
+  ENV['RAFT_UPDATE_INTERVAL']&.to_f    || 0.2,
+  ENV['RAFT_HEARTBEAT_INTERVAL']&.to_f || 1.0,
+)
 
-  raft_node = Raft::Node.new(ENV['RAFT_NODE'], raft_config, raft_cluster) do |command|
-    schema.apply_tx(command)
-  end
+raft_node = Raft::Node.new(ENV['RAFT_NODE'], raft_config, raft_cluster) do |command|
+  schema.apply_tx(command)
+end
 
-  Thread.new do
-    while true
-      raft_node.update
-      sleep(raft_node.config.update_interval)
-    end
+Thread.new do
+  while true
+    raft_node.update
+    sleep raft_node.config.update_interval
   end
 end
 
@@ -51,12 +52,21 @@ parser = Kwery::Parser.new
 
 set :protection, false
 set :show_exceptions, false
+disable :logging
 
 get '/' do
   { name: ENV['SERVER_NAME'] }.to_json + "\n"
 end
 
 # TODO: move these raft endpoints out to a rack middleware or such
+
+get '/raft/leader' do
+  JSON.pretty_generate({
+    leader_id: raft_node.temporary_state.leader_id,
+    commit_index: raft_node.temporary_state.commit_index,
+    current_term: raft_node.persistent_state.current_term,
+  }) + "\n"
+end
 
 post '/raft/request_votes' do
   params = JSON.parse(request.body.read)
@@ -128,6 +138,21 @@ post '/query' do
 
   query = parser.parse(sql)
   query.options[:partial] = true if env['HTTP_PARTIAL'] == 'true'
+
+  # this is not strictly necessary, as writes will always go through raft
+  # but for performance it is better for clients to connect to the leader
+  # this response will instruct the client to refresh their cache
+  read_only = Kwery::Query::Select === query || query.options[:explain]
+  unless raft_node.role == Raft::Node::LEADER_ROLE || read_only
+    status 400
+    return JSON.pretty_generate({
+      error: 'no writes allowed against replica',
+      config_reload_hint: true,
+      leader_id: raft_node.temporary_state.leader_id,
+      current_term: raft_node.persistent_state.current_term,
+      # TODO: is any of this at all reliable?
+    }) + "\n"
+  end
 
   plan = query.plan(schema)
 

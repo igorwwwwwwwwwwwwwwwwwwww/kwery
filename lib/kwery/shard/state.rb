@@ -1,4 +1,5 @@
 require 'set'
+require 'zlib'
 
 module Kwery
   module Shard
@@ -10,20 +11,19 @@ module Kwery
     end
 
     class StateMap
-      # each line is a "replica set"
-      # the first backend is the primary,
-      # the others are replicas.
+      # each line is a replica set / raft group
       #
       # backends: [
-      #   [http://localhost:8000, http://localhost:9000],
-      #   [http://localhost:8001, http://localhost:9001],
-      #   [http://localhost:8002, http://localhost:9002],
+      #   [http://localhost:8000, http://localhost:8001, http://localhost:8002],
+      #   [http://localhost:8100, http://localhost:8101, http://localhost:8102],
+      #   [http://localhost:8200, http://localhost:8201, http://localhost:8202],
       # ],
       #
       # TODO: introduce rs key prefix to make it more explicit,
       #       e.g. backends: { rs0: ..., rs1: ..., rs2: ... }
       def initialize(backends)
         @states = {}
+        @leaders = {}
         @backends = backends
       end
 
@@ -35,6 +35,8 @@ module Kwery
       #   [ 6,  7,  8,  9, 10],
       #   [11, 12, 13, 14, 15],
       # ],
+      #
+      # TODO: validate that the assignments are actually valid
       def define_shard(table, key:, count:, assignments:)
         @states[table] = Kwery::Shard::State.new(
           key: key,
@@ -61,15 +63,47 @@ module Kwery
         @backends[rs]
       end
 
-      def primary_for_shard(table, shard)
-        rs = @states[table].assignments_inverse[shard]
-        @backends[rs].first
+      # TODO: support some kind of interrupt so that a "config_reload_hint" response
+      #       to a query can perform a faster poll
+      # TODO: make intervals configurable
+      def start_config_update_thread
+        Thread.new {
+          sleep 5
+          loop do
+            @backends.each do |rs|
+              client = Kwery::Client::Batch.new
+              results = client.raft_leader(rs)
+              leader = results
+                .sort_by { |res| res[:current_term] }
+                .map { |res| res[:leader_id] }
+                .last
+              @leaders[rs] = leader
+            end
+
+            # some backends are unknown, poll more quickly
+            if @leaders.values.any? { |v| v.nil? }
+              sleep 5
+            else
+              sleep 60
+            end
+          end
+        }
       end
 
+      # TODO: select primary from raft leader
+      #       perhaps even error out if we do not know
+      #       a background process should infrequently poll each set for updates,
+      #       in response to a query should trigger a poll
+      def primary_for_shard(table, shard)
+        rs = rs_for_shard(table, shard)
+        @leaders[rs] or raise "do not know leader for raft group #{rs}"
+      end
+
+      # TODO: select primary from raft leader
       def primaries_for_shards(table, shards)
         shards
           .group_by { |shard| rs_for_shard(table, shard) }
-          .map { |rs, shards| rs.first }
+          .map { |rs, shards| @leaders[rs] or raise "do not know leader for raft group #{rs}" }
       end
 
       def primaries_all(table)

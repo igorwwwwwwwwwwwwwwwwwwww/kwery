@@ -133,6 +133,7 @@ module Kwery
         end
 
         def await
+          # TODO: track wait time, perhaps propagate to context somehow
           until yield
             sleep @await_interval
           end

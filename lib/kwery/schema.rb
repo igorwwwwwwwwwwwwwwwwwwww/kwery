@@ -1,5 +1,3 @@
-require 'zlib'
-
 # TODO: this is a "god" object, things should be moved out
 #       perhaps separate "storage" and "tx" modules
 
